@@ -1,4 +1,4 @@
-package com.sebn.pfmea.backend.user.dto.request;
+package com.sebn.pfmea.backend.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

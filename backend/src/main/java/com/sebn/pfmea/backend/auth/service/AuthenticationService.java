@@ -1,14 +1,17 @@
 package com.sebn.pfmea.backend.auth.service;
 
+import com.sebn.pfmea.backend.auth.dto.request.ChangePasswordRequest;
 import com.sebn.pfmea.backend.auth.dto.request.LoginRequest;
 import com.sebn.pfmea.backend.auth.dto.response.LoginResponse;
 import com.sebn.pfmea.backend.auth.token.JwtService;
 import com.sebn.pfmea.backend.exception.ResourceNotFoundException;
+import com.sebn.pfmea.backend.exception.UnauthorizedException;
 import com.sebn.pfmea.backend.user.entity.User;
 import com.sebn.pfmea.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,7 +21,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtService jwtService;
-
+    private final PasswordEncoder passwordEncoder;
     public LoginResponse login(LoginRequest request) {
 
         authenticationManager.authenticate(
@@ -45,5 +48,25 @@ public class AuthenticationService {
                 user.getEmail(),
                 user.getRole()
         );
+    }
+    public void changePassword(
+            String email,
+            ChangePasswordRequest request
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found.")
+                );
+
+        if (!passwordEncoder.matches(
+                request.currentPassword(),
+                user.getPassword()
+        )) {
+            throw new UnauthorizedException("Current password is incorrect.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+
+        userRepository.save(user);
     }
 }

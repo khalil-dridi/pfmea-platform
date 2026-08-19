@@ -1,6 +1,7 @@
 package com.sebn.pfmea.backend.user.mapper;
 
 import com.sebn.pfmea.backend.user.dto.request.CreateUserRequest;
+import com.sebn.pfmea.backend.user.dto.request.UpdateProfileRequest;
 import com.sebn.pfmea.backend.user.dto.request.UpdateUserRequest;
 import com.sebn.pfmea.backend.user.dto.response.UserResponse;
 import com.sebn.pfmea.backend.user.entity.User;
@@ -46,6 +47,15 @@ public class UserMapper {
 
         if (request.role() != null) {
             user.setRole(request.role());
+        }
+    }
+    public void updateProfile(User user, UpdateProfileRequest request) {
+        if (request.firstName() != null) {
+            user.setFirstName(request.firstName());
+        }
+
+        if (request.lastName() != null) {
+            user.setLastName(request.lastName());
         }
     }
 }

@@ -4,12 +4,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 
 @Service
 public class JwtService {
@@ -28,45 +26,34 @@ public class JwtService {
     }
 
     public String generateToken(String email, String role) {
-
-        Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + expiration);
+        Date issuedAt = new Date();
+        Date expiresAt = new Date(issuedAt.getTime() + expiration);
 
         return Jwts.builder()
                 .subject(email)
                 .claim("role", role)
-                .issuedAt(now)
-                .expiration(expirationDate)
+                .issuedAt(issuedAt)
+                .expiration(expiresAt)
                 .signWith(signingKey)
                 .compact();
     }
 
     public String extractEmail(String token) {
-
-        return extractAllClaims(token).getSubject();
+        return parseToken(token).getSubject();
     }
 
     public String extractRole(String token) {
-
-        return extractAllClaims(token).get("role", String.class);
+        return parseToken(token).get("role", String.class);
     }
 
     public boolean isTokenValid(String token, String email) {
+        Claims claims = parseToken(token);
 
-        String tokenEmail = extractEmail(token);
-
-        return tokenEmail.equals(email) && !isTokenExpired(token);
+        return email.equals(claims.getSubject())
+                && !claims.getExpiration().before(new Date());
     }
 
-    private boolean isTokenExpired(String token) {
-
-        Date expirationDate = extractAllClaims(token).getExpiration();
-
-        return expirationDate.before(new Date());
-    }
-
-    private Claims extractAllClaims(String token) {
-
+    private Claims parseToken(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey)
                 .build()

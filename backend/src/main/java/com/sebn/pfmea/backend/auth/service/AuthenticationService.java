@@ -3,6 +3,7 @@ package com.sebn.pfmea.backend.auth.service;
 import com.sebn.pfmea.backend.auth.dto.request.LoginRequest;
 import com.sebn.pfmea.backend.auth.dto.response.LoginResponse;
 import com.sebn.pfmea.backend.auth.token.JwtService;
+import com.sebn.pfmea.backend.exception.ResourceNotFoundException;
 import com.sebn.pfmea.backend.user.entity.User;
 import com.sebn.pfmea.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +30,7 @@ public class AuthenticationService {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() ->
-                        new com.sebn.pfmea.backend.exception.ResourceNotFoundException(
-                                "Authenticated user not found."
-                        )
+                        new ResourceNotFoundException("Authenticated user not found.")
                 );
 
         String accessToken = jwtService.generateToken(

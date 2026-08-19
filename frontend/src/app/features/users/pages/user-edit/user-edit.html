@@ -1,0 +1,132 @@
+<section class="user-form-page">
+  <header class="user-form-page__header">
+    <div>
+      <p class="user-form-page__crumb">
+        <a routerLink="/users">Gestion des utilisateurs</a>
+      </p>
+      <h1>Modifier un utilisateur</h1>
+      <p>
+        @if (displayName()) {
+          Mettez à jour le compte de {{ displayName() }}.
+        } @else {
+          Mettez à jour les informations du compte.
+        }
+      </p>
+    </div>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="users-alert users-alert--error" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="users-card users-state" role="status" aria-live="polite">
+      Chargement de l’utilisateur…
+    </div>
+  } @else if (user(); as currentUser) {
+    <div class="users-card user-form-card">
+      <div class="user-edit-meta">
+        <span class="badge badge--role">{{ currentUser.role }}</span>
+        <span
+          class="badge"
+          [class.badge--active]="currentUser.enabled"
+          [class.badge--inactive]="!currentUser.enabled"
+        >
+          {{ statusLabel() }}
+        </span>
+        <p>Le mot de passe se gère depuis le profil de l’utilisateur.</p>
+      </div>
+
+      <form [formGroup]="userForm" (ngSubmit)="submit()" novalidate>
+        <fieldset [disabled]="isSaving()">
+          <div class="user-form-grid">
+            <div class="field">
+              <label for="firstName">Prénom</label>
+              <input
+                id="firstName"
+                type="text"
+                formControlName="firstName"
+                autocomplete="given-name"
+                maxlength="100"
+                [attr.aria-invalid]="firstNameError() ? true : null"
+                [attr.aria-describedby]="firstNameError() ? 'firstName-error' : null"
+              />
+              @if (firstNameError(); as message) {
+                <p id="firstName-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field">
+              <label for="lastName">Nom</label>
+              <input
+                id="lastName"
+                type="text"
+                formControlName="lastName"
+                autocomplete="family-name"
+                maxlength="100"
+                [attr.aria-invalid]="lastNameError() ? true : null"
+                [attr.aria-describedby]="lastNameError() ? 'lastName-error' : null"
+              />
+              @if (lastNameError(); as message) {
+                <p id="lastName-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field">
+              <label for="email">Adresse e-mail</label>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                maxlength="254"
+                [attr.aria-invalid]="emailError() ? true : null"
+                [attr.aria-describedby]="emailError() ? 'email-error' : null"
+              />
+              @if (emailError(); as message) {
+                <p id="email-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field">
+              <label for="role">Rôle</label>
+              <select
+                id="role"
+                formControlName="role"
+                [attr.aria-invalid]="roleError() ? true : null"
+                [attr.aria-describedby]="roleError() ? 'role-error' : null"
+              >
+                <option value="ADMIN">ADMIN</option>
+                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+              </select>
+              @if (roleError(); as message) {
+                <p id="role-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field field--full">
+              <span class="field__label">Statut du compte</span>
+              <p class="field__value">{{ statusLabel() }}</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="users-actions users-actions--form">
+          <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="spinner" aria-hidden="true"></span>
+              Enregistrement…
+            } @else {
+              Enregistrer
+            }
+          </button>
+          <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancel()">
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</section>

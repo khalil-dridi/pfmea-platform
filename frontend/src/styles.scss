@@ -1,0 +1,19 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+app-root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #1e1b4b;
+  background: #f7f6fb;
+  -webkit-font-smoothing: antialiased;
+}

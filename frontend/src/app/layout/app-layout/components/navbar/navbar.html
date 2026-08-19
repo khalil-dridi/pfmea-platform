@@ -1,0 +1,70 @@
+<header class="navbar">
+  <div class="navbar__left">
+    <button
+      type="button"
+      class="navbar__icon-btn"
+      [attr.aria-expanded]="mobileOpen()"
+      aria-controls="app-sidebar"
+      [attr.aria-label]="collapsed() ? 'Développer le menu' : 'Réduire le menu'"
+      (click)="toggleSidebar()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <div class="navbar__title-block">
+      <p class="navbar__crumb">P-FMEA Platform</p>
+      <h1 class="navbar__title">{{ pageTitle() }}</h1>
+    </div>
+  </div>
+
+  <div class="navbar__right">
+    <button
+      type="button"
+      class="navbar__icon-btn"
+      aria-label="Notifications"
+    >
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5L20 18H4l2-1.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <div class="navbar__profile" (focusout)="closeUserMenuOnBlur($event)">
+      <button
+        type="button"
+        class="navbar__user"
+        [attr.aria-expanded]="isMenuOpen()"
+        aria-haspopup="menu"
+        (click)="toggleUserMenu()"
+      >
+        <span class="navbar__avatar" aria-hidden="true">
+          {{ displayName().slice(0, 1).toUpperCase() }}
+        </span>
+        <span class="navbar__user-text">
+          <strong>{{ displayName() }}</strong>
+          <span>{{ roleLabel() }}</span>
+        </span>
+        <svg class="navbar__caret" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </button>
+
+      @if (isMenuOpen()) {
+        <div class="navbar__menu" role="menu">
+          <a routerLink="/profile" role="menuitem" (click)="closeUserMenu()">Mon profil</a>
+          <a
+            routerLink="/profile"
+            [queryParams]="{ action: 'password' }"
+            role="menuitem"
+            (click)="closeUserMenu()"
+          >
+            Changer le mot de passe
+          </a>
+          <button type="button" role="menuitem" (click)="logout()">Déconnexion</button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

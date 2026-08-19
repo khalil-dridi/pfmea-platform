@@ -1,0 +1,79 @@
+@use '../../styles/users-ui';
+
+:host {
+  display: block;
+}
+
+.user-form-page {
+  max-width: 46rem;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+.user-form-page__header {
+  margin-bottom: 1.35rem;
+
+  h1,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    color: #1e1b4b;
+    font-size: 1.55rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin-top: 0.45rem;
+    color: #6b6685;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+
+.user-form-page__crumb {
+  margin: 0 0 0.45rem !important;
+  font-size: 0.8rem !important;
+
+  a {
+    color: #543a95;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+  }
+}
+
+.user-form-card {
+  padding: 1.4rem 1.45rem 1.3rem;
+}
+
+.user-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.95rem 1rem;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .user-form-grid,
+  .users-actions--form,
+  .users-actions--form .btn {
+    width: 100%;
+  }
+
+  .user-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-form-card {
+    padding: 1.15rem 1rem 1.1rem;
+  }
+}

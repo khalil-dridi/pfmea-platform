@@ -1,0 +1,194 @@
+<main class="login-page">
+  <section class="login-hero" aria-label="Présentation de la plateforme">
+    <div class="login-hero__content">
+      <div class="login-hero__top">
+        <img
+          class="login-hero__logo"
+          src="/assets/auth/sebn-logo-transparent.png"
+          alt="SEBN TN"
+        />
+        <p class="login-hero__product">P-FMEA Platform</p>
+        <h1 class="login-hero__headline">
+          Anticipez les risques. Maîtrisez la qualité.<br />
+          Optimisez vos processus.
+        </h1>
+        <div class="login-hero__rule" aria-hidden="true"></div>
+      </div>
+
+      <ul class="login-hero__features">
+        @for (highlight of highlights; track highlight.title; let index = $index) {
+          <li class="login-hero__feature">
+            <span class="login-hero__feature-icon" aria-hidden="true">
+              @switch (index) {
+                @case (0) {
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3 5 6.5v5.2c0 4.2 2.8 8 7 9.3 4.2-1.3 7-5.1 7-9.3V6.5L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                  </svg>
+                }
+                @case (1) {
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 18V9M12 18V5M19 18v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                  </svg>
+                }
+                @default {
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4a8 8 0 1 1 0 16 8 8 0 0 1 0-16Z" stroke="currentColor" stroke-width="1.6" />
+                    <path d="M12 12H20.5M12 12V4.2M12 12l-6.2 4.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                }
+              }
+            </span>
+            <span>
+              <strong>{{ highlight.title }}</strong>
+              <span>{{ highlight.description }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="login-panel">
+    <div class="login-panel__band" aria-hidden="true"></div>
+    <div class="login-panel__dots login-panel__dots--tr" aria-hidden="true"></div>
+    <div class="login-panel__dots login-panel__dots--bl" aria-hidden="true"></div>
+
+    <div class="login-panel__body">
+      <div class="login-card">
+        <header class="login-card__header">
+          <h2 id="login-title">Bienvenue</h2>
+          <p>Connectez-vous pour accéder à la plateforme P-FMEA</p>
+        </header>
+
+        <form
+          class="login-card__form"
+          [formGroup]="loginForm"
+          (ngSubmit)="onSubmit()"
+          novalidate
+          aria-labelledby="login-title"
+        >
+          @if (errorMessage(); as message) {
+            <div class="login-card__error" role="alert" aria-live="assertive">
+              {{ message }}
+            </div>
+          }
+
+          <div class="field">
+            <label for="email">Adresse e-mail</label>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.6" />
+                  <path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="Entrez votre adresse e-mail"
+                autocomplete="email"
+                spellcheck="false"
+                [attr.aria-invalid]="emailControl.invalid && emailControl.touched"
+                [attr.aria-describedby]="emailError() ? 'email-error' : null"
+              />
+            </div>
+            @if (emailError(); as message) {
+              <p id="email-error" class="field__error" role="alert">{{ message }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="password">Mot de passe</label>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.6" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                </svg>
+              </span>
+              <input
+                id="password"
+                [type]="isPasswordVisible() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Entrez votre mot de passe"
+                autocomplete="current-password"
+                [attr.aria-invalid]="passwordControl.invalid && passwordControl.touched"
+                [attr.aria-describedby]="passwordError() ? 'password-error' : null"
+              />
+              <button
+                type="button"
+                class="field__toggle"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="isPasswordVisible() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                [attr.aria-pressed]="isPasswordVisible()"
+              >
+                @if (isPasswordVisible()) {
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 3l18 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                    <path d="M10.5 6.3A10.8 10.8 0 0 1 12 6c5.5 0 9.5 4.5 10.5 6-.4.6-1.1 1.6-2.2 2.7M7 7.8C4.6 9.3 3.2 11.2 2.5 12c1 1.5 5 6 9.5 6 1.4 0 2.7-.3 3.9-.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M2.5 12C3.5 10.5 7.5 6 12 6s8.5 4.5 9.5 6c-1 1.5-5 6-9.5 6s-8.5-4.5-9.5-6Z" stroke="currentColor" stroke-width="1.7" />
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7" />
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (passwordError(); as message) {
+              <p id="password-error" class="field__error" role="alert">{{ message }}</p>
+            }
+          </div>
+
+          <div class="login-card__meta">
+            <label class="remember">
+              <input type="checkbox" formControlName="rememberMe" />
+              <span>Se souvenir de moi</span>
+            </label>
+            <a href="#" class="login-card__forgot" (click)="onForgotPassword($event)">
+              Mot de passe oublié ?
+            </a>
+          </div>
+
+          <button
+            type="submit"
+            class="login-card__submit"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              Connexion en cours…
+            } @else {
+              Se connecter
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+          </button>
+        </form>
+
+        <div class="login-card__divider" aria-hidden="true">
+          <span>ou</span>
+        </div>
+
+        <button
+          type="button"
+          class="login-card__sso"
+          disabled
+          aria-disabled="true"
+          title="La connexion SSO n’est pas encore disponible"
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 3 5 6.5v5.2c0 4.2 2.8 8 7 9.3 4.2-1.3 7-5.1 7-9.3V6.5L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Se connecter avec SSO
+        </button>
+
+        <p class="login-card__legal">© 2026 SEBN.TN – Tous droits réservés</p>
+      </div>
+    </div>
+  </section>
+</main>

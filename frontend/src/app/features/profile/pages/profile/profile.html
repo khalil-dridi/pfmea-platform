@@ -1,0 +1,250 @@
+<section class="profile-page" [attr.inert]="isPasswordPanelOpen() ? '' : null">
+  <header class="profile-page__header">
+    <h1>Mon profil</h1>
+    <p>Consultez et mettez à jour vos informations personnelles, et changez votre mot de passe.</p>
+  </header>
+
+  @if (successMessage(); as success) {
+    <div class="profile-alert profile-alert--success" role="status" aria-live="polite">
+      {{ success }}
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="profile-alert profile-alert--error" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="profile-alert profile-alert--neutral" role="status" aria-live="polite">
+      Chargement du profil…
+    </div>
+  } @else if (profile(); as user) {
+    <div class="profile-grid">
+      <aside class="profile-card profile-identity">
+        <div class="profile-identity__avatar" aria-hidden="true">{{ initials() }}</div>
+        <h2>{{ displayName() }}</h2>
+        <p class="profile-identity__email">{{ user.email }}</p>
+        <div class="profile-identity__badges">
+          <span class="badge badge--role">{{ roleBadge() }}</span>
+          <span class="badge" [class.badge--active]="user.enabled" [class.badge--inactive]="!user.enabled">
+            {{ statusLabel() }}
+          </span>
+        </div>
+        <p class="profile-identity__role">{{ roleLabel() }}</p>
+      </aside>
+
+      <div class="profile-card profile-details">
+        <div class="profile-details__heading">
+          <h2>Informations personnelles</h2>
+          <p>L’adresse e-mail, le rôle et le statut du compte ne peuvent pas être modifiés.</p>
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="profile-fields">
+              <div class="field">
+                @if (isEditing()) {
+                  <label for="firstName">Prénom</label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    formControlName="firstName"
+                    autocomplete="given-name"
+                    maxlength="100"
+                    autofocus
+                    [attr.aria-invalid]="firstNameError() ? true : null"
+                    [attr.aria-describedby]="firstNameError() ? 'firstName-error' : null"
+                  />
+                  @if (firstNameError(); as message) {
+                    <p id="firstName-error" class="field__error">{{ message }}</p>
+                  }
+                } @else {
+                  <span class="field__label">Prénom</span>
+                  <p class="field__value">{{ user.firstName }}</p>
+                }
+              </div>
+
+              <div class="field">
+                @if (isEditing()) {
+                  <label for="lastName">Nom</label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    formControlName="lastName"
+                    autocomplete="family-name"
+                    maxlength="100"
+                    [attr.aria-invalid]="lastNameError() ? true : null"
+                    [attr.aria-describedby]="lastNameError() ? 'lastName-error' : null"
+                  />
+                  @if (lastNameError(); as message) {
+                    <p id="lastName-error" class="field__error">{{ message }}</p>
+                  }
+                } @else {
+                  <span class="field__label">Nom</span>
+                  <p class="field__value">{{ user.lastName }}</p>
+                }
+              </div>
+
+              <div class="field">
+                <span class="field__label">Adresse e-mail</span>
+                <p class="field__value">{{ user.email }}</p>
+              </div>
+
+              <div class="field">
+                <span class="field__label">Rôle</span>
+                <p class="field__value">{{ roleBadge() }}</p>
+              </div>
+
+              <div class="field field--full">
+                <span class="field__label">Statut du compte</span>
+                <p class="field__value">{{ statusLabel() }}</p>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="profile-actions">
+            @if (isEditing()) {
+              <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+                @if (isSaving()) {
+                  <span class="spinner" aria-hidden="true"></span>
+                  Enregistrement…
+                } @else {
+                  Enregistrer
+                }
+              </button>
+              <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancelEdit()">
+                Annuler
+              </button>
+            } @else {
+              <button type="button" class="btn btn--primary" (click)="startEdit()">
+                Modifier mon profil
+              </button>
+              <button type="button" class="btn btn--secondary" (click)="openPasswordPanel()">
+                Changer mon mot de passe
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</section>
+
+@if (isPasswordPanelOpen()) {
+  <div class="profile-dialog" role="presentation" (click)="closePasswordPanel()">
+    <div
+      class="profile-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="password-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="profile-dialog__header">
+        <h2 id="password-dialog-title">Changer mon mot de passe</h2>
+        <p>Saisissez votre mot de passe actuel, puis définissez un nouveau mot de passe.</p>
+      </header>
+
+      @if (passwordErrorMessage(); as message) {
+        <div class="profile-alert profile-alert--error" role="alert" aria-live="assertive">
+          {{ message }}
+        </div>
+      }
+
+      <form [formGroup]="passwordForm" (ngSubmit)="submitPasswordChange()" novalidate>
+        <fieldset [disabled]="isChangingPassword()">
+          <div class="field">
+            <label for="currentPassword">Mot de passe actuel</label>
+            <div class="field__control">
+              <input
+                id="currentPassword"
+                [type]="isCurrentPasswordVisible() ? 'text' : 'password'"
+                formControlName="currentPassword"
+                autocomplete="current-password"
+                autofocus
+                [attr.aria-invalid]="currentPasswordError() ? true : null"
+                [attr.aria-describedby]="currentPasswordError() ? 'currentPassword-error' : null"
+              />
+              <button
+                type="button"
+                class="field__toggle"
+                (click)="toggleCurrentPasswordVisibility()"
+                [attr.aria-label]="isCurrentPasswordVisible() ? 'Masquer le mot de passe actuel' : 'Afficher le mot de passe actuel'"
+              >
+                {{ isCurrentPasswordVisible() ? 'Masquer' : 'Afficher' }}
+              </button>
+            </div>
+            @if (currentPasswordError(); as message) {
+              <p id="currentPassword-error" class="field__error">{{ message }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="newPassword">Nouveau mot de passe</label>
+            <div class="field__control">
+              <input
+                id="newPassword"
+                [type]="isNewPasswordVisible() ? 'text' : 'password'"
+                formControlName="newPassword"
+                autocomplete="new-password"
+                [attr.aria-invalid]="newPasswordError() ? true : null"
+                [attr.aria-describedby]="newPasswordError() ? 'newPassword-error' : null"
+              />
+              <button
+                type="button"
+                class="field__toggle"
+                (click)="toggleNewPasswordVisibility()"
+                [attr.aria-label]="isNewPasswordVisible() ? 'Masquer le nouveau mot de passe' : 'Afficher le nouveau mot de passe'"
+              >
+                {{ isNewPasswordVisible() ? 'Masquer' : 'Afficher' }}
+              </button>
+            </div>
+            @if (newPasswordError(); as message) {
+              <p id="newPassword-error" class="field__error">{{ message }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+            <div class="field__control">
+              <input
+                id="confirmPassword"
+                [type]="isConfirmPasswordVisible() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                [attr.aria-invalid]="confirmPasswordError() ? true : null"
+                [attr.aria-describedby]="confirmPasswordError() ? 'confirmPassword-error' : null"
+              />
+              <button
+                type="button"
+                class="field__toggle"
+                (click)="toggleConfirmPasswordVisibility()"
+                [attr.aria-label]="isConfirmPasswordVisible() ? 'Masquer la confirmation' : 'Afficher la confirmation'"
+              >
+                {{ isConfirmPasswordVisible() ? 'Masquer' : 'Afficher' }}
+              </button>
+            </div>
+            @if (confirmPasswordError(); as message) {
+              <p id="confirmPassword-error" class="field__error">{{ message }}</p>
+            }
+          </div>
+        </fieldset>
+
+        <div class="profile-actions">
+          <button type="submit" class="btn btn--primary" [disabled]="isChangingPassword()">
+            @if (isChangingPassword()) {
+              <span class="spinner" aria-hidden="true"></span>
+              Enregistrement…
+            } @else {
+              Enregistrer
+            }
+          </button>
+          <button type="button" class="btn btn--ghost" [disabled]="isChangingPassword()" (click)="closePasswordPanel()">
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,0 +1,255 @@
+<section class="users-page">
+  <header class="users-page__header">
+    <div>
+      <h1>Gestion des utilisateurs</h1>
+      <p>Administrez les comptes et les accès à la plateforme P-FMEA.</p>
+    </div>
+    <a routerLink="/users/create" class="btn btn--primary">+ Ajouter un utilisateur</a>
+  </header>
+
+  @if (successMessage(); as success) {
+    <div class="users-alert users-alert--success" role="status" aria-live="polite">
+      {{ success }}
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="users-alert users-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" (click)="loadUsers()">
+        Réessayer
+      </button>
+    </div>
+  }
+
+  <div class="users-card">
+    <form class="users-toolbar" role="search" (submit)="$event.preventDefault()">
+      <div class="field field--search">
+        <label class="visually-hidden" for="user-search">Rechercher un utilisateur</label>
+        <input
+          id="user-search"
+          type="search"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          placeholder="Rechercher un utilisateur..."
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="field">
+        <label for="role-filter">Rôle</label>
+        <select
+          id="role-filter"
+          [value]="roleFilter()"
+          (change)="onRoleFilterChange($event)"
+        >
+          <option value="ALL">Tous</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="status-filter">Statut</label>
+        <select
+          id="status-filter"
+          [value]="statusFilter()"
+          (change)="onStatusFilterChange($event)"
+        >
+          <option value="ALL">Tous</option>
+          <option value="ACTIVE">Actif</option>
+          <option value="DISABLED">Désactivé</option>
+        </select>
+      </div>
+    </form>
+
+    @if (isLoading()) {
+      <div class="users-state" role="status" aria-live="polite">
+        Chargement des utilisateurs…
+      </div>
+    } @else if (users().length === 0 && errorMessage()) {
+      <div class="users-state" role="status">
+        Impossible d’afficher la liste pour le moment.
+      </div>
+    } @else if (filteredUsers().length === 0) {
+      <div class="users-state" role="status">
+        Aucun utilisateur trouvé.
+      </div>
+    } @else {
+      <div class="users-table-wrap">
+        <table class="users-table">
+          <caption class="visually-hidden">Liste des utilisateurs de la plateforme</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nom complet</th>
+              <th scope="col">Email</th>
+              <th scope="col">Rôle</th>
+              <th scope="col">Statut</th>
+              <th scope="col">Date de création</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of filteredUsers(); track user.id) {
+              <tr>
+                <td>
+                  <strong>{{ fullName(user) }}</strong>
+                </td>
+                <td class="users-table__email">{{ user.email }}</td>
+                <td>
+                  <span class="badge badge--role">{{ user.role }}</span>
+                </td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.badge--active]="user.enabled"
+                    [class.badge--inactive]="!user.enabled"
+                  >
+                    {{ statusLabel(user) }}
+                  </span>
+                </td>
+                <td>{{ createdAt(user) }}</td>
+                <td>
+                  <div class="users-actions">
+                    <a [routerLink]="['/users', user.id, 'edit']" class="btn btn--ghost btn--compact">
+                      Voir / modifier
+                    </a>
+                    @if (user.enabled) {
+                      <button
+                        type="button"
+                        class="btn btn--danger btn--compact"
+                        [disabled]="isCurrentUser(user) || isUpdatingStatus()"
+                        [attr.title]="isCurrentUser(user) ? 'Vous ne pouvez pas désactiver votre propre compte.' : null"
+                        (click)="openStatusConfirmation(user)"
+                      >
+                        Désactiver
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn btn--secondary btn--compact"
+                        [disabled]="isUpdatingStatus()"
+                        (click)="openStatusConfirmation(user)"
+                      >
+                        Activer
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="users-cards">
+        @for (user of filteredUsers(); track user.id) {
+          <li class="user-card">
+            <div class="user-card__top">
+              <div>
+                <h2>{{ fullName(user) }}</h2>
+                <p>{{ user.email }}</p>
+              </div>
+              <span
+                class="badge"
+                [class.badge--active]="user.enabled"
+                [class.badge--inactive]="!user.enabled"
+              >
+                {{ statusLabel(user) }}
+              </span>
+            </div>
+            <dl>
+              <div>
+                <dt>Rôle</dt>
+                <dd><span class="badge badge--role">{{ user.role }}</span></dd>
+              </div>
+              <div>
+                <dt>Date de création</dt>
+                <dd>{{ createdAt(user) }}</dd>
+              </div>
+            </dl>
+            <div class="users-actions">
+              <a [routerLink]="['/users', user.id, 'edit']" class="btn btn--ghost btn--compact">
+                Voir / modifier
+              </a>
+              @if (user.enabled) {
+                <button
+                  type="button"
+                  class="btn btn--danger btn--compact"
+                  [disabled]="isCurrentUser(user) || isUpdatingStatus()"
+                  [attr.title]="isCurrentUser(user) ? 'Vous ne pouvez pas désactiver votre propre compte.' : null"
+                  (click)="openStatusConfirmation(user)"
+                >
+                  Désactiver
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn--secondary btn--compact"
+                  [disabled]="isUpdatingStatus()"
+                  (click)="openStatusConfirmation(user)"
+                >
+                  Activer
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>
+
+@if (confirmation(); as pending) {
+  <div class="users-dialog" role="presentation" (click)="closeStatusConfirmation()">
+    <div
+      class="users-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="status-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="status-dialog-title">
+        {{ pending.enable ? 'Réactiver l\'utilisateur' : 'Désactiver l\'utilisateur' }}
+      </h2>
+      <p>
+        {{
+          pending.enable
+            ? 'Voulez-vous réactiver cet utilisateur ?'
+            : 'Voulez-vous vraiment désactiver cet utilisateur ?'
+        }}
+      </p>
+      <p class="users-dialog__hint">
+        {{ fullName(pending.user) }} — {{ pending.user.email }}
+        @if (!pending.enable) {
+          <span>Le compte ne sera pas supprimé. Cette action est réversible.</span>
+        }
+      </p>
+      <div class="users-actions">
+        <button
+          type="button"
+          class="btn"
+          [class.btn--primary]="pending.enable"
+          [class.btn--danger]="!pending.enable"
+          [disabled]="isUpdatingStatus()"
+          (click)="confirmStatusChange()"
+        >
+          @if (isUpdatingStatus()) {
+            <span class="spinner" aria-hidden="true"></span>
+            Enregistrement…
+          } @else {
+            {{ pending.enable ? 'Réactiver' : 'Désactiver' }}
+          }
+        </button>
+        <button
+          type="button"
+          class="btn btn--ghost"
+          [disabled]="isUpdatingStatus()"
+          (click)="closeStatusConfirmation()"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+}

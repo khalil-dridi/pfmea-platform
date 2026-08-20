@@ -12,17 +12,17 @@ export const USERS_ROUTES: Routes = [
       {
         path: '',
         component: UserList,
-        data: { title: 'Gestion des utilisateurs' }
+        data: { title: 'User Management' }
       },
       {
         path: 'create',
         component: UserCreate,
-        data: { title: 'Ajouter un utilisateur' }
+        data: { title: 'Add User' }
       },
       {
         path: ':id/edit',
         component: UserEdit,
-        data: { title: 'Modifier un utilisateur' }
+        data: { title: 'Edit User' }
       }
     ]
   }

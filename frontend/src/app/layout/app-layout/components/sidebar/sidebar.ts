@@ -28,13 +28,13 @@ export class Sidebar {
   readonly roleLabel = this.authService.roleLabel;
 
   private readonly navItems: readonly SidebarNavItem[] = [
-    { label: 'Tableau de bord', path: '/dashboard', icon: 'dashboard' },
-    { label: 'Processus', path: '/processes', icon: 'processes' },
-    { label: 'Recherche', path: '/search', icon: 'search' },
+    { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
+    { label: 'Processes', path: '/processes', icon: 'processes' },
+    { label: 'Search', path: '/search', icon: 'search' },
     { label: 'Actions', path: '/actions', icon: 'actions' },
-    { label: 'Rapports', path: '/reports', icon: 'reports' },
-    { label: 'Profil', path: '/profile', icon: 'profile' },
-    { label: 'Gestion des utilisateurs', path: '/users', icon: 'users', roles: ['SUPER_ADMIN'] },
+    { label: 'Reports', path: '/reports', icon: 'reports' },
+    { label: 'Profile', path: '/profile', icon: 'profile' },
+    { label: 'User Management', path: '/users', icon: 'users', roles: ['SUPER_ADMIN'] },
     { label: 'Validations', path: '/validations', icon: 'validations', roles: ['SUPER_ADMIN'] }
   ];
 

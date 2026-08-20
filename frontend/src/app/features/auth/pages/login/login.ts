@@ -18,23 +18,22 @@ export class Login {
   private readonly formBuilder = inject(FormBuilder);
   private readonly router = inject(Router);
 
-  readonly currentYear = new Date().getFullYear();
   readonly isSubmitting = signal(false);
   readonly isPasswordVisible = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   readonly highlights = [
     {
-      title: 'Gestion complète des P-FMEA',
-      description: 'Structurez et centralisez vos analyses de risques.'
+      title: 'Complete P-FMEA Management',
+      description: 'Structure and centralize your risk analyses.'
     },
     {
-      title: 'Suivi des actions d’optimisation',
-      description: 'Pilotez les actions et assurez leur efficacité.'
+      title: 'Optimization Action Tracking',
+      description: 'Manage actions and ensure their effectiveness.'
     },
     {
-      title: 'Tableaux de bord & rapports',
-      description: 'Prenez des décisions basées sur vos données.'
+      title: 'Dashboards & Reports',
+      description: 'Make decisions based on your data.'
     }
   ] as const;
 
@@ -95,11 +94,11 @@ export class Login {
     }
 
     if (this.emailControl.hasError('required')) {
-      return 'L’adresse e-mail est obligatoire.';
+      return 'Email address is required.';
     }
 
     if (this.emailControl.hasError('email')) {
-      return 'Veuillez saisir une adresse e-mail valide.';
+      return 'Please enter a valid email address.';
     }
 
     return null;
@@ -111,11 +110,11 @@ export class Login {
     }
 
     if (this.passwordControl.hasError('required')) {
-      return 'Le mot de passe est obligatoire.';
+      return 'Password is required.';
     }
 
     if (this.passwordControl.hasError('minlength')) {
-      return 'Le mot de passe doit contenir au moins 8 caractères.';
+      return 'Password must be at least 8 characters.';
     }
 
     return null;
@@ -123,17 +122,17 @@ export class Login {
 
   private resolveErrorMessage(error: HttpErrorResponse): string {
     if (error.status === 401) {
-      return 'Adresse e-mail ou mot de passe incorrect.';
+      return 'Incorrect email or password.';
     }
 
     if (error.status === 400) {
-      return 'Les informations saisies sont invalides. Veuillez vérifier le formulaire.';
+      return 'The information entered is invalid. Please check the form.';
     }
 
     if (error.status === 403) {
-      return 'Vous n\'avez pas l\'autorisation d\'accéder à cette ressource.';
+      return 'You do not have permission to access this resource.';
     }
 
-    return 'Une erreur est survenue. Veuillez réessayer.';
+    return 'An error occurred. Please try again.';
   }
 }

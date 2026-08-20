@@ -5,13 +5,13 @@
 }
 
 .user-form-page {
-  max-width: 46rem;
+  max-width: 52rem;
   margin: 0 auto;
   overflow-x: hidden;
 }
 
 .user-form-page__header {
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.2rem;
 
   h1,
   p {
@@ -48,18 +48,38 @@
   }
 }
 
+.user-form-page__back {
+  margin-top: 0.95rem;
+  width: fit-content;
+}
+
 .user-form-card {
-  padding: 1.4rem 1.45rem 1.3rem;
+  padding: 1.55rem 1.6rem 1.45rem;
 }
 
 .user-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.95rem 1rem;
+  gap: 1.15rem;
 }
 
 .field--full {
   grid-column: 1 / -1;
+}
+
+.field__required {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.field__value--status {
+  display: flex;
+  align-items: center;
+}
+
+.users-actions--form {
+  gap: 0.75rem;
+  margin-top: 1.45rem;
 }
 
 .user-edit-meta {
@@ -67,20 +87,101 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.25rem;
 
   p {
     flex-basis: 100%;
-    margin: 0.2rem 0 0;
+    margin: 0.35rem 0 0;
     color: #8a86a0;
     font-size: 0.82rem;
   }
 }
 
+.badge {
+  gap: 0.38rem;
+}
+
+.badge__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.badge--admin {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.badge--super-admin {
+  color: #3b1699;
+  background: #ede9fe;
+}
+
+.badge--active {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.badge--inactive {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.users-state--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.spinner--muted {
+  border-color: rgba(59, 22, 153, 0.18);
+  border-top-color: #3b1699;
+}
+
+.edit-summary {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  background: #f8f7fc;
+  border: 1px solid #ece9f5;
+  border-radius: 0.75rem;
+}
+
+.edit-summary div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.edit-summary dt {
+  color: #8a86a0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.edit-summary dd {
+  margin: 0;
+  color: #1e1b4b;
+  font-size: 0.92rem;
+  word-break: break-word;
+}
+
+.edit-summary__changed {
+  padding: 0.35rem 0.45rem;
+  margin: 0 -0.45rem;
+  background: #f5f3ff;
+  border-radius: 0.45rem;
+}
+
 @media (max-width: 720px) {
   .user-form-grid,
   .users-actions--form,
-  .users-actions--form .btn {
+  .users-actions--form .btn,
+  .user-form-page__back {
     width: 100%;
   }
 

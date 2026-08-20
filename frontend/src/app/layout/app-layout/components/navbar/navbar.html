@@ -53,14 +53,14 @@
 
       @if (isMenuOpen()) {
         <div class="navbar__menu" role="menu">
-          <a routerLink="/profile" role="menuitem" (click)="closeUserMenu()">Mon profil</a>
+          <a routerLink="/profile" role="menuitem" (click)="closeUserMenu()">My Profile</a>
           <a
             routerLink="/profile"
             [queryParams]="{ action: 'password' }"
             role="menuitem"
             (click)="closeUserMenu()"
           >
-            Changer le mot de passe
+            Change Password
           </a>
           <button type="button" role="menuitem" (click)="logout()">Déconnexion</button>
         </div>

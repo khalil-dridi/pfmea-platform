@@ -5,6 +5,6 @@ export const PROFILE_ROUTES: Routes = [
   {
     path: '',
     component: Profile,
-    data: { title: 'Profil' }
+        data: { title: 'My Profile' }
   }
 ];

@@ -1,0 +1,48 @@
+<div
+  class="confirm-dialog"
+  role="presentation"
+  (click)="onOverlayClick()"
+>
+  <div
+    class="confirm-dialog__panel"
+    [class.confirm-dialog__panel--danger]="variant() === 'danger'"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="'confirm-dialog-title'"
+    [attr.aria-describedby]="'confirm-dialog-message'"
+    (click)="onPanelClick($event)"
+  >
+    <h2 id="confirm-dialog-title">{{ title() }}</h2>
+    <p id="confirm-dialog-message">{{ message() }}</p>
+
+    <div class="confirm-dialog__body">
+      <ng-content />
+    </div>
+
+    <div class="confirm-dialog__actions">
+      <button
+        #confirmButton
+        type="button"
+        class="confirm-dialog__btn"
+        [class.confirm-dialog__btn--primary]="variant() === 'default'"
+        [class.confirm-dialog__btn--danger]="variant() === 'danger'"
+        [disabled]="isConfirming()"
+        [attr.aria-busy]="isConfirming()"
+        (click)="onConfirm()"
+      >
+        @if (isConfirming()) {
+          <span class="confirm-dialog__spinner" aria-hidden="true"></span>
+        }
+        {{ confirmLabel() }}
+      </button>
+      <button
+        type="button"
+        class="confirm-dialog__btn confirm-dialog__btn--ghost"
+        [disabled]="isConfirming()"
+        (click)="onCancel()"
+      >
+        {{ cancelLabel() }}
+      </button>
+    </div>
+  </div>
+</div>

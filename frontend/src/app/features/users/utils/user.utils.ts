@@ -19,23 +19,23 @@ export function formatUserDate(value: string): string {
 
 export function resolveUserApiError(error: HttpErrorResponse, fallback: string): string {
   if (error.status === 400) {
-    return 'Les informations saisies sont invalides.';
+    return 'The information entered is invalid.';
   }
 
   if (error.status === 401) {
-    return 'Votre session a expiré. Veuillez vous reconnecter.';
+    return 'Your session has expired. Please sign in again.';
   }
 
   if (error.status === 403) {
-    return 'Vous n\'avez pas l\'autorisation d\'effectuer cette action.';
+    return 'You do not have permission to perform this action.';
   }
 
   if (error.status === 404) {
-    return 'Utilisateur introuvable.';
+    return 'User not found.';
   }
 
   if (error.status === 409) {
-    return 'L\'adresse e-mail est déjà utilisée.';
+    return 'This email address is already in use.';
   }
 
   return fallback;
@@ -47,11 +47,11 @@ export function firstNameError(control: AbstractControl): string | null {
   }
 
   if (control.hasError('required')) {
-    return 'Le prénom est obligatoire.';
+    return 'First name is required.';
   }
 
   if (control.hasError('maxlength')) {
-    return 'Le prénom ne peut pas dépasser 100 caractères.';
+    return 'First name cannot exceed 100 characters.';
   }
 
   return null;
@@ -63,11 +63,11 @@ export function lastNameError(control: AbstractControl): string | null {
   }
 
   if (control.hasError('required')) {
-    return 'Le nom est obligatoire.';
+    return 'Last name is required.';
   }
 
   if (control.hasError('maxlength')) {
-    return 'Le nom ne peut pas dépasser 100 caractères.';
+    return 'Last name cannot exceed 100 characters.';
   }
 
   return null;
@@ -79,11 +79,11 @@ export function emailError(control: AbstractControl): string | null {
   }
 
   if (control.hasError('required')) {
-    return 'L\'adresse e-mail est obligatoire.';
+    return 'Email address is required.';
   }
 
   if (control.hasError('email') || control.hasError('maxlength')) {
-    return 'Veuillez saisir une adresse e-mail valide.';
+    return 'Please enter a valid email address.';
   }
 
   return null;
@@ -95,11 +95,11 @@ export function passwordError(control: AbstractControl): string | null {
   }
 
   if (control.hasError('required')) {
-    return 'Le mot de passe est obligatoire.';
+    return 'Password is required.';
   }
 
   if (control.hasError('minlength')) {
-    return 'Le mot de passe doit contenir au moins 8 caractères.';
+    return 'Password must be at least 8 characters.';
   }
 
   return null;
@@ -110,5 +110,5 @@ export function roleError(control: AbstractControl): string | null {
     return null;
   }
 
-  return 'Le rôle est obligatoire.';
+  return 'Role is required.';
 }

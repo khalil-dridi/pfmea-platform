@@ -5,13 +5,13 @@
 }
 
 .user-form-page {
-  max-width: 46rem;
+  max-width: 52rem;
   margin: 0 auto;
   overflow-x: hidden;
 }
 
 .user-form-page__header {
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.2rem;
 
   h1,
   p {
@@ -48,24 +48,70 @@
   }
 }
 
+.user-form-page__back {
+  margin-top: 0.95rem;
+  width: fit-content;
+}
+
 .user-form-card {
-  padding: 1.4rem 1.45rem 1.3rem;
+  padding: 1.55rem 1.6rem 1.45rem;
 }
 
 .user-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.95rem 1rem;
+  gap: 1.15rem 1.15rem;
 }
 
 .field--full {
   grid-column: 1 / -1;
 }
 
+.field__required {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.users-actions--form {
+  gap: 0.75rem;
+  margin-top: 1.45rem;
+}
+
+.create-summary {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  background: #f8f7fc;
+  border: 1px solid #ece9f5;
+  border-radius: 0.75rem;
+}
+
+.create-summary div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.create-summary dt {
+  color: #8a86a0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.create-summary dd {
+  margin: 0;
+  color: #1e1b4b;
+  font-size: 0.92rem;
+  word-break: break-word;
+}
+
 @media (max-width: 720px) {
   .user-form-grid,
   .users-actions--form,
-  .users-actions--form .btn {
+  .users-actions--form .btn,
+  .user-form-page__back {
     width: 100%;
   }
 

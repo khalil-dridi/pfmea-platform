@@ -20,8 +20,11 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { UserProfile } from '../../../auth/models/user-profile.model';
 import { ProfileService } from '../../services/profile.service';
+
+type PendingConfirmation = 'profile' | 'password';
 
 const passwordConfirmationMatch: ValidatorFn = (
   control: AbstractControl
@@ -38,7 +41,7 @@ const passwordConfirmationMatch: ValidatorFn = (
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ConfirmationDialog],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -62,6 +65,7 @@ export class Profile implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly passwordErrorMessage = signal<string | null>(null);
+  readonly pendingConfirmation = signal<PendingConfirmation | null>(null);
 
   readonly initials = computed(() => {
     const profile = this.profile();
@@ -90,24 +94,14 @@ export class Profile implements OnInit {
 
   readonly statusLabel = computed(() => {
     const profile = this.profile();
-    return profile?.enabled ? 'Actif' : 'Inactif';
+    return profile?.enabled ? 'Active' : 'Disabled';
   });
 
   readonly roleBadge = computed(() => this.profile()?.role ?? '');
 
-  readonly roleLabel = computed(() => {
-    const role = this.profile()?.role;
-
-    if (role === 'SUPER_ADMIN') {
-      return 'Super administrateur';
-    }
-
-    if (role === 'ADMIN') {
-      return 'Administrateur';
-    }
-
-    return '';
-  });
+  readonly isConfirming = computed(
+    () => this.isSaving() || this.isChangingPassword()
+  );
 
   readonly profileForm = this.formBuilder.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -156,11 +150,16 @@ export class Profile implements OnInit {
   }
 
   cancelEdit(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
     this.isEditing.set(false);
+    this.pendingConfirmation.set(null);
     this.profileForm.reset();
   }
 
-  saveProfile(): void {
+  requestSaveProfile(): void {
     this.profileForm.patchValue({
       firstName: this.profileForm.controls.firstName.value.trim(),
       lastName: this.profileForm.controls.lastName.value.trim()
@@ -171,31 +170,39 @@ export class Profile implements OnInit {
       return;
     }
 
-    if (this.isSaving()) {
+    this.pendingConfirmation.set('profile');
+  }
+
+  requestPasswordChange(): void {
+    this.passwordErrorMessage.set(null);
+
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
       return;
     }
 
-    this.isSaving.set(true);
-    this.clearMessages();
+    this.pendingConfirmation.set('password');
+  }
 
-    const { firstName, lastName } = this.profileForm.getRawValue();
+  closeConfirmation(): void {
+    if (this.isConfirming()) {
+      return;
+    }
 
-    this.profileService
-      .updateProfile({ firstName: firstName.trim(), lastName: lastName.trim() })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isSaving.set(false))
-      )
-      .subscribe({
-        next: profile => {
-          this.profile.set(profile);
-          this.isEditing.set(false);
-          this.successMessage.set('Votre profil a été mis à jour.');
-        },
-        error: (error: HttpErrorResponse) => {
-          this.errorMessage.set(this.resolveProfileError(error));
-        }
-      });
+    this.pendingConfirmation.set(null);
+  }
+
+  confirmPendingAction(): void {
+    const action = this.pendingConfirmation();
+
+    if (action === 'profile') {
+      this.performProfileSave();
+      return;
+    }
+
+    if (action === 'password') {
+      this.performPasswordChange();
+    }
   }
 
   openPasswordPanel(): void {
@@ -209,7 +216,11 @@ export class Profile implements OnInit {
   }
 
   closePasswordPanel(): void {
-    if (this.isChangingPassword() || !this.isPasswordPanelOpen()) {
+    if (this.isChangingPassword() || this.pendingConfirmation() === 'password') {
+      return;
+    }
+
+    if (!this.isPasswordPanelOpen()) {
       return;
     }
 
@@ -220,42 +231,11 @@ export class Profile implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.pendingConfirmation()) {
+      return;
+    }
+
     this.closePasswordPanel();
-  }
-
-  submitPasswordChange(): void {
-    this.passwordErrorMessage.set(null);
-
-    if (this.passwordForm.invalid) {
-      this.passwordForm.markAllAsTouched();
-      return;
-    }
-
-    if (this.isChangingPassword()) {
-      return;
-    }
-
-    this.isChangingPassword.set(true);
-
-    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
-
-    this.profileService
-      .changePassword({ currentPassword, newPassword })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isChangingPassword.set(false))
-      )
-      .subscribe({
-        next: () => {
-          this.isPasswordPanelOpen.set(false);
-          this.passwordForm.reset();
-          this.passwordErrorMessage.set(null);
-          this.successMessage.set('Votre mot de passe a été modifié.');
-        },
-        error: (error: HttpErrorResponse) => {
-          this.passwordErrorMessage.set(this.resolvePasswordError(error));
-        }
-      });
   }
 
   toggleCurrentPasswordVisibility(): void {
@@ -278,11 +258,11 @@ export class Profile implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'Le prénom est obligatoire.';
+      return 'First name is required.';
     }
 
     if (control.hasError('maxlength')) {
-      return 'Le prénom ne peut pas dépasser 100 caractères.';
+      return 'First name cannot exceed 100 characters.';
     }
 
     return null;
@@ -296,11 +276,11 @@ export class Profile implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'Le nom est obligatoire.';
+      return 'Last name is required.';
     }
 
     if (control.hasError('maxlength')) {
-      return 'Le nom ne peut pas dépasser 100 caractères.';
+      return 'Last name cannot exceed 100 characters.';
     }
 
     return null;
@@ -313,7 +293,7 @@ export class Profile implements OnInit {
       return null;
     }
 
-    return 'Le mot de passe actuel est obligatoire.';
+    return 'Current password is required.';
   }
 
   newPasswordError(): string | null {
@@ -324,11 +304,11 @@ export class Profile implements OnInit {
     }
 
     if (control.hasError('required')) {
-      return 'Le nouveau mot de passe est obligatoire.';
+      return 'New password is required.';
     }
 
     if (control.hasError('minlength')) {
-      return 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
+      return 'New password must be at least 8 characters.';
     }
 
     return null;
@@ -338,11 +318,11 @@ export class Profile implements OnInit {
     const control = this.passwordForm.controls.confirmPassword;
 
     if (control.touched && control.hasError('required')) {
-      return 'Veuillez confirmer le nouveau mot de passe.';
+      return 'Please confirm the new password.';
     }
 
     if (control.touched && control.hasError('minlength')) {
-      return 'Le mot de passe de confirmation doit contenir au moins 8 caractères.';
+      return 'Password confirmation must be at least 8 characters.';
     }
 
     if (
@@ -350,10 +330,71 @@ export class Profile implements OnInit {
       this.passwordForm.hasError('passwordMismatch') &&
       control.value
     ) {
-      return 'Les mots de passe ne correspondent pas.';
+      return 'Passwords do not match.';
     }
 
     return null;
+  }
+
+  private performProfileSave(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
+    this.isSaving.set(true);
+    this.clearMessages();
+
+    const { firstName, lastName } = this.profileForm.getRawValue();
+
+    this.profileService
+      .updateProfile({ firstName: firstName.trim(), lastName: lastName.trim() })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isSaving.set(false))
+      )
+      .subscribe({
+        next: profile => {
+          this.pendingConfirmation.set(null);
+          this.profile.set(profile);
+          this.isEditing.set(false);
+          this.successMessage.set('Profile updated successfully.');
+        },
+        error: (error: HttpErrorResponse) => {
+          this.pendingConfirmation.set(null);
+          this.errorMessage.set(this.resolveProfileError(error));
+        }
+      });
+  }
+
+  private performPasswordChange(): void {
+    if (this.isChangingPassword()) {
+      return;
+    }
+
+    this.isChangingPassword.set(true);
+    this.passwordErrorMessage.set(null);
+
+    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+
+    this.profileService
+      .changePassword({ currentPassword, newPassword })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isChangingPassword.set(false))
+      )
+      .subscribe({
+        next: () => {
+          this.pendingConfirmation.set(null);
+          this.isPasswordPanelOpen.set(false);
+          this.passwordForm.reset();
+          this.passwordErrorMessage.set(null);
+          this.successMessage.set('Password changed successfully.');
+        },
+        error: (error: HttpErrorResponse) => {
+          this.pendingConfirmation.set(null);
+          this.passwordErrorMessage.set(this.resolvePasswordError(error));
+        }
+      });
   }
 
   private loadProfile(): void {
@@ -382,38 +423,38 @@ export class Profile implements OnInit {
   private resolveProfileError(error: HttpErrorResponse, isLoad = false): string {
     if (error.status === 401) {
       return isLoad
-        ? 'Votre session a expiré. Veuillez vous reconnecter.'
-        : 'Vous n\'êtes pas autorisé à effectuer cette action.';
+        ? 'Your session has expired. Please sign in again.'
+        : 'You are not authorized to perform this action.';
     }
 
     if (error.status === 403) {
-      return 'Vous n\'avez pas l\'autorisation d\'accéder à cette ressource.';
+      return 'You do not have permission to access this resource.';
     }
 
     if (error.status === 400) {
-      return 'Les informations saisies sont invalides. Veuillez vérifier le formulaire.';
+      return 'The information entered is invalid. Please check the form.';
     }
 
     if (error.status === 404) {
-      return 'Profil utilisateur introuvable.';
+      return 'User profile not found.';
     }
 
-    return 'Une erreur est survenue. Veuillez réessayer.';
+    return 'An error occurred. Please try again.';
   }
 
   private resolvePasswordError(error: HttpErrorResponse): string {
     if (error.status === 401) {
-      return 'Le mot de passe actuel est incorrect.';
+      return 'The current password is incorrect.';
     }
 
     if (error.status === 400) {
-      return 'Les informations saisies sont invalides. Veuillez vérifier le formulaire.';
+      return 'The information entered is invalid. Please check the form.';
     }
 
     if (error.status === 403) {
-      return 'Vous n\'avez pas l\'autorisation d\'accéder à cette ressource.';
+      return 'You do not have permission to access this resource.';
     }
 
-    return 'Une erreur est survenue. Veuillez réessayer.';
+    return 'An error occurred. Please try again.';
   }
 }

@@ -242,8 +242,24 @@ fieldset {
   color: #fff;
 }
 
+.btn--success {
+  color: #166534;
+  background: #fff;
+  border: 1px solid #86efac;
+
+  &:hover:not(:disabled) {
+    background: #f0fdf4;
+  }
+
+  .spinner {
+    border-color: rgba(22, 101, 52, 0.25);
+    border-top-color: currentColor;
+  }
+}
+
 .btn--ghost:visited,
-.btn--secondary:visited {
+.btn--secondary:visited,
+.btn--success:visited {
   color: inherit;
 }
 

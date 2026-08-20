@@ -11,6 +11,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { UserRole } from '../../../auth/models/login-response.model';
+import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { UserService } from '../../services/user.service';
 import {
   emailError,
@@ -21,9 +22,17 @@ import {
   roleError
 } from '../../utils/user.utils';
 
+interface PendingUserCreate {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 @Component({
   selector: 'app-user-create',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ConfirmationDialog],
   templateUrl: './user-create.html',
   styleUrl: './user-create.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -37,6 +46,7 @@ export class UserCreate {
   readonly isSaving = signal(false);
   readonly isPasswordVisible = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly pendingCreate = signal<PendingUserCreate | null>(null);
 
   readonly userForm = this.formBuilder.nonNullable.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
@@ -74,7 +84,15 @@ export class UserCreate {
     void this.router.navigateByUrl('/users');
   }
 
-  submit(): void {
+  closeConfirmation(): void {
+    if (this.isSaving()) {
+      return;
+    }
+
+    this.pendingCreate.set(null);
+  }
+
+  onSubmit(): void {
     this.errorMessage.set(null);
     this.userForm.patchValue({
       firstName: this.userForm.controls.firstName.value.trim(),
@@ -87,10 +105,6 @@ export class UserCreate {
       return;
     }
 
-    if (this.isSaving()) {
-      return;
-    }
-
     const { firstName, lastName, email, password, role } = this.userForm.getRawValue();
 
     if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
@@ -98,10 +112,26 @@ export class UserCreate {
       return;
     }
 
+    this.pendingCreate.set({ firstName, lastName, email, password, role });
+  }
+
+  confirmCreate(): void {
+    const pending = this.pendingCreate();
+
+    if (!pending || this.isSaving()) {
+      return;
+    }
+
     this.isSaving.set(true);
 
     this.userService
-      .createUser({ firstName, lastName, email, password, role })
+      .createUser({
+        firstName: pending.firstName,
+        lastName: pending.lastName,
+        email: pending.email,
+        password: pending.password,
+        role: pending.role
+      })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isSaving.set(false))
@@ -109,11 +139,13 @@ export class UserCreate {
       .subscribe({
         next: () => {
           this.userForm.controls.password.reset('');
+          this.pendingCreate.set(null);
           void this.router.navigate(['/users'], { queryParams: { notice: 'created' } });
         },
         error: (error: HttpErrorResponse) => {
+          this.pendingCreate.set(null);
           this.errorMessage.set(
-            resolveUserApiError(error, 'Une erreur est survenue. Veuillez réessayer.')
+            resolveUserApiError(error, 'An error occurred. Please try again.')
           );
         }
       });

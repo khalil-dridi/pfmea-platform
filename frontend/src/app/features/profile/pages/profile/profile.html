@@ -1,24 +1,47 @@
-<section class="profile-page" [attr.inert]="isPasswordPanelOpen() ? '' : null">
+<section
+  class="profile-page"
+  [attr.inert]="isPasswordPanelOpen() || pendingConfirmation() ? '' : null"
+>
   <header class="profile-page__header">
-    <h1>Mon profil</h1>
-    <p>Consultez et mettez à jour vos informations personnelles, et changez votre mot de passe.</p>
+    @if (isEditing()) {
+      <p class="profile-page__crumb">
+        <button type="button" (click)="cancelEdit()">Profile</button>
+      </p>
+      <h1>Edit Profile</h1>
+    } @else {
+      <h1>My Profile</h1>
+      <p>View and update your personal information and change your password.</p>
+    }
   </header>
 
   @if (successMessage(); as success) {
     <div class="profile-alert profile-alert--success" role="status" aria-live="polite">
-      {{ success }}
+      <span class="profile-alert__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+          <path d="m8.2 12.2 2.4 2.4 5.2-5.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span>{{ success }}</span>
     </div>
   }
 
   @if (errorMessage(); as error) {
     <div class="profile-alert profile-alert--error" role="alert" aria-live="assertive">
-      {{ error }}
+      <span class="profile-alert__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 8v5M12 16.2h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span>{{ error }}</span>
     </div>
   }
 
   @if (isLoading()) {
-    <div class="profile-alert profile-alert--neutral" role="status" aria-live="polite">
-      Chargement du profil…
+    <div class="profile-alert profile-alert--neutral profile-alert--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading profile…
     </div>
   } @else if (profile(); as user) {
     <div class="profile-grid">
@@ -27,26 +50,36 @@
         <h2>{{ displayName() }}</h2>
         <p class="profile-identity__email">{{ user.email }}</p>
         <div class="profile-identity__badges">
-          <span class="badge badge--role">{{ roleBadge() }}</span>
-          <span class="badge" [class.badge--active]="user.enabled" [class.badge--inactive]="!user.enabled">
+          <span
+            class="badge"
+            [class.badge--admin]="user.role === 'ADMIN'"
+            [class.badge--super-admin]="user.role === 'SUPER_ADMIN'"
+          >
+            {{ roleBadge() }}
+          </span>
+          <span
+            class="badge"
+            [class.badge--active]="user.enabled"
+            [class.badge--inactive]="!user.enabled"
+          >
+            <span class="badge__dot" aria-hidden="true"></span>
             {{ statusLabel() }}
           </span>
         </div>
-        <p class="profile-identity__role">{{ roleLabel() }}</p>
       </aside>
 
       <div class="profile-card profile-details">
         <div class="profile-details__heading">
-          <h2>Informations personnelles</h2>
-          <p>L’adresse e-mail, le rôle et le statut du compte ne peuvent pas être modifiés.</p>
+          <h2>Personal Information</h2>
+          <p>Email address, role and account status cannot be changed.</p>
         </div>
 
-        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" novalidate>
+        <form [formGroup]="profileForm" (ngSubmit)="requestSaveProfile()" novalidate>
           <fieldset [disabled]="isSaving()">
             <div class="profile-fields">
               <div class="field">
                 @if (isEditing()) {
-                  <label for="firstName">Prénom</label>
+                  <label for="firstName">First Name</label>
                   <input
                     id="firstName"
                     type="text"
@@ -61,14 +94,14 @@
                     <p id="firstName-error" class="field__error">{{ message }}</p>
                   }
                 } @else {
-                  <span class="field__label">Prénom</span>
+                  <span class="field__label">First Name</span>
                   <p class="field__value">{{ user.firstName }}</p>
                 }
               </div>
 
               <div class="field">
                 @if (isEditing()) {
-                  <label for="lastName">Nom</label>
+                  <label for="lastName">Last Name</label>
                   <input
                     id="lastName"
                     type="text"
@@ -82,24 +115,33 @@
                     <p id="lastName-error" class="field__error">{{ message }}</p>
                   }
                 } @else {
-                  <span class="field__label">Nom</span>
+                  <span class="field__label">Last Name</span>
                   <p class="field__value">{{ user.lastName }}</p>
                 }
               </div>
 
               <div class="field">
-                <span class="field__label">Adresse e-mail</span>
-                <p class="field__value">{{ user.email }}</p>
+                <span class="field__label">Email Address</span>
+                <p class="field__value field__value--readonly">{{ user.email }}</p>
               </div>
 
               <div class="field">
-                <span class="field__label">Rôle</span>
-                <p class="field__value">{{ roleBadge() }}</p>
+                <span class="field__label">Role</span>
+                <p class="field__value field__value--readonly">{{ roleBadge() }}</p>
               </div>
 
               <div class="field field--full">
-                <span class="field__label">Statut du compte</span>
-                <p class="field__value">{{ statusLabel() }}</p>
+                <span class="field__label">Account Status</span>
+                <div class="field__value field__value--readonly field__value--status">
+                  <span
+                    class="badge"
+                    [class.badge--active]="user.enabled"
+                    [class.badge--inactive]="!user.enabled"
+                  >
+                    <span class="badge__dot" aria-hidden="true"></span>
+                    {{ statusLabel() }}
+                  </span>
+                </div>
               </div>
             </div>
           </fieldset>
@@ -107,22 +149,17 @@
           <div class="profile-actions">
             @if (isEditing()) {
               <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
-                @if (isSaving()) {
-                  <span class="spinner" aria-hidden="true"></span>
-                  Enregistrement…
-                } @else {
-                  Enregistrer
-                }
+                Save Changes
               </button>
               <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancelEdit()">
-                Annuler
+                Cancel
               </button>
             } @else {
               <button type="button" class="btn btn--primary" (click)="startEdit()">
-                Modifier mon profil
+                Edit Profile
               </button>
               <button type="button" class="btn btn--secondary" (click)="openPasswordPanel()">
-                Changer mon mot de passe
+                Change Password
               </button>
             }
           </div>
@@ -133,29 +170,41 @@
 </section>
 
 @if (isPasswordPanelOpen()) {
-  <div class="profile-dialog" role="presentation" (click)="closePasswordPanel()">
+  <div
+    class="profile-dialog"
+    role="presentation"
+    [attr.inert]="pendingConfirmation() === 'password' ? '' : null"
+    (click)="closePasswordPanel()"
+  >
     <div
       class="profile-dialog__panel"
       role="dialog"
       aria-modal="true"
       aria-labelledby="password-dialog-title"
+      aria-describedby="password-dialog-subtitle"
       (click)="$event.stopPropagation()"
     >
       <header class="profile-dialog__header">
-        <h2 id="password-dialog-title">Changer mon mot de passe</h2>
-        <p>Saisissez votre mot de passe actuel, puis définissez un nouveau mot de passe.</p>
+        <h2 id="password-dialog-title">Change Password</h2>
+        <p id="password-dialog-subtitle">Enter your current password, then choose a new password.</p>
       </header>
 
       @if (passwordErrorMessage(); as message) {
         <div class="profile-alert profile-alert--error" role="alert" aria-live="assertive">
-          {{ message }}
+          <span class="profile-alert__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+              <path d="M12 8v5M12 16.2h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>{{ message }}</span>
         </div>
       }
 
-      <form [formGroup]="passwordForm" (ngSubmit)="submitPasswordChange()" novalidate>
+      <form [formGroup]="passwordForm" (ngSubmit)="requestPasswordChange()" novalidate>
         <fieldset [disabled]="isChangingPassword()">
           <div class="field">
-            <label for="currentPassword">Mot de passe actuel</label>
+            <label for="currentPassword">Current Password</label>
             <div class="field__control">
               <input
                 id="currentPassword"
@@ -170,9 +219,10 @@
                 type="button"
                 class="field__toggle"
                 (click)="toggleCurrentPasswordVisibility()"
-                [attr.aria-label]="isCurrentPasswordVisible() ? 'Masquer le mot de passe actuel' : 'Afficher le mot de passe actuel'"
+                [attr.aria-label]="isCurrentPasswordVisible() ? 'Hide current password' : 'Show current password'"
+                [attr.aria-pressed]="isCurrentPasswordVisible()"
               >
-                {{ isCurrentPasswordVisible() ? 'Masquer' : 'Afficher' }}
+                {{ isCurrentPasswordVisible() ? 'Hide' : 'Show' }}
               </button>
             </div>
             @if (currentPasswordError(); as message) {
@@ -181,7 +231,7 @@
           </div>
 
           <div class="field">
-            <label for="newPassword">Nouveau mot de passe</label>
+            <label for="newPassword">New Password</label>
             <div class="field__control">
               <input
                 id="newPassword"
@@ -195,9 +245,10 @@
                 type="button"
                 class="field__toggle"
                 (click)="toggleNewPasswordVisibility()"
-                [attr.aria-label]="isNewPasswordVisible() ? 'Masquer le nouveau mot de passe' : 'Afficher le nouveau mot de passe'"
+                [attr.aria-label]="isNewPasswordVisible() ? 'Hide new password' : 'Show new password'"
+                [attr.aria-pressed]="isNewPasswordVisible()"
               >
-                {{ isNewPasswordVisible() ? 'Masquer' : 'Afficher' }}
+                {{ isNewPasswordVisible() ? 'Hide' : 'Show' }}
               </button>
             </div>
             @if (newPasswordError(); as message) {
@@ -206,7 +257,7 @@
           </div>
 
           <div class="field">
-            <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+            <label for="confirmPassword">Confirm New Password</label>
             <div class="field__control">
               <input
                 id="confirmPassword"
@@ -220,9 +271,10 @@
                 type="button"
                 class="field__toggle"
                 (click)="toggleConfirmPasswordVisibility()"
-                [attr.aria-label]="isConfirmPasswordVisible() ? 'Masquer la confirmation' : 'Afficher la confirmation'"
+                [attr.aria-label]="isConfirmPasswordVisible() ? 'Hide password confirmation' : 'Show password confirmation'"
+                [attr.aria-pressed]="isConfirmPasswordVisible()"
               >
-                {{ isConfirmPasswordVisible() ? 'Masquer' : 'Afficher' }}
+                {{ isConfirmPasswordVisible() ? 'Hide' : 'Show' }}
               </button>
             </div>
             @if (confirmPasswordError(); as message) {
@@ -233,18 +285,28 @@
 
         <div class="profile-actions">
           <button type="submit" class="btn btn--primary" [disabled]="isChangingPassword()">
-            @if (isChangingPassword()) {
-              <span class="spinner" aria-hidden="true"></span>
-              Enregistrement…
-            } @else {
-              Enregistrer
-            }
+            Save Changes
           </button>
           <button type="button" class="btn btn--ghost" [disabled]="isChangingPassword()" (click)="closePasswordPanel()">
-            Annuler
+            Cancel
           </button>
         </div>
       </form>
     </div>
   </div>
+}
+
+@if (pendingConfirmation(); as action) {
+  <app-confirmation-dialog
+    [title]="action === 'profile' ? 'Save Changes' : 'Change Password'"
+    [message]="
+      action === 'profile'
+        ? 'Are you sure you want to save these changes?'
+        : 'Are you sure you want to change your password?'
+    "
+    variant="default"
+    [isConfirming]="isConfirming()"
+    (cancelled)="closeConfirmation()"
+    (confirmed)="confirmPendingAction()"
+  />
 }

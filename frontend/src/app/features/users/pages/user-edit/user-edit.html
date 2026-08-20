@@ -1,18 +1,14 @@
 <section class="user-form-page">
   <header class="user-form-page__header">
-    <div>
-      <p class="user-form-page__crumb">
-        <a routerLink="/users">Gestion des utilisateurs</a>
-      </p>
-      <h1>Modifier un utilisateur</h1>
-      <p>
-        @if (displayName()) {
-          Mettez à jour le compte de {{ displayName() }}.
-        } @else {
-          Mettez à jour les informations du compte.
-        }
-      </p>
-    </div>
+    <p class="user-form-page__crumb">
+      <a routerLink="/users">User Management</a>
+    </p>
+    <h1>Edit User</h1>
+    <p>Update the account information of this user.</p>
+    <a routerLink="/users" class="btn btn--ghost user-form-page__back">
+      <span aria-hidden="true">←</span>
+      Back to User Management
+    </a>
   </header>
 
   @if (errorMessage(); as error) {
@@ -22,28 +18,38 @@
   }
 
   @if (isLoading()) {
-    <div class="users-card users-state" role="status" aria-live="polite">
-      Chargement de l’utilisateur…
+    <div class="users-card users-state users-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading user…
     </div>
   } @else if (user(); as currentUser) {
     <div class="users-card user-form-card">
       <div class="user-edit-meta">
-        <span class="badge badge--role">{{ currentUser.role }}</span>
+        <span
+          class="badge"
+          [class.badge--admin]="currentUser.role === 'ADMIN'"
+          [class.badge--super-admin]="currentUser.role === 'SUPER_ADMIN'"
+        >
+          {{ currentUser.role }}
+        </span>
         <span
           class="badge"
           [class.badge--active]="currentUser.enabled"
           [class.badge--inactive]="!currentUser.enabled"
         >
+          <span class="badge__dot" aria-hidden="true"></span>
           {{ statusLabel() }}
         </span>
-        <p>Le mot de passe se gère depuis le profil de l’utilisateur.</p>
+        <p>Password is managed from the user's profile.</p>
       </div>
 
-      <form [formGroup]="userForm" (ngSubmit)="submit()" novalidate>
+      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
         <fieldset [disabled]="isSaving()">
           <div class="user-form-grid">
             <div class="field">
-              <label for="firstName">Prénom</label>
+              <label for="firstName">
+                First Name <span class="field__required" aria-hidden="true">*</span>
+              </label>
               <input
                 id="firstName"
                 type="text"
@@ -52,6 +58,7 @@
                 maxlength="100"
                 [attr.aria-invalid]="firstNameError() ? true : null"
                 [attr.aria-describedby]="firstNameError() ? 'firstName-error' : null"
+                [attr.aria-required]="true"
               />
               @if (firstNameError(); as message) {
                 <p id="firstName-error" class="field__error">{{ message }}</p>
@@ -59,7 +66,9 @@
             </div>
 
             <div class="field">
-              <label for="lastName">Nom</label>
+              <label for="lastName">
+                Last Name <span class="field__required" aria-hidden="true">*</span>
+              </label>
               <input
                 id="lastName"
                 type="text"
@@ -68,6 +77,7 @@
                 maxlength="100"
                 [attr.aria-invalid]="lastNameError() ? true : null"
                 [attr.aria-describedby]="lastNameError() ? 'lastName-error' : null"
+                [attr.aria-required]="true"
               />
               @if (lastNameError(); as message) {
                 <p id="lastName-error" class="field__error">{{ message }}</p>
@@ -75,7 +85,9 @@
             </div>
 
             <div class="field">
-              <label for="email">Adresse e-mail</label>
+              <label for="email">
+                Email Address <span class="field__required" aria-hidden="true">*</span>
+              </label>
               <input
                 id="email"
                 type="email"
@@ -84,6 +96,7 @@
                 maxlength="254"
                 [attr.aria-invalid]="emailError() ? true : null"
                 [attr.aria-describedby]="emailError() ? 'email-error' : null"
+                [attr.aria-required]="true"
               />
               @if (emailError(); as message) {
                 <p id="email-error" class="field__error">{{ message }}</p>
@@ -91,12 +104,15 @@
             </div>
 
             <div class="field">
-              <label for="role">Rôle</label>
+              <label for="role">
+                Role <span class="field__required" aria-hidden="true">*</span>
+              </label>
               <select
                 id="role"
                 formControlName="role"
                 [attr.aria-invalid]="roleError() ? true : null"
                 [attr.aria-describedby]="roleError() ? 'role-error' : null"
+                [attr.aria-required]="true"
               >
                 <option value="ADMIN">ADMIN</option>
                 <option value="SUPER_ADMIN">SUPER_ADMIN</option>
@@ -107,26 +123,60 @@
             </div>
 
             <div class="field field--full">
-              <span class="field__label">Statut du compte</span>
-              <p class="field__value">{{ statusLabel() }}</p>
+              <span class="field__label">Account Status</span>
+              <div class="field__value field__value--status">
+                <span
+                  class="badge"
+                  [class.badge--active]="currentUser.enabled"
+                  [class.badge--inactive]="!currentUser.enabled"
+                >
+                  <span class="badge__dot" aria-hidden="true"></span>
+                  {{ statusLabel() }}
+                </span>
+              </div>
             </div>
           </div>
         </fieldset>
 
         <div class="users-actions users-actions--form">
           <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
-            @if (isSaving()) {
-              <span class="spinner" aria-hidden="true"></span>
-              Enregistrement…
-            } @else {
-              Enregistrer
-            }
+            Save Changes
           </button>
           <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancel()">
-            Annuler
+            Cancel
           </button>
         </div>
       </form>
     </div>
   }
 </section>
+
+@if (pendingUpdate(); as pending) {
+  <app-confirmation-dialog
+    title="Save Changes"
+    message="Are you sure you want to save these changes?"
+    variant="default"
+    [isConfirming]="isSaving()"
+    (cancelled)="closeConfirmation()"
+    (confirmed)="confirmSave()"
+  >
+    <dl class="edit-summary">
+      <div [class.edit-summary__changed]="isFieldChanged('firstName')">
+        <dt>First Name</dt>
+        <dd>{{ pending.firstName }}</dd>
+      </div>
+      <div [class.edit-summary__changed]="isFieldChanged('lastName')">
+        <dt>Last Name</dt>
+        <dd>{{ pending.lastName }}</dd>
+      </div>
+      <div [class.edit-summary__changed]="isFieldChanged('email')">
+        <dt>Email Address</dt>
+        <dd>{{ pending.email }}</dd>
+      </div>
+      <div [class.edit-summary__changed]="isFieldChanged('role')">
+        <dt>Role</dt>
+        <dd>{{ pending.role }}</dd>
+      </div>
+    </dl>
+  </app-confirmation-dialog>
+}

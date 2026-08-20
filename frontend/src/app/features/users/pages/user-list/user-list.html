@@ -1,23 +1,35 @@
 <section class="users-page">
   <header class="users-page__header">
     <div>
-      <h1>Gestion des utilisateurs</h1>
-      <p>Administrez les comptes et les accès à la plateforme P-FMEA.</p>
+      <h1>User Management</h1>
+      <p>Manage user accounts and access to the P-FMEA platform.</p>
     </div>
-    <a routerLink="/users/create" class="btn btn--primary">+ Ajouter un utilisateur</a>
+    <a routerLink="/users/create" class="btn btn--primary">+ Add User</a>
   </header>
 
   @if (successMessage(); as success) {
     <div class="users-alert users-alert--success" role="status" aria-live="polite">
-      {{ success }}
+      <span class="users-alert__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+          <path d="m8.2 12.2 2.4 2.4 5.2-5.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span>{{ success }}</span>
     </div>
   }
 
   @if (errorMessage(); as error) {
     <div class="users-alert users-alert--error" role="alert" aria-live="assertive">
+      <span class="users-alert__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 8v5M12 16.2h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
       <span>{{ error }}</span>
       <button type="button" class="btn btn--ghost btn--compact" (click)="loadUsers()">
-        Réessayer
+        Retry
       </button>
     </div>
   }
@@ -25,79 +37,86 @@
   <div class="users-card">
     <form class="users-toolbar" role="search" (submit)="$event.preventDefault()">
       <div class="field field--search">
-        <label class="visually-hidden" for="user-search">Rechercher un utilisateur</label>
+        <label class="visually-hidden" for="user-search">Search for a user</label>
         <input
           id="user-search"
           type="search"
           [value]="searchQuery()"
           (input)="onSearchInput($event)"
-          placeholder="Rechercher un utilisateur..."
+          placeholder="Search for a user..."
           autocomplete="off"
         />
       </div>
 
       <div class="field">
-        <label for="role-filter">Rôle</label>
+        <label for="role-filter">Role</label>
         <select
           id="role-filter"
           [value]="roleFilter()"
           (change)="onRoleFilterChange($event)"
         >
-          <option value="ALL">Tous</option>
+          <option value="ALL">All</option>
           <option value="ADMIN">ADMIN</option>
           <option value="SUPER_ADMIN">SUPER_ADMIN</option>
         </select>
       </div>
 
       <div class="field">
-        <label for="status-filter">Statut</label>
+        <label for="status-filter">Status</label>
         <select
           id="status-filter"
           [value]="statusFilter()"
           (change)="onStatusFilterChange($event)"
         >
-          <option value="ALL">Tous</option>
-          <option value="ACTIVE">Actif</option>
-          <option value="DISABLED">Désactivé</option>
+          <option value="ALL">All</option>
+          <option value="ACTIVE">Active</option>
+          <option value="DISABLED">Disabled</option>
         </select>
       </div>
     </form>
 
     @if (isLoading()) {
-      <div class="users-state" role="status" aria-live="polite">
-        Chargement des utilisateurs…
+      <div class="users-state users-state--loading" role="status" aria-live="polite">
+        <span class="spinner spinner--muted" aria-hidden="true"></span>
+        Loading users…
       </div>
     } @else if (users().length === 0 && errorMessage()) {
       <div class="users-state" role="status">
-        Impossible d’afficher la liste pour le moment.
+        Unable to display the user list at this time.
       </div>
     } @else if (filteredUsers().length === 0) {
       <div class="users-state" role="status">
-        Aucun utilisateur trouvé.
+        No users found.
       </div>
     } @else {
       <div class="users-table-wrap">
         <table class="users-table">
-          <caption class="visually-hidden">Liste des utilisateurs de la plateforme</caption>
+          <caption class="visually-hidden">Platform users</caption>
           <thead>
             <tr>
-              <th scope="col">Nom complet</th>
+              <th scope="col">Full name</th>
               <th scope="col">Email</th>
-              <th scope="col">Rôle</th>
-              <th scope="col">Statut</th>
-              <th scope="col">Date de création</th>
+              <th scope="col">Role</th>
+              <th scope="col">Status</th>
+              <th scope="col">Creation date</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
             @for (user of filteredUsers(); track user.id) {
-              <tr>
+              <tr [class.users-table__row--disabled]="!user.enabled">
                 <td>
                   <strong>{{ fullName(user) }}</strong>
                 </td>
                 <td class="users-table__email">{{ user.email }}</td>
                 <td>
-                  <span class="badge badge--role">{{ user.role }}</span>
+                  <span
+                    class="badge"
+                    [class.badge--admin]="user.role === 'ADMIN'"
+                    [class.badge--super-admin]="user.role === 'SUPER_ADMIN'"
+                  >
+                    {{ user.role }}
+                  </span>
                 </td>
                 <td>
                   <span
@@ -105,33 +124,34 @@
                     [class.badge--active]="user.enabled"
                     [class.badge--inactive]="!user.enabled"
                   >
+                    <span class="badge__dot" aria-hidden="true"></span>
                     {{ statusLabel(user) }}
                   </span>
                 </td>
-                <td>{{ createdAt(user) }}</td>
+                <td class="users-table__date">{{ createdAt(user) }}</td>
                 <td>
                   <div class="users-actions">
                     <a [routerLink]="['/users', user.id, 'edit']" class="btn btn--ghost btn--compact">
-                      Voir / modifier
+                      View / Edit
                     </a>
                     @if (user.enabled) {
                       <button
                         type="button"
                         class="btn btn--danger btn--compact"
                         [disabled]="isCurrentUser(user) || isUpdatingStatus()"
-                        [attr.title]="isCurrentUser(user) ? 'Vous ne pouvez pas désactiver votre propre compte.' : null"
+                        [attr.title]="isCurrentUser(user) ? 'You cannot disable your own account.' : null"
                         (click)="openStatusConfirmation(user)"
                       >
-                        Désactiver
+                        Disable
                       </button>
                     } @else {
                       <button
                         type="button"
-                        class="btn btn--secondary btn--compact"
+                        class="btn btn--success btn--compact"
                         [disabled]="isUpdatingStatus()"
                         (click)="openStatusConfirmation(user)"
                       >
-                        Activer
+                        Enable
                       </button>
                     }
                   </div>
@@ -144,7 +164,7 @@
 
       <ul class="users-cards">
         @for (user of filteredUsers(); track user.id) {
-          <li class="user-card">
+          <li class="user-card" [class.user-card--disabled]="!user.enabled">
             <div class="user-card__top">
               <div>
                 <h2>{{ fullName(user) }}</h2>
@@ -155,41 +175,50 @@
                 [class.badge--active]="user.enabled"
                 [class.badge--inactive]="!user.enabled"
               >
+                <span class="badge__dot" aria-hidden="true"></span>
                 {{ statusLabel(user) }}
               </span>
             </div>
             <dl>
               <div>
-                <dt>Rôle</dt>
-                <dd><span class="badge badge--role">{{ user.role }}</span></dd>
+                <dt>Role</dt>
+                <dd>
+                  <span
+                    class="badge"
+                    [class.badge--admin]="user.role === 'ADMIN'"
+                    [class.badge--super-admin]="user.role === 'SUPER_ADMIN'"
+                  >
+                    {{ user.role }}
+                  </span>
+                </dd>
               </div>
               <div>
-                <dt>Date de création</dt>
+                <dt>Creation date</dt>
                 <dd>{{ createdAt(user) }}</dd>
               </div>
             </dl>
             <div class="users-actions">
               <a [routerLink]="['/users', user.id, 'edit']" class="btn btn--ghost btn--compact">
-                Voir / modifier
+                View / Edit
               </a>
               @if (user.enabled) {
                 <button
                   type="button"
                   class="btn btn--danger btn--compact"
                   [disabled]="isCurrentUser(user) || isUpdatingStatus()"
-                  [attr.title]="isCurrentUser(user) ? 'Vous ne pouvez pas désactiver votre propre compte.' : null"
+                  [attr.title]="isCurrentUser(user) ? 'You cannot disable your own account.' : null"
                   (click)="openStatusConfirmation(user)"
                 >
-                  Désactiver
+                  Disable
                 </button>
               } @else {
                 <button
                   type="button"
-                  class="btn btn--secondary btn--compact"
+                  class="btn btn--success btn--compact"
                   [disabled]="isUpdatingStatus()"
                   (click)="openStatusConfirmation(user)"
                 >
-                  Activer
+                  Enable
                 </button>
               }
             </div>
@@ -201,55 +230,23 @@
 </section>
 
 @if (confirmation(); as pending) {
-  <div class="users-dialog" role="presentation" (click)="closeStatusConfirmation()">
-    <div
-      class="users-dialog__panel"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="status-dialog-title"
-      (click)="$event.stopPropagation()"
-    >
-      <h2 id="status-dialog-title">
-        {{ pending.enable ? 'Réactiver l\'utilisateur' : 'Désactiver l\'utilisateur' }}
-      </h2>
-      <p>
-        {{
-          pending.enable
-            ? 'Voulez-vous réactiver cet utilisateur ?'
-            : 'Voulez-vous vraiment désactiver cet utilisateur ?'
-        }}
-      </p>
-      <p class="users-dialog__hint">
-        {{ fullName(pending.user) }} — {{ pending.user.email }}
-        @if (!pending.enable) {
-          <span>Le compte ne sera pas supprimé. Cette action est réversible.</span>
-        }
-      </p>
-      <div class="users-actions">
-        <button
-          type="button"
-          class="btn"
-          [class.btn--primary]="pending.enable"
-          [class.btn--danger]="!pending.enable"
-          [disabled]="isUpdatingStatus()"
-          (click)="confirmStatusChange()"
-        >
-          @if (isUpdatingStatus()) {
-            <span class="spinner" aria-hidden="true"></span>
-            Enregistrement…
-          } @else {
-            {{ pending.enable ? 'Réactiver' : 'Désactiver' }}
-          }
-        </button>
-        <button
-          type="button"
-          class="btn btn--ghost"
-          [disabled]="isUpdatingStatus()"
-          (click)="closeStatusConfirmation()"
-        >
-          Annuler
-        </button>
-      </div>
-    </div>
-  </div>
+  <app-confirmation-dialog
+    [title]="pending.enable ? 'Enable User' : 'Disable User'"
+    [message]="
+      pending.enable
+        ? 'Are you sure you want to enable this user?'
+        : 'Are you sure you want to disable this user?'
+    "
+    [variant]="pending.enable ? 'default' : 'danger'"
+    [isConfirming]="isUpdatingStatus()"
+    (cancelled)="closeStatusConfirmation()"
+    (confirmed)="confirmStatusChange()"
+  >
+    <p class="users-confirm-hint">
+      {{ fullName(pending.user) }} — {{ pending.user.email }}
+      @if (!pending.enable) {
+        <span>The account will not be deleted. This action can be reversed.</span>
+      }
+    </p>
+  </app-confirmation-dialog>
 }

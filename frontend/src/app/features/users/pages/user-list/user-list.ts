@@ -4,7 +4,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  HostListener,
   inject,
   OnInit,
   signal
@@ -13,10 +12,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { UserRole } from '../../../auth/models/login-response.model';
 import { User } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
-import { formatUserDate, resolveUserApiError, userFullName } from '../../utils/user.utils';
+import { formatUserDate, userFullName } from '../../utils/user.utils';
 
 type RoleFilter = 'ALL' | UserRole;
 type StatusFilter = 'ALL' | 'ACTIVE' | 'DISABLED';
@@ -28,7 +28,7 @@ interface StatusConfirmation {
 
 @Component({
   selector: 'app-user-list',
-  imports: [RouterLink],
+  imports: [RouterLink, ConfirmationDialog],
   templateUrl: './user-list.html',
   styleUrl: './user-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -80,12 +80,12 @@ export class UserList implements OnInit {
         const notice = params.get('notice');
 
         if (notice === 'created') {
-          this.successMessage.set('L\'utilisateur a été créé.');
+          this.successMessage.set('User created successfully.');
           this.clearNotice();
         }
 
         if (notice === 'updated') {
-          this.successMessage.set('L\'utilisateur a été mis à jour.');
+          this.successMessage.set('User updated successfully.');
           this.clearNotice();
         }
       });
@@ -108,7 +108,7 @@ export class UserList implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.users.set([]);
           this.errorMessage.set(
-            resolveUserApiError(error, 'Impossible de charger les utilisateurs. Veuillez réessayer.')
+            this.resolveError(error, 'Unable to load users. Please try again.')
           );
         }
       });
@@ -147,7 +147,7 @@ export class UserList implements OnInit {
   }
 
   statusLabel(user: User): string {
-    return user.enabled ? 'Actif' : 'Désactivé';
+    return user.enabled ? 'Active' : 'Disabled';
   }
 
   isCurrentUser(user: User): boolean {
@@ -195,8 +195,8 @@ export class UserList implements OnInit {
           this.confirmation.set(null);
           this.successMessage.set(
             confirmation.enable
-              ? 'L\'utilisateur a été réactivé.'
-              : 'L\'utilisateur a été désactivé.'
+              ? 'User enabled successfully.'
+              : 'User disabled successfully.'
           );
 
           if (updatedUser.id === this.currentUserId()) {
@@ -205,16 +205,11 @@ export class UserList implements OnInit {
         },
         error: (error: HttpErrorResponse) => {
           this.errorMessage.set(
-            resolveUserApiError(error, 'Une erreur est survenue. Veuillez réessayer.')
+            this.resolveError(error, 'An error occurred. Please try again.')
           );
           this.confirmation.set(null);
         }
       });
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.closeStatusConfirmation();
   }
 
   private replaceUser(updatedUser: User): void {
@@ -245,5 +240,29 @@ export class UserList implements OnInit {
     }
 
     return 'ALL';
+  }
+
+  private resolveError(error: HttpErrorResponse, fallback: string): string {
+    if (error.status === 400) {
+      return 'The information entered is invalid.';
+    }
+
+    if (error.status === 401) {
+      return 'Your session has expired. Please sign in again.';
+    }
+
+    if (error.status === 403) {
+      return 'You do not have permission to perform this action.';
+    }
+
+    if (error.status === 404) {
+      return 'User not found.';
+    }
+
+    if (error.status === 409) {
+      return 'This email address is already in use.';
+    }
+
+    return fallback;
   }
 }

@@ -2,12 +2,17 @@ package com.sebn.pfmea.backend.change.mapper;
 
 import com.sebn.pfmea.backend.change.dto.response.ChangeRequestResponse;
 import com.sebn.pfmea.backend.change.entity.ChangeRequest;
+import com.sebn.pfmea.backend.user.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ChangeRequestMapper {
 
-    public ChangeRequestResponse toResponse(ChangeRequest changeRequest) {
+    public ChangeRequestResponse toResponse(
+            ChangeRequest changeRequest
+    ) {
+        User requestedBy = changeRequest.getRequestedBy();
+        User reviewedBy = changeRequest.getReviewedBy();
 
         return new ChangeRequestResponse(
                 changeRequest.getId(),
@@ -16,14 +21,14 @@ public class ChangeRequestMapper {
                 changeRequest.getOperation(),
                 changeRequest.getOldData(),
                 changeRequest.getNewData(),
-                changeRequest.getRequestedBy().getId(),
-                getUserFullName(changeRequest.getRequestedBy()),
+                requestedBy.getId(),
+                getUserFullName(requestedBy),
                 changeRequest.getStatus(),
-                changeRequest.getReviewedBy() != null
-                        ? changeRequest.getReviewedBy().getId()
+                reviewedBy != null
+                        ? reviewedBy.getId()
                         : null,
-                changeRequest.getReviewedBy() != null
-                        ? getUserFullName(changeRequest.getReviewedBy())
+                reviewedBy != null
+                        ? getUserFullName(reviewedBy)
                         : null,
                 changeRequest.getReviewComment(),
                 changeRequest.getCreatedAt(),
@@ -31,9 +36,7 @@ public class ChangeRequestMapper {
         );
     }
 
-    private String getUserFullName(
-            com.sebn.pfmea.backend.user.entity.User user
-    ) {
+    private String getUserFullName(User user) {
         return user.getFirstName() + " " + user.getLastName();
     }
 }

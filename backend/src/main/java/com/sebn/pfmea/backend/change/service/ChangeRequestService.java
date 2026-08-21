@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ChangeRequestService {
 
+    private static final String CHANGE_REQUEST_ENTITY_TYPE = "CHANGE_REQUEST";
+
     private final ChangeRequestRepository changeRequestRepository;
     private final ChangeRequestMapper changeRequestMapper;
     private final NotificationService notificationService;
@@ -34,10 +37,15 @@ public class ChangeRequestService {
     private final AuditLogService auditLogService;
     private final List<ChangeApplier> changeAppliers;
 
+    /**
+     * Creates a pending change request submitted by an ADMIN.
+     */
     public ChangeRequestResponse createRequest(
             ChangeRequestCreateRequest request,
             User requester
     ) {
+        validateAdminRequester(requester);
+
         ChangeRequest changeRequest = new ChangeRequest();
 
         changeRequest.setEntityType(request.entityType());
@@ -56,6 +64,10 @@ public class ChangeRequestService {
         return changeRequestMapper.toResponse(savedRequest);
     }
 
+    /**
+     * SUPER_ADMIN only:
+     * Returns all pending change requests.
+     */
     @Transactional(readOnly = true)
     public List<ChangeRequestResponse> getPendingRequests() {
         return changeRequestRepository
@@ -67,11 +79,47 @@ public class ChangeRequestService {
                 .toList();
     }
 
+    /**
+     * ADMIN:
+     * Returns only the requests submitted by the current ADMIN.
+     *
+     * SUPER_ADMIN:
+     * Can retrieve any request.
+     */
     @Transactional(readOnly = true)
-    public ChangeRequestResponse getRequestById(UUID id) {
-        return changeRequestMapper.toResponse(findById(id));
+    public ChangeRequestResponse getRequestById(
+            UUID id,
+            User currentUser
+    ) {
+        ChangeRequest changeRequest = findById(id);
+
+        validateRequestAccess(changeRequest, currentUser);
+
+        return changeRequestMapper.toResponse(changeRequest);
     }
 
+    /**
+     * ADMIN:
+     * Returns only his own requests.
+     */
+    @Transactional(readOnly = true)
+    public List<ChangeRequestResponse> getMyRequests(User currentUser) {
+
+        validateAdminRequester(currentUser);
+
+        return changeRequestRepository
+                .findByRequestedByIdOrderByCreatedAtDesc(
+                        currentUser.getId()
+                )
+                .stream()
+                .map(changeRequestMapper::toResponse)
+                .toList();
+    }
+
+    /**
+     * SUPER_ADMIN only:
+     * Approves a pending change request.
+     */
     public ChangeRequestResponse approveRequest(
             UUID id,
             User reviewer,
@@ -83,9 +131,8 @@ public class ChangeRequestService {
 
         validatePending(changeRequest);
 
-        ChangeApplier applier = getApplier(
-                changeRequest.getEntityType()
-        );
+        ChangeApplier applier =
+                getApplier(changeRequest.getEntityType());
 
         UUID appliedEntityId = applier.apply(changeRequest);
 
@@ -114,7 +161,7 @@ public class ChangeRequestService {
                 "Your change request for "
                         + changeRequest.getEntityType()
                         + " has been approved.",
-                "CHANGE_REQUEST",
+                CHANGE_REQUEST_ENTITY_TYPE,
                 changeRequest.getId(),
                 reviewComment
         );
@@ -122,6 +169,10 @@ public class ChangeRequestService {
         return changeRequestMapper.toResponse(savedRequest);
     }
 
+    /**
+     * SUPER_ADMIN only:
+     * Rejects a pending change request.
+     */
     public ChangeRequestResponse rejectRequest(
             UUID id,
             User reviewer,
@@ -142,8 +193,8 @@ public class ChangeRequestService {
                 changeRequestRepository.save(changeRequest);
 
         auditLogService.createAuditLog(
-                changeRequest.getEntityType(),
-                changeRequest.getEntityId(),
+                CHANGE_REQUEST_ENTITY_TYPE,
+                changeRequest.getId(),
                 AuditAction.REJECT,
                 changeRequest.getOldData(),
                 changeRequest.getNewData(),
@@ -157,7 +208,7 @@ public class ChangeRequestService {
                 "Your change request for "
                         + changeRequest.getEntityType()
                         + " has been rejected.",
-                "CHANGE_REQUEST",
+                CHANGE_REQUEST_ENTITY_TYPE,
                 changeRequest.getId(),
                 reviewComment
         );
@@ -165,6 +216,10 @@ public class ChangeRequestService {
         return changeRequestMapper.toResponse(savedRequest);
     }
 
+    /**
+     * Sends a notification to a SUPER_ADMIN when an ADMIN
+     * submits a new change request.
+     */
     private void notifySuperAdmin(
             ChangeRequest changeRequest,
             User requester
@@ -180,12 +235,15 @@ public class ChangeRequestService {
                         + requester.getLastName()
                         + " submitted a change request for "
                         + changeRequest.getEntityType(),
-                "CHANGE_REQUEST",
+                CHANGE_REQUEST_ENTITY_TYPE,
                 changeRequest.getId(),
                 null
         );
     }
 
+    /**
+     * Finds the appropriate applier for the requested entity type.
+     */
     private ChangeApplier getApplier(String entityType) {
         return changeAppliers.stream()
                 .filter(applier -> applier.supports(entityType))
@@ -217,12 +275,40 @@ public class ChangeRequestService {
         }
     }
 
-    private void validateSuperAdmin(User reviewer) {
-        if (reviewer.getRole() != Role.SUPER_ADMIN) {
-            throw new org.springframework.security.access.AccessDeniedException(
+    private void validateSuperAdmin(User user) {
+        if (user.getRole() != Role.SUPER_ADMIN) {
+            throw new AccessDeniedException(
                     "Only SUPER_ADMIN can review change requests."
             );
         }
+    }
+
+    private void validateAdminRequester(User user) {
+        if (user.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException(
+                    "Only ADMIN can submit change requests."
+            );
+        }
+    }
+
+    private void validateRequestAccess(
+            ChangeRequest changeRequest,
+            User currentUser
+    ) {
+        if (currentUser.getRole() == Role.SUPER_ADMIN) {
+            return;
+        }
+
+        if (currentUser.getRole() == Role.ADMIN
+                && changeRequest.getRequestedBy()
+                .getId()
+                .equals(currentUser.getId())) {
+            return;
+        }
+
+        throw new AccessDeniedException(
+                "You are not allowed to access this change request."
+        );
     }
 
     private User getSuperAdmin() {

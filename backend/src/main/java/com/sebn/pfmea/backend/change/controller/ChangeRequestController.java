@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,23 +20,62 @@ public class ChangeRequestController {
     private final ChangeRequestService changeRequestService;
     private final UserRepository userRepository;
 
+    /**
+     * SUPER_ADMIN only:
+     * Returns all pending change requests.
+     */
     @GetMapping("/pending")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<List<ChangeRequestResponse>> getPendingRequests() {
         return ResponseEntity.ok(
                 changeRequestService.getPendingRequests()
         );
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ChangeRequestResponse> getRequestById(
-            @PathVariable UUID id
+    /**
+     * ADMIN only:
+     * Returns only the authenticated ADMIN's own requests.
+     */
+    @GetMapping("/my-requests")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ChangeRequestResponse>> getMyRequests(
+            Authentication authentication
     ) {
+        User currentUser = getAuthenticatedUser(authentication);
+
         return ResponseEntity.ok(
-                changeRequestService.getRequestById(id)
+                changeRequestService.getMyRequests(currentUser)
         );
     }
 
+    /**
+     * ADMIN:
+     * Can only access his own request.
+     *
+     * SUPER_ADMIN:
+     * Can access any request.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ChangeRequestResponse> getRequestById(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        User currentUser = getAuthenticatedUser(authentication);
+
+        return ResponseEntity.ok(
+                changeRequestService.getRequestById(
+                        id,
+                        currentUser
+                )
+        );
+    }
+
+    /**
+     * SUPER_ADMIN only:
+     * Approves a pending change request.
+     */
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ChangeRequestResponse> approveRequest(
             @PathVariable UUID id,
             @RequestParam(required = false) String reviewComment,
@@ -52,7 +92,12 @@ public class ChangeRequestController {
         );
     }
 
+    /**
+     * SUPER_ADMIN only:
+     * Rejects a pending change request.
+     */
     @PostMapping("/{id}/reject")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ChangeRequestResponse> rejectRequest(
             @PathVariable UUID id,
             @RequestParam(required = false) String reviewComment,

@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "notifications")
@@ -49,7 +47,7 @@ public class Notification {
 
     private LocalDateTime readAt;
 
-    @Column(columnDefinition = "json")
+    @Column(columnDefinition = "LONGTEXT")
     private String metadata;
 
     @CreationTimestamp

@@ -13,6 +13,10 @@ export function resolveNotificationRoute(notification: Notification): string | n
     return `/processes/${entityId}`;
   }
 
+  if (entityType === 'CHANGE_REQUEST') {
+    return `/change-requests/${entityId}`;
+  }
+
   return null;
 }
 

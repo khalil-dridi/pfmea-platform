@@ -1,0 +1,151 @@
+<section class="requests-page">
+  <header class="requests-page__header">
+    <div>
+      <h1>My Requests</h1>
+      <p>Track your P-FMEA changes and their approval status.</p>
+    </div>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="requests-alert requests-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="loadRequests()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <div class="requests-card">
+    <form class="requests-toolbar" (submit)="$event.preventDefault()">
+      <div class="field">
+        <label for="status-filter">Status</label>
+        <select id="status-filter" [value]="statusFilter()" (change)="onStatusFilterChange($event)">
+          <option value="ALL">All</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+    </form>
+
+    @if (isLoading()) {
+      <div class="requests-table-wrap" aria-hidden="true">
+        <table class="requests-table">
+          <thead>
+            <tr>
+              <th scope="col">Entity</th>
+              <th scope="col">Operation</th>
+              <th scope="col">Submitted By</th>
+              <th scope="col">Status</th>
+              <th scope="col">Submitted At</th>
+              <th scope="col">Reviewed At</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of skeletonRows; track row) {
+              <tr>
+                <td colspan="7"><span class="skeleton"></span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="requests-state requests-state--loading" role="status" aria-live="polite">
+        <span class="spinner spinner--muted" aria-hidden="true"></span>
+        Loading requests…
+      </div>
+    } @else if (requests().length === 0 && errorMessage()) {
+      <div class="requests-state" role="status">Unable to display your requests at this time.</div>
+    } @else if (requests().length === 0) {
+      <div class="requests-empty" role="status">
+        <h2>No requests</h2>
+        <p>You have not submitted any change requests yet.</p>
+      </div>
+    } @else if (filteredRequests().length === 0) {
+      <div class="requests-empty" role="status">
+        <h2>No requests</h2>
+        <p>No change requests match the selected status.</p>
+      </div>
+    } @else {
+      <div class="requests-table-wrap">
+        <table class="requests-table">
+          <caption class="visually-hidden">Your change requests</caption>
+          <thead>
+            <tr>
+              <th scope="col">Entity</th>
+              <th scope="col">Operation</th>
+              <th scope="col">Submitted By</th>
+              <th scope="col">Status</th>
+              <th scope="col">Submitted At</th>
+              <th scope="col">Reviewed At</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (request of filteredRequests(); track request.id) {
+              <tr>
+                <td><strong>{{ request.entityType }}</strong></td>
+                <td>{{ operationText(request) }}</td>
+                <td class="requests-table__secondary">{{ request.requestedByName }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.badge--pending]="request.status === 'PENDING'"
+                    [class.badge--approved]="request.status === 'APPROVED'"
+                    [class.badge--rejected]="request.status === 'REJECTED'"
+                  >
+                    <span class="badge__dot" aria-hidden="true"></span>
+                    {{ statusText(request.status) }}
+                  </span>
+                </td>
+                <td class="requests-table__date">{{ submittedAt(request) }}</td>
+                <td class="requests-table__date">{{ reviewedAt(request) }}</td>
+                <td>
+                  <a class="btn btn--ghost btn--compact" [routerLink]="['/change-requests', request.id]">
+                    View Details
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="requests-cards">
+        @for (request of filteredRequests(); track request.id) {
+          <li class="request-card">
+            <div class="request-card__top">
+              <div>
+                <h2>{{ request.entityType }} · {{ operationText(request) }}</h2>
+                <p class="requests-table__secondary">Submitted by {{ request.requestedByName }}</p>
+              </div>
+              <span
+                class="badge"
+                [class.badge--pending]="request.status === 'PENDING'"
+                [class.badge--approved]="request.status === 'APPROVED'"
+                [class.badge--rejected]="request.status === 'REJECTED'"
+              >
+                <span class="badge__dot" aria-hidden="true"></span>
+                {{ statusText(request.status) }}
+              </span>
+            </div>
+            <dl>
+              <div>
+                <dt>Submitted At</dt>
+                <dd>{{ submittedAt(request) }}</dd>
+              </div>
+              <div>
+                <dt>Reviewed At</dt>
+                <dd>{{ reviewedAt(request) }}</dd>
+              </div>
+            </dl>
+            <a class="btn btn--ghost btn--compact" [routerLink]="['/change-requests', request.id]">
+              View Details
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

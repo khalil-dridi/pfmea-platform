@@ -1,0 +1,173 @@
+<section class="request-detail-page">
+  <header class="request-detail-page__header">
+    <p class="request-detail-page__crumb">
+      <a [routerLink]="backLink()">{{ isSuperAdmin() ? 'Validations' : 'My Requests' }}</a>
+    </p>
+    <h1>Change Request</h1>
+    <p>Review the submitted P-FMEA change and its approval status.</p>
+    <a [routerLink]="backLink()" class="btn btn--ghost request-detail-page__back">
+      <span aria-hidden="true">←</span>
+      {{ backLabel() }}
+    </a>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="requests-alert requests-alert--error" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="requests-card requests-state requests-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading change request…
+    </div>
+  } @else if (request(); as currentRequest) {
+    @if (currentRequest.status === 'PENDING' && !isSuperAdmin()) {
+      <div class="requests-alert requests-alert--pending" role="status">
+        <div class="requests-alert__body">
+          <p><strong>Waiting for SUPER_ADMIN approval</strong></p>
+          <p>This change request is pending review. You can monitor its status here.</p>
+        </div>
+      </div>
+    }
+
+    @if (currentRequest.status === 'APPROVED') {
+      <div class="requests-alert requests-alert--success" role="status">
+        <div class="requests-alert__body">
+          <p><strong>Approved</strong></p>
+          <p>
+            Reviewed by {{ currentRequest.reviewedByName || '—' }}
+            on {{ formatDate(currentRequest.reviewedAt) }}.
+          </p>
+          @if (currentRequest.reviewComment) {
+            <p>{{ currentRequest.reviewComment }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    @if (currentRequest.status === 'REJECTED') {
+      <div class="requests-alert requests-alert--rejected" role="status">
+        <div class="requests-alert__body">
+          <p><strong>Rejected</strong></p>
+          <p>
+            Reviewed by {{ currentRequest.reviewedByName || '—' }}
+            on {{ formatDate(currentRequest.reviewedAt) }}.
+          </p>
+          @if (currentRequest.reviewComment) {
+            <p class="request-detail__comment">{{ currentRequest.reviewComment }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="requests-card request-detail-card">
+      <dl class="request-detail-grid">
+        <div>
+          <dt>Request ID</dt>
+          <dd>{{ currentRequest.id }}</dd>
+        </div>
+        <div>
+          <dt>Entity Type</dt>
+          <dd>{{ currentRequest.entityType }}</dd>
+        </div>
+        <div>
+          <dt>Operation</dt>
+          <dd>{{ operationText(currentRequest) }}</dd>
+        </div>
+        <div>
+          <dt>Submitted By</dt>
+          <dd>{{ currentRequest.requestedByName }}</dd>
+        </div>
+        <div>
+          <dt>Submitted At</dt>
+          <dd>{{ formatDate(currentRequest.createdAt) }}</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>
+            <span
+              class="badge"
+              [class.badge--pending]="currentRequest.status === 'PENDING'"
+              [class.badge--approved]="currentRequest.status === 'APPROVED'"
+              [class.badge--rejected]="currentRequest.status === 'REJECTED'"
+            >
+              <span class="badge__dot" aria-hidden="true"></span>
+              {{ statusText(currentRequest) }}
+            </span>
+          </dd>
+        </div>
+        <div>
+          <dt>Reviewed By</dt>
+          <dd>{{ currentRequest.reviewedByName || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Reviewed At</dt>
+          <dd>{{ formatDate(currentRequest.reviewedAt) }}</dd>
+        </div>
+        <div class="request-detail-grid__full">
+          <dt>Review Comment</dt>
+          <dd>{{ currentRequest.reviewComment || '—' }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="requests-card request-detail-card">
+      <app-data-comparison [request]="currentRequest" />
+    </div>
+
+    @if (currentRequest.status === 'PENDING' && isSuperAdmin()) {
+      <div class="requests-actions requests-actions--form">
+        <button
+          type="button"
+          class="btn btn--danger"
+          [disabled]="isSubmitting()"
+          (click)="openRejectDialog()"
+        >
+          Reject
+        </button>
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="isSubmitting()"
+          (click)="openApproveDialog()"
+        >
+          Approve
+        </button>
+      </div>
+    }
+  }
+</section>
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="action === 'approve' ? 'Approve Change Request' : 'Reject Change Request'"
+    [message]="
+      action === 'approve'
+        ? 'Are you sure you want to approve this change request?'
+        : 'Are you sure you want to reject this change request?'
+    "
+    [confirmLabel]="action === 'approve' ? 'Approve' : 'Reject'"
+    cancelLabel="Cancel"
+    [variant]="action === 'approve' ? 'default' : 'danger'"
+    [isConfirming]="isSubmitting()"
+    (cancelled)="closeDialog()"
+    (confirmed)="confirmReview()"
+  >
+    @if (action === 'reject') {
+      <div class="field">
+        <label for="review-comment">
+          Review comment <span class="field__hint">Recommended</span>
+        </label>
+        <textarea
+          id="review-comment"
+          [value]="reviewComment()"
+          (input)="onCommentInput($event)"
+          placeholder="Enter a reason for rejection..."
+          maxlength="1000"
+        ></textarea>
+      </div>
+    }
+  </app-confirmation-dialog>
+}

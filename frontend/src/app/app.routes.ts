@@ -55,11 +55,17 @@ export const routes: Routes = [
           import('./features/users/users.routes').then(m => m.USERS_ROUTES)
       },
       {
+        path: 'change-requests',
+        loadChildren: () =>
+          import('./features/change-requests/change-requests.routes').then(
+            m => m.CHANGE_REQUESTS_ROUTES
+          )
+      },
+      {
         path: 'validations',
-        component: FeaturePlaceholder,
-        canActivate: [roleGuard(['SUPER_ADMIN'])],
-        data: { title: 'Validations' }
-      }
+        pathMatch: 'full',
+        redirectTo: '/change-requests/validations'
+      },
     ]
   },
   {

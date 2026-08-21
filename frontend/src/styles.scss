@@ -7,8 +7,10 @@
 html,
 body,
 app-root {
+  display: block;
   height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
 body {

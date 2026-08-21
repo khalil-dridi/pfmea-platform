@@ -24,8 +24,9 @@ export const routes: Routes = [
       },
       {
         path: 'processes',
-        component: FeaturePlaceholder,
-        data: { title: 'Processus' }
+        canActivate: [roleGuard(['ADMIN', 'SUPER_ADMIN'])],
+        loadChildren: () =>
+          import('./features/processes/processes.routes').then(m => m.PROCESSES_ROUTES)
       },
       {
         path: 'search',

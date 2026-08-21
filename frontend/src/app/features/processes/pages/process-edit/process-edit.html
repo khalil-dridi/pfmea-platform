@@ -1,0 +1,101 @@
+<section class="process-form-page">
+  <header class="process-form-page__header">
+    <p class="process-form-page__crumb">
+      <a routerLink="/processes">Processes</a>
+    </p>
+    <h1>Edit Process</h1>
+    <p>Update the production process details used by the P-FMEA platform.</p>
+    <button type="button" class="btn btn--ghost process-form-page__back" (click)="cancel()">
+      <span aria-hidden="true">←</span>
+      Back to Processes
+    </button>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="processes-card processes-state processes-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading process…
+    </div>
+  } @else if (process(); as currentProcess) {
+    <div class="processes-card process-form-card">
+      <form [formGroup]="processForm" (ngSubmit)="onSubmit()" novalidate>
+        <fieldset [disabled]="isSaving()">
+          <div class="process-form-grid">
+            <div class="field">
+              <label for="processName">
+                Process Name <span class="field__required" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="processName"
+                type="text"
+                formControlName="name"
+                maxlength="150"
+                autocomplete="off"
+                [attr.aria-invalid]="nameError() ? true : null"
+                [attr.aria-describedby]="nameError() ? 'processName-error' : null"
+                [attr.aria-required]="true"
+              />
+              @if (nameError(); as message) {
+                <p id="processName-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field">
+              <label for="processNumber">
+                Process Number <span class="field__required" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="processNumber"
+                type="text"
+                formControlName="processNumber"
+                maxlength="50"
+                autocomplete="off"
+                [attr.aria-invalid]="numberError() ? true : null"
+                [attr.aria-describedby]="numberError() ? 'processNumber-error' : null"
+                [attr.aria-required]="true"
+              />
+              @if (numberError(); as message) {
+                <p id="processNumber-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="processes-actions processes-actions--form">
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="isSaving()"
+            [attr.aria-busy]="isSaving()"
+          >
+            @if (isSaving()) {
+              <span class="spinner" aria-hidden="true"></span>
+            }
+            Save Changes
+          </button>
+          <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancel()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</section>
+
+@if (discardChanges.isOpen()) {
+  <app-confirmation-dialog
+    title="Discard Changes?"
+    message="Are you sure you want to leave without saving your changes?"
+    confirmLabel="Discard"
+    cancelLabel="Stay"
+    variant="danger"
+    (confirmed)="discardChanges.discard()"
+    (cancelled)="discardChanges.stay()"
+  />
+}

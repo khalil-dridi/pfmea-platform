@@ -1,0 +1,60 @@
+<section class="process-detail-page">
+  <header class="process-detail-page__header">
+    <p class="process-detail-page__crumb">
+      <a routerLink="/processes">Processes</a>
+    </p>
+    <h1>Process Details</h1>
+    <p>Review the production process information used by the P-FMEA platform.</p>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="processes-card processes-state processes-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading process…
+    </div>
+  } @else if (process(); as currentProcess) {
+    <div class="processes-card process-detail-card">
+      <dl class="process-detail-grid">
+        <div>
+          <dt>Process Name</dt>
+          <dd>{{ currentProcess.name }}</dd>
+        </div>
+        <div>
+          <dt>Process Number</dt>
+          <dd>{{ currentProcess.processNumber }}</dd>
+        </div>
+        <div>
+          <dt>Created At</dt>
+          <dd>{{ formatDate(currentProcess.createdAt) }}</dd>
+        </div>
+        <div>
+          <dt>Updated At</dt>
+          <dd>{{ formatDate(currentProcess.updatedAt) }}</dd>
+        </div>
+      </dl>
+
+      <div class="processes-actions processes-actions--form">
+        <a class="btn btn--primary" [routerLink]="['/processes', currentProcess.id, 'edit']">
+          Edit Process
+        </a>
+        <button type="button" class="btn btn--ghost" (click)="back()">
+          Back to Processes
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="processes-card processes-empty" role="status">
+      <h2>Process not found</h2>
+      <p>The requested process could not be displayed.</p>
+      <button type="button" class="btn btn--ghost" (click)="back()">
+        Back to Processes
+      </button>
+    </div>
+  }
+</section>

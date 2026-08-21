@@ -1,0 +1,75 @@
+.process-form-page {
+  max-width: 52rem;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+.process-form-page__header {
+  margin-bottom: 1.2rem;
+
+  h1,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    color: #1e1b4b;
+    font-size: 1.55rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin-top: 0.45rem;
+    color: #6b6685;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+
+.process-form-page__crumb {
+  margin: 0 0 0.45rem !important;
+  font-size: 0.8rem !important;
+
+  a {
+    color: #543a95;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+  }
+}
+
+.process-form-page__back {
+  margin-top: 0.95rem;
+  width: fit-content;
+}
+
+.process-form-card {
+  padding: 1.55rem 1.6rem 1.45rem;
+}
+
+.process-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem;
+}
+
+@media (max-width: 720px) {
+  .process-form-grid,
+  .processes-actions--form,
+  .processes-actions--form .btn,
+  .process-form-page__back {
+    width: 100%;
+  }
+
+  .process-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .process-form-card {
+    padding: 1.15rem 1rem 1.1rem;
+  }
+}

@@ -1,0 +1,279 @@
+.processes-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.processes-alert__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-top: 0.1rem;
+
+  svg {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+.processes-alert__body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+
+  p {
+    margin: 0;
+  }
+}
+
+.processes-alert--success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.processes-alert--pending {
+  color: #6b21a8;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+}
+
+.processes-alert--error {
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+
+  .btn {
+    margin-left: auto;
+  }
+}
+
+.processes-card {
+  background: #fff;
+  border: 1px solid #ece9f5;
+  border-radius: 1.15rem;
+  box-shadow: 0 10px 28px rgba(40, 28, 90, 0.06);
+}
+
+.processes-state {
+  padding: 2rem 1.25rem;
+  color: #6b6685;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.processes-state--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.processes-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 2.4rem 1.25rem;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  p {
+    max-width: 28rem;
+    color: #6b6685;
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+
+  .btn {
+    margin-top: 0.55rem;
+  }
+}
+
+.field {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.field label,
+.field__label {
+  color: #2a2740;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+  height: 2.7rem;
+  padding: 0 0.85rem;
+  color: #141420;
+  background: #fff;
+  border: 1px solid #e0e1e5;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.92rem;
+
+  &:focus {
+    border-color: #6b51aa;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 22, 153, 0.12);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+  }
+}
+
+.field__required {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.field__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.78rem;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.processes-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.processes-actions--form {
+  gap: 0.75rem;
+  margin-top: 1.45rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.65rem;
+  padding: 0 1.05rem;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn--compact {
+  min-height: 2.15rem;
+  padding: 0 0.7rem;
+  font-size: 0.8rem;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.btn--primary {
+  color: #fff;
+  background: #3b1699;
+  border: 0;
+  box-shadow: 0 10px 22px rgba(59, 22, 153, 0.22);
+
+  &:hover:not(:disabled) {
+    background: #4118a2;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #311279;
+    outline-offset: 3px;
+  }
+}
+
+.btn--secondary {
+  color: #3b1699;
+  background: #fff;
+  border: 1px solid #d8d0ee;
+
+  &:hover:not(:disabled) {
+    background: #f5f3ff;
+  }
+}
+
+.btn--ghost {
+  color: #433e5c;
+  background: transparent;
+  border: 1px solid #e0e1e5;
+
+  &:hover:not(:disabled) {
+    background: #f5f6fa;
+  }
+}
+
+.btn--primary:visited {
+  color: #fff;
+}
+
+.btn--ghost:visited,
+.btn--secondary:visited {
+  color: inherit;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.spinner {
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 2px solid rgba(255, 255, 255, 0.38);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: processes-spin 0.7s linear infinite;
+}
+
+.spinner--muted {
+  border-color: rgba(59, 22, 153, 0.18);
+  border-top-color: #3b1699;
+}
+
+@keyframes processes-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

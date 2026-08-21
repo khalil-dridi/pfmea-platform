@@ -20,16 +20,33 @@
   </div>
 
   <div class="navbar__right">
-    <button
-      type="button"
-      class="navbar__icon-btn"
-      aria-label="Notifications"
+    <div
+      class="navbar__notifications"
+      #notificationRoot
+      (focusout)="closeNotificationsOnBlur($event)"
     >
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5L20 18H4l2-1.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
-        <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-      </svg>
-    </button>
+      <button
+        type="button"
+        class="navbar__icon-btn"
+        [attr.aria-label]="notificationsLabel()"
+        [attr.aria-expanded]="isNotificationsOpen()"
+        aria-haspopup="true"
+        aria-controls="navbar-notifications"
+        (click)="toggleNotifications(); $event.stopPropagation()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5L20 18H4l2-1.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        @if (unreadCount() > 0) {
+          <span class="navbar__badge" aria-hidden="true">{{ unreadBadge() }}</span>
+        }
+      </button>
+
+      @if (isNotificationsOpen()) {
+        <app-notification-dropdown (closed)="closeNotifications()" />
+      }
+    </div>
 
     <div class="navbar__profile" (focusout)="closeUserMenuOnBlur($event)">
       <button

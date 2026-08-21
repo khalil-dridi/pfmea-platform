@@ -23,6 +23,7 @@
 .navbar__icon-btn {
   display: grid;
   place-items: center;
+  position: relative;
   width: 2.4rem;
   height: 2.4rem;
   color: #3f3a55;
@@ -66,6 +67,29 @@
   color: #1e1b4b;
   font-size: 1.05rem;
   font-weight: 700;
+}
+
+.navbar__notifications {
+  position: relative;
+}
+
+.navbar__badge {
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.28rem;
+  color: #fff;
+  background: #3b1699;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .navbar__profile {

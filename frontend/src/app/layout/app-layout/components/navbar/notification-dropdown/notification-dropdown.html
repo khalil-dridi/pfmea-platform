@@ -1,0 +1,95 @@
+<div
+  class="notification-dropdown"
+  role="region"
+  aria-label="Notifications"
+  id="navbar-notifications"
+  (click)="onPanelClick($event)"
+>
+  <header class="notification-dropdown__header">
+    <h2>Notifications</h2>
+    <div class="notification-dropdown__header-actions">
+      @if (isLoading() && notifications().length > 0) {
+        <span class="notification-dropdown__spinner" aria-hidden="true"></span>
+        <span class="visually-hidden" role="status">Refreshing notifications</span>
+      }
+      <button
+        type="button"
+        class="notification-dropdown__mark-all"
+        [disabled]="!hasUnread() || isMarkingAll()"
+        [attr.aria-busy]="isMarkingAll()"
+        (click)="markAllAsRead()"
+      >
+        @if (isMarkingAll()) {
+          <span class="notification-dropdown__spinner" aria-hidden="true"></span>
+        }
+        Mark all as read
+      </button>
+    </div>
+  </header>
+
+  @if (actionError(); as error) {
+    <p class="notification-dropdown__alert" role="alert">{{ error }}</p>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="notification-dropdown__alert-row" role="alert">
+      <p>{{ error }}</p>
+      <button type="button" (click)="retry()">Retry</button>
+    </div>
+  }
+
+  @if (isLoading() && notifications().length === 0) {
+    <ul class="notification-dropdown__list" aria-hidden="true">
+      @for (row of skeletonRows; track row) {
+        <li class="notification-item notification-item--skeleton">
+          <span class="skeleton skeleton--title"></span>
+          <span class="skeleton skeleton--body"></span>
+          <span class="skeleton skeleton--time"></span>
+        </li>
+      }
+    </ul>
+    <p class="visually-hidden" role="status">Loading notifications</p>
+  } @else if (notifications().length === 0 && !errorMessage()) {
+    <div class="notification-dropdown__empty" role="status">
+      <h3>No notifications</h3>
+      <p>You're all caught up.</p>
+    </div>
+  } @else if (notifications().length > 0) {
+    <ul class="notification-dropdown__list">
+      @for (notification of notifications(); track notification.id) {
+        <li>
+          <button
+            type="button"
+            class="notification-item"
+            [class.notification-item--unread]="!notification.read"
+            [disabled]="markingId() === notification.id"
+            [attr.aria-busy]="markingId() === notification.id"
+            (click)="onNotificationActivate(notification)"
+          >
+            <span
+              class="notification-item__dot"
+              [class.notification-item__dot--unread]="!notification.read"
+              aria-hidden="true"
+            ></span>
+            <span class="notification-item__body">
+              <span class="notification-item__title">{{ notification.title }}</span>
+              <span class="notification-item__message">{{ notification.message }}</span>
+              <time class="notification-item__time" [attr.datetime]="notification.createdAt">
+                {{ formatTime(notification.createdAt) }}
+              </time>
+            </span>
+            @if (!notification.read) {
+              <span class="visually-hidden">Unread</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <footer class="notification-dropdown__footer">
+    <button type="button" class="notification-dropdown__close" (click)="close()">
+      Close
+    </button>
+  </footer>
+</div>

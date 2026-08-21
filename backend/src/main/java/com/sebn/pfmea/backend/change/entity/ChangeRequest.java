@@ -21,8 +21,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "change_requests")
@@ -39,19 +37,17 @@ public class ChangeRequest {
     @Column(nullable = false, length = 100)
     private String entityType;
 
-    @Column(nullable = false)
+    @Column
     private UUID entityId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ChangeRequestOperation operation;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(nullable = false, columnDefinition = "json")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String oldData;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(nullable = false, columnDefinition = "json")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String newData;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

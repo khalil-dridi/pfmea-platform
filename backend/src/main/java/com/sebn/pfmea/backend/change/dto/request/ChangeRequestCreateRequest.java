@@ -12,7 +12,7 @@ public record ChangeRequestCreateRequest(
         @Size(max = 100)
         String entityType,
 
-        @NotNull
+
         UUID entityId,
 
         @NotNull

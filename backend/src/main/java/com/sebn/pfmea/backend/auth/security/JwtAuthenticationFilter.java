@@ -42,6 +42,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authorizationHeader.substring(BEARER_PREFIX.length());
 
+
+
         try {
             authenticateRequest(token, request);
         } catch (JwtException | IllegalArgumentException exception) {

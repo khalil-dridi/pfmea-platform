@@ -20,8 +20,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "audit_logs")
@@ -38,19 +36,17 @@ public class AuditLog {
     @Column(nullable = false, length = 100)
     private String entityType;
 
-    @Column(nullable = false)
+    @Column
     private UUID entityId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private AuditAction action;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
+    @Column(columnDefinition = "LONGTEXT")
     private String oldData;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
+    @Column(columnDefinition = "LONGTEXT")
     private String newData;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

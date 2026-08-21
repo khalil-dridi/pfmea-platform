@@ -2,12 +2,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   inject,
   output,
   signal
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { Notification } from '../../../../../core/models/notification.model';
@@ -27,7 +25,6 @@ import { formatRelativeTime } from '../../../../../core/utils/relative-time';
 export class NotificationDropdown {
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
 
   readonly closed = output<void>();
 
@@ -58,7 +55,10 @@ export class NotificationDropdown {
     event.stopPropagation();
   }
 
-  markAllAsRead(): void {
+  markAllAsRead(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (!this.hasUnread() || this.isMarkingAll()) {
       return;
     }
@@ -68,20 +68,20 @@ export class NotificationDropdown {
 
     this.notificationService
       .markAllAsRead()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isMarkingAll.set(false))
-      )
+      .pipe(finalize(() => this.isMarkingAll.set(false)))
       .subscribe({
         error: (error: HttpErrorResponse) => {
           this.actionError.set(
-            resolveNotificationApiError(error, 'Unable to load notifications. Please try again.')
+            resolveNotificationApiError(error, 'Unable to mark notifications as read. Please try again.')
           );
         }
       });
   }
 
-  onNotificationActivate(notification: Notification): void {
+  onNotificationActivate(notification: Notification, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (this.markingId() === notification.id) {
       return;
     }
@@ -98,15 +98,12 @@ export class NotificationDropdown {
 
     this.notificationService
       .markAsRead(notification.id)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.markingId.set(null))
-      )
+      .pipe(finalize(() => this.markingId.set(null)))
       .subscribe({
         next: () => this.navigateIfPossible(targetRoute),
         error: (error: HttpErrorResponse) => {
           this.actionError.set(
-            resolveNotificationApiError(error, 'Unable to load notifications. Please try again.')
+            resolveNotificationApiError(error, 'Unable to mark this notification as read. Please try again.')
           );
         }
       });

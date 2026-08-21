@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, of, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Notification } from '../models/notification.model';
-import { resolveNotificationApiError } from '../utils/notification.utils';
+import { Notification, NotificationPayload } from '../models/notification.model';
+import { toNotification, resolveNotificationApiError } from '../utils/notification.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -38,13 +38,13 @@ export class NotificationService {
     this.errorMessageSignal.set(null);
     const generation = ++this.loadGeneration;
 
-    this.http.get<Notification[]>(this.baseUrl).subscribe({
+    this.http.get<NotificationPayload[]>(this.baseUrl).subscribe({
       next: notifications => {
         if (generation !== this.loadGeneration) {
           return;
         }
 
-        this.notificationsSignal.set(notifications);
+        this.notificationsSignal.set(notifications.map(payload => toNotification(payload)));
         this.isLoadingSignal.set(false);
         this.requestInFlight = false;
       },
@@ -63,21 +63,42 @@ export class NotificationService {
   }
 
   markAsRead(id: string): Observable<Notification> {
-    return this.http
-      .patch<Notification>(`${this.baseUrl}/${id}/read`, {})
-      .pipe(tap(updated => this.replaceNotification(updated)));
+    const existing = this.notificationsSignal().find(notification => notification.id === id);
+
+    if (existing?.read) {
+      return of(existing);
+    }
+
+    return this.runMutation(
+      this.http.patch<NotificationPayload>(`${this.baseUrl}/${id}/read`, {}).pipe(
+        map(payload => this.toReadNotification(id, payload)),
+        tap(notification => {
+          this.invalidateInFlightLoads();
+          this.replaceNotification(notification);
+        })
+      )
+    );
   }
 
   markAllAsRead(): Observable<void> {
-    return this.http
-      .patch(`${this.baseUrl}/read-all`, {}, {
-        observe: 'response',
-        responseType: 'text'
-      })
-      .pipe(
-        tap(() => this.markLocalNotificationsRead()),
-        map(() => undefined)
-      );
+    if (!this.hasUnread()) {
+      return of(undefined);
+    }
+
+    return this.runMutation(
+      this.http
+        .patch(`${this.baseUrl}/read-all`, {}, {
+          observe: 'response',
+          responseType: 'text'
+        })
+        .pipe(
+          tap(() => {
+            this.invalidateInFlightLoads();
+            this.markLocalNotificationsRead();
+          }),
+          map(() => undefined)
+        )
+    );
   }
 
   clear(): void {
@@ -88,9 +109,56 @@ export class NotificationService {
     this.requestInFlight = false;
   }
 
+  private runMutation<T>(source$: Observable<T>): Observable<T> {
+    const shared$ = source$.pipe(
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+
+    shared$.subscribe({
+      error: () => undefined
+    });
+
+    return shared$;
+  }
+
+  private invalidateInFlightLoads(): void {
+    this.loadGeneration += 1;
+    this.requestInFlight = false;
+    this.isLoadingSignal.set(false);
+  }
+
+  private toReadNotification(id: string, payload: NotificationPayload | null): Notification {
+    const existing = this.notificationsSignal().find(notification => notification.id === id);
+    const fromPayload = payload?.id ? toNotification(payload) : null;
+    const base = fromPayload ?? existing;
+
+    if (!base) {
+      return {
+        id,
+        type: 'SYSTEM',
+        title: '',
+        message: '',
+        relatedEntityType: null,
+        relatedEntityId: null,
+        read: true,
+        readAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    return {
+      ...base,
+      id,
+      read: true,
+      readAt: fromPayload?.readAt ?? existing?.readAt ?? new Date().toISOString()
+    };
+  }
+
   private replaceNotification(updated: Notification): void {
     this.notificationsSignal.update(notifications =>
-      notifications.map(notification => (notification.id === updated.id ? updated : notification))
+      notifications.map(notification =>
+        notification.id === updated.id ? { ...notification, ...updated, read: true } : notification
+      )
     );
   }
 

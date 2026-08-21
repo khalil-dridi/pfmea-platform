@@ -10,9 +10,9 @@ import {
   signal,
   viewChild
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { filter } from 'rxjs';
+import { distinctUntilChanged, filter, map } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { NotificationDropdown } from './notification-dropdown/notification-dropdown';
@@ -44,9 +44,18 @@ export class Navbar {
 
   private readonly notificationRoot = viewChild<ElementRef<HTMLElement>>('notificationRoot');
 
+  private lastNotificationUserId: string | null = null;
+
   constructor() {
     this.updatePageTitle();
-    this.notificationService.loadNotifications();
+
+    toObservable(this.authService.currentUser)
+      .pipe(
+        map(user => user?.userId ?? null),
+        distinctUntilChanged(),
+        takeUntilDestroyed()
+      )
+      .subscribe(userId => this.onAuthenticatedUserChanged(userId));
 
     this.router.events
       .pipe(
@@ -126,9 +135,12 @@ export class Navbar {
     const currentTarget = event.currentTarget;
     const nextTarget = event.relatedTarget;
 
+    if (!(nextTarget instanceof Node)) {
+      return;
+    }
+
     if (
       currentTarget instanceof HTMLElement &&
-      nextTarget instanceof Node &&
       currentTarget.contains(nextTarget)
     ) {
       return;
@@ -166,6 +178,21 @@ export class Navbar {
     if (this.isNotificationsOpen()) {
       this.isNotificationsOpen.set(false);
     }
+  }
+
+  private onAuthenticatedUserChanged(userId: string | null): void {
+    if (this.lastNotificationUserId !== null && this.lastNotificationUserId !== userId) {
+      this.notificationService.clear();
+    }
+
+    this.lastNotificationUserId = userId;
+
+    if (userId) {
+      this.notificationService.loadNotifications();
+      return;
+    }
+
+    this.notificationService.clear();
   }
 
   private updatePageTitle(): void {

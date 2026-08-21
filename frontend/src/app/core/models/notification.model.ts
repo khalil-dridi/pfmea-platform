@@ -18,3 +18,16 @@ export interface Notification {
   readAt: string | null;
   createdAt: string;
 }
+
+export interface NotificationPayload {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+  read?: boolean;
+  isRead?: boolean;
+  readAt: string | null;
+  createdAt: string;
+}

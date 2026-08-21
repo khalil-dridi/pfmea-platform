@@ -17,7 +17,7 @@
         class="notification-dropdown__mark-all"
         [disabled]="!hasUnread() || isMarkingAll()"
         [attr.aria-busy]="isMarkingAll()"
-        (click)="markAllAsRead()"
+        (click)="markAllAsRead($event)"
       >
         @if (isMarkingAll()) {
           <span class="notification-dropdown__spinner" aria-hidden="true"></span>
@@ -64,7 +64,7 @@
             [class.notification-item--unread]="!notification.read"
             [disabled]="markingId() === notification.id"
             [attr.aria-busy]="markingId() === notification.id"
-            (click)="onNotificationActivate(notification)"
+            (click)="onNotificationActivate(notification, $event)"
           >
             <span
               class="notification-item__dot"

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Notification } from '../models/notification.model';
+import { Notification, NotificationPayload } from '../models/notification.model';
 
 export function resolveNotificationRoute(notification: Notification): string | null {
   const entityType = notification.relatedEntityType;
@@ -38,4 +38,26 @@ export function resolveNotificationApiError(error: HttpErrorResponse, fallback: 
   }
 
   return fallback;
+}
+
+export function isNotificationRead(payload: NotificationPayload | Notification): boolean {
+  if ('isRead' in payload && payload.isRead === true) {
+    return true;
+  }
+
+  return payload.read === true;
+}
+
+export function toNotification(payload: NotificationPayload): Notification {
+  return {
+    id: payload.id,
+    type: payload.type,
+    title: payload.title,
+    message: payload.message,
+    relatedEntityType: payload.relatedEntityType,
+    relatedEntityId: payload.relatedEntityId,
+    read: isNotificationRead(payload),
+    readAt: payload.readAt,
+    createdAt: payload.createdAt
+  };
 }

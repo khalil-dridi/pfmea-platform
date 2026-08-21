@@ -1,0 +1,47 @@
+<section class="process-history" aria-labelledby="process-history-title">
+  <header class="process-history__header">
+    <div>
+      <h2 id="process-history-title">History</h2>
+      <p>Recorded actions for this process.</p>
+    </div>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="audit-alert audit-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="retry()">
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="audit-state audit-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading process history…
+    </div>
+  } @else if (logs().length === 0 && errorMessage()) {
+    <div class="audit-state" role="status">Unable to display process history at this time.</div>
+  } @else if (logs().length === 0) {
+    <div class="audit-empty" role="status">
+      <h3>No history found for this process.</h3>
+      <p>No recorded actions were found.</p>
+    </div>
+  } @else {
+    <ul class="process-history__list">
+      @for (log of logs(); track log.id) {
+        <li>
+          <div class="process-history__meta">
+            <time [attr.datetime]="log.createdAt">{{ formatDate(log.createdAt) }}</time>
+            <span>{{ log.performedByName }}</span>
+            <span [class]="actionBadge(log)">{{ actionText(log) }}</span>
+          </div>
+          <p>{{ summary(log) }}</p>
+          <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', log.id]">
+            View Details
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</section>

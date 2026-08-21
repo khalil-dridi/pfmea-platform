@@ -1,14 +1,17 @@
-<section class="data-comparison" aria-label="Change comparison">
+<section class="data-comparison" aria-label="Data comparison">
   @if (rows(); as comparisonRows) {
     <div class="data-comparison__panels">
       <article class="data-comparison__panel">
-        <h3>Previous Data</h3>
+        <h3>{{ previousTitle() }}</h3>
         @if (!hasPreviousData()) {
           <p class="data-comparison__empty">No previous data</p>
         } @else {
           <dl>
             @for (row of comparisonRows; track row.field) {
-              <div [class.data-comparison__changed]="row.changed">
+              <div
+                [class.data-comparison__changed]="row.changed"
+                [class.data-comparison__unchanged]="!row.changed"
+              >
                 <dt>{{ row.label }}</dt>
                 <dd>{{ row.previous }}</dd>
               </div>
@@ -18,12 +21,15 @@
       </article>
 
       <article class="data-comparison__panel">
-        <h3>Proposed Changes</h3>
+        <h3>{{ newTitle() }}</h3>
         <dl>
           @for (row of comparisonRows; track row.field) {
-            <div [class.data-comparison__changed]="row.changed">
+            <div
+              [class.data-comparison__changed]="row.changed"
+              [class.data-comparison__unchanged]="!row.changed"
+            >
               <dt>{{ row.label }}</dt>
-              <dd>{{ row.proposed }}</dd>
+              <dd>{{ row.next }}</dd>
             </div>
           }
         </dl>
@@ -32,29 +38,32 @@
 
     <div class="data-comparison__table-wrap">
       <table class="data-comparison__table">
-        <caption class="visually-hidden">Previous and proposed values</caption>
+        <caption class="visually-hidden">{{ previousTitle() }} and {{ newTitle() }}</caption>
         <thead>
           <tr>
             <th scope="col">Field</th>
-            <th scope="col">Previous</th>
-            <th scope="col">Proposed</th>
+            <th scope="col">{{ previousColumn() }}</th>
+            <th scope="col">{{ newColumn() }}</th>
           </tr>
         </thead>
         <tbody>
           @for (row of comparisonRows; track row.field) {
-            <tr [class.data-comparison__changed]="row.changed">
+            <tr
+              [class.data-comparison__changed]="row.changed"
+              [class.data-comparison__unchanged]="!row.changed"
+            >
               <th scope="row">{{ row.label }}</th>
               <td>{{ hasPreviousData() ? row.previous : 'No previous data' }}</td>
-              <td>{{ row.proposed }}</td>
+              <td>{{ row.next }}</td>
             </tr>
           }
         </tbody>
       </table>
     </div>
   } @else {
-    <div class="data-comparison__panels">
+    <div class="data-comparison__panels data-comparison__panels--fallback">
       <article class="data-comparison__panel">
-        <h3>Previous Data</h3>
+        <h3>{{ previousTitle() }}</h3>
         @if (!hasPreviousData()) {
           <p class="data-comparison__empty">No previous data</p>
         } @else {
@@ -62,8 +71,12 @@
         }
       </article>
       <article class="data-comparison__panel">
-        <h3>Proposed Changes</h3>
-        <pre>{{ proposedFallback() }}</pre>
+        <h3>{{ newTitle() }}</h3>
+        @if (newFallback()) {
+          <pre>{{ newFallback() }}</pre>
+        } @else {
+          <p class="data-comparison__empty">No data</p>
+        }
       </article>
     </div>
   }

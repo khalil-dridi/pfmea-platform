@@ -8,6 +8,10 @@
   gap: 1rem;
 }
 
+.data-comparison__panels--fallback {
+  display: grid;
+}
+
 .data-comparison__panel {
   padding: 1rem 1.05rem 1.05rem;
   background: #f8f7fc;
@@ -63,6 +67,10 @@
 .data-comparison__changed dd,
 .data-comparison__changed td:last-child {
   font-weight: 700;
+}
+
+.data-comparison__unchanged {
+  opacity: 0.72;
 }
 
 .data-comparison__table-wrap {

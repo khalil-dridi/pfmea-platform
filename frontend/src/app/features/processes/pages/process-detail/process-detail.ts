@@ -13,10 +13,11 @@ import { finalize } from 'rxjs';
 import { Process } from '../../models/process.model';
 import { ProcessService } from '../../services/process.service';
 import { formatProcessDateTime, resolveProcessApiError } from '../../utils/process.utils';
+import { ProcessHistory } from '../../../audit/components/process-history/process-history';
 
 @Component({
   selector: 'app-process-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, ProcessHistory],
   templateUrl: './process-detail.html',
   styleUrl: './process-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

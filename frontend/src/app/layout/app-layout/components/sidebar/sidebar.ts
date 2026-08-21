@@ -6,7 +6,7 @@ import { UserRole } from '../../../../features/auth/models/login-response.model'
 interface SidebarNavItem {
   label: string;
   path: string;
-  icon: 'dashboard' | 'processes' | 'search' | 'actions' | 'reports' | 'profile' | 'users' | 'validations' | 'requests';
+  icon: 'dashboard' | 'processes' | 'search' | 'actions' | 'reports' | 'profile' | 'users' | 'validations' | 'requests' | 'history';
   roles?: readonly UserRole[];
 }
 
@@ -34,6 +34,7 @@ export class Sidebar {
     { label: 'Actions', path: '/actions', icon: 'actions' },
     { label: 'Reports', path: '/reports', icon: 'reports' },
     { label: 'Profile', path: '/profile', icon: 'profile' },
+    { label: 'History', path: '/audit', icon: 'history', roles: ['ADMIN', 'SUPER_ADMIN'] },
     { label: 'My Requests', path: '/change-requests/my-requests', icon: 'requests', roles: ['ADMIN'] },
     { label: 'User Management', path: '/users', icon: 'users', roles: ['SUPER_ADMIN'] },
     { label: 'Validations', path: '/change-requests/validations', icon: 'validations', roles: ['SUPER_ADMIN'] }

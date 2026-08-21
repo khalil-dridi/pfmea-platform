@@ -1,0 +1,74 @@
+<section class="audit-detail-page">
+  <header class="audit-detail-page__header">
+    <p class="audit-detail-page__crumb">
+      <a routerLink="/audit">History</a>
+    </p>
+    <h1>Audit Details</h1>
+    <p>Inspect a recorded action and the related data changes.</p>
+    <a routerLink="/audit" class="btn btn--ghost audit-detail-page__back">
+      <span aria-hidden="true">←</span>
+      Back to History
+    </a>
+  </header>
+
+  @if (errorMessage(); as error) {
+    <div class="audit-alert audit-alert--error" role="alert" aria-live="assertive">
+      {{ error }}
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="audit-card audit-state audit-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading audit record…
+    </div>
+  } @else if (log(); as currentLog) {
+    <div class="audit-card audit-detail-card">
+      <dl class="audit-detail-grid">
+        <div>
+          <dt>Audit ID</dt>
+          <dd>{{ currentLog.id }}</dd>
+        </div>
+        <div>
+          <dt>Action</dt>
+          <dd>
+            <span [class]="actionBadge(currentLog)">{{ actionText(currentLog) }}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Entity Type</dt>
+          <dd>{{ currentLog.entityType }}</dd>
+        </div>
+        <div>
+          <dt>Entity ID</dt>
+          <dd>{{ currentLog.entityId || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Performed By</dt>
+          <dd>{{ currentLog.performedByName }}</dd>
+        </div>
+        <div>
+          <dt>Date</dt>
+          <dd>{{ formatDate(currentLog.createdAt) }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="audit-card audit-detail-card">
+      <app-json-data-comparison
+        [oldData]="currentLog.oldData"
+        [newData]="currentLog.newData"
+        previousTitle="Previous Data"
+        newTitle="New Data"
+        previousColumn="Previous"
+        newColumn="New"
+      />
+    </div>
+  } @else {
+    <div class="audit-card audit-empty" role="status">
+      <h2>Audit record not found</h2>
+      <p>The requested history entry could not be displayed.</p>
+      <button type="button" class="btn btn--ghost" (click)="back()">Back to History</button>
+    </div>
+  }
+</section>

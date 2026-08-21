@@ -1,16 +1,16 @@
-@use '../../styles/processes-ui';
+@use '../../styles/audit-ui';
 
 :host {
   display: block;
 }
 
-.process-detail-page {
+.audit-detail-page {
   max-width: 64rem;
   margin: 0 auto;
   overflow-x: hidden;
 }
 
-.process-detail-page__header {
+.audit-detail-page__header {
   margin-bottom: 1.2rem;
 
   h1,
@@ -32,7 +32,7 @@
   }
 }
 
-.process-detail-page__crumb {
+.audit-detail-page__crumb {
   margin: 0 0 0.45rem !important;
   font-size: 0.8rem !important;
 
@@ -48,14 +48,20 @@
   }
 }
 
-.process-detail-card {
-  padding: 1.55rem 1.6rem 1.45rem;
+.audit-detail-page__back {
+  margin-top: 0.95rem;
+  width: fit-content;
 }
 
-.process-detail-grid {
+.audit-detail-card {
+  padding: 1.4rem 1.5rem 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.audit-detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.15rem;
+  gap: 1.05rem;
   margin: 0;
 
   dt {
@@ -81,17 +87,16 @@
 }
 
 @media (max-width: 720px) {
-  .process-detail-grid,
-  .processes-actions--form,
-  .processes-actions--form .btn {
+  .audit-detail-grid,
+  .audit-detail-page__back {
     width: 100%;
   }
 
-  .process-detail-grid {
+  .audit-detail-grid {
     grid-template-columns: 1fr;
   }
 
-  .process-detail-card {
+  .audit-detail-card {
     padding: 1.15rem 1rem 1.1rem;
   }
 }

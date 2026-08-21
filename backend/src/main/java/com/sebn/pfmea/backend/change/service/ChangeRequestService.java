@@ -58,6 +58,14 @@ public class ChangeRequestService {
 
         ChangeRequest savedRequest =
                 changeRequestRepository.save(changeRequest);
+        auditLogService.createAuditLog(
+                CHANGE_REQUEST_ENTITY_TYPE,
+                savedRequest.getId(),
+                AuditAction.CREATE,
+                savedRequest.getOldData(),
+                savedRequest.getNewData(),
+                requester
+        );
 
         notifySuperAdmin(savedRequest, requester);
 

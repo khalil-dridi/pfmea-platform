@@ -49,6 +49,12 @@ export const routes: Routes = [
           import('./features/profile/profile.routes').then(m => m.PROFILE_ROUTES)
       },
       {
+        path: 'audit',
+        canActivate: [roleGuard(['ADMIN', 'SUPER_ADMIN'])],
+        loadChildren: () =>
+          import('./features/audit/audit.routes').then(m => m.AUDIT_ROUTES)
+      },
+      {
         path: 'users',
         canActivate: [roleGuard(['SUPER_ADMIN'])],
         loadChildren: () =>

@@ -1,0 +1,80 @@
+@use '../../styles/audit-ui';
+
+:host {
+  display: block;
+}
+
+.process-history {
+  margin-top: 1.15rem;
+  padding: 1.35rem 1.45rem 1.2rem;
+  background: #fff;
+  border: 1px solid #ece9f5;
+  border-radius: 1.15rem;
+  box-shadow: 0 10px 28px rgba(40, 28, 90, 0.06);
+}
+
+.process-history__header {
+  margin-bottom: 1rem;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin-top: 0.3rem;
+    color: #6b6685;
+    font-size: 0.9rem;
+  }
+}
+
+.process-history__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.process-history__list li {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 0;
+  border-top: 1px solid #eeeaf6;
+}
+
+.process-history__list p {
+  margin: 0;
+  color: #1e1b4b;
+  font-size: 0.92rem;
+}
+
+.process-history__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+  color: #6b6685;
+  font-size: 0.86rem;
+}
+
+.audit-empty h3 {
+  margin: 0;
+  color: #1e1b4b;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .process-history {
+    padding: 1.1rem 1rem 1rem;
+  }
+
+  .process-history__list .btn {
+    width: 100%;
+  }
+}

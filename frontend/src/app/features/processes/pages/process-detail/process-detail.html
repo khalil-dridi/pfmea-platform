@@ -48,6 +48,8 @@
         </button>
       </div>
     </div>
+
+    <app-process-history [processId]="currentProcess.id" />
   } @else {
     <div class="processes-card processes-empty" role="status">
       <h2>Process not found</h2>

@@ -1,0 +1,158 @@
+<section class="audit-page">
+  <header class="audit-page__header">
+    <div>
+      <h1>History</h1>
+      <p>Track changes and actions across the P-FMEA platform.</p>
+    </div>
+  </header>
+
+  @if (isAdmin() && !isSuperAdmin()) {
+    <h2 class="audit-page__section-title">My History</h2>
+  }
+
+  @if (isSuperAdmin()) {
+    <p class="audit-page__hint">
+      Review actions performed by a selected user. Process-specific history is available from Process Details.
+    </p>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="audit-alert audit-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="loadHistory()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <div class="audit-card">
+    <form class="audit-toolbar" role="search" (submit)="$event.preventDefault()">
+      <div class="field field--search">
+        <label class="visually-hidden" for="audit-search">Search history</label>
+        <input
+          id="audit-search"
+          type="search"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          placeholder="Search by action, entity or user..."
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="field">
+        <label for="action-filter">Action</label>
+        <select id="action-filter" [value]="actionFilter()" (change)="onActionFilterChange($event)">
+          <option value="ALL">All</option>
+          @for (action of actionOptions; track action) {
+            <option [value]="action">{{ actionText(action) }}</option>
+          }
+        </select>
+      </div>
+
+      @if (isSuperAdmin()) {
+        <div class="field">
+          <label for="user-filter">Performed by</label>
+          <select id="user-filter" [value]="selectedUserId() ?? ''" (change)="onUserFilterChange($event)">
+            @if (currentUserId(); as currentId) {
+              @if (users().length === 0) {
+                <option [value]="currentId">My activity</option>
+              }
+            }
+            @for (user of users(); track user.id) {
+              <option [value]="user.id">{{ userOptionLabel(user) }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <button type="button" class="btn btn--ghost" [disabled]="searchQuery().length === 0" (click)="clearSearch()">
+        Clear
+      </button>
+    </form>
+
+    @if (isLoading()) {
+      <div class="audit-state audit-state--loading" role="status" aria-live="polite">
+        <span class="spinner spinner--muted" aria-hidden="true"></span>
+        Loading history…
+      </div>
+    } @else if (logs().length === 0 && errorMessage()) {
+      <div class="audit-state" role="status">Unable to display history at this time.</div>
+    } @else if (!hasCompletedLoad()) {
+      <div class="audit-state audit-state--loading" role="status" aria-live="polite">
+        <span class="spinner spinner--muted" aria-hidden="true"></span>
+        Loading history…
+      </div>
+    } @else if (logs().length === 0) {
+      <div class="audit-empty" role="status">
+        <h2>No history available</h2>
+        <p>No recorded actions were found.</p>
+      </div>
+    } @else if (filteredLogs().length === 0) {
+      <div class="audit-empty" role="status">
+        <h2>No history available</h2>
+        <p>No recorded actions match the current filters.</p>
+      </div>
+    } @else {
+      <div class="audit-table-wrap">
+        <table class="audit-table">
+          <caption class="visually-hidden">Audit history</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Action</th>
+              <th scope="col">Entity</th>
+              <th scope="col">Entity ID</th>
+              <th scope="col">Performed By</th>
+              <th scope="col">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of filteredLogs(); track log.id) {
+              <tr>
+                <td class="audit-table__date">{{ formatDate(log.createdAt) }}</td>
+                <td>
+                  <span [class]="actionBadge(log.action)">{{ actionText(log.action) }}</span>
+                </td>
+                <td>{{ log.entityType }}</td>
+                <td>
+                  <span [title]="log.entityId ?? ''">{{ entityId(log.entityId) }}</span>
+                </td>
+                <td>{{ log.performedByName }}</td>
+                <td>
+                  <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', log.id]">
+                    View Details
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="audit-cards">
+        @for (log of filteredLogs(); track log.id) {
+          <li class="audit-item-card">
+            <div class="audit-item-card__top">
+              <div>
+                <h2>{{ log.entityType }}</h2>
+                <p>{{ formatDate(log.createdAt) }}</p>
+              </div>
+              <span [class]="actionBadge(log.action)">{{ actionText(log.action) }}</span>
+            </div>
+            <dl>
+              <div>
+                <dt>Performed By</dt>
+                <dd>{{ log.performedByName }}</dd>
+              </div>
+              <div>
+                <dt>Entity ID</dt>
+                <dd>{{ entityId(log.entityId) }}</dd>
+              </div>
+            </dl>
+            <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', log.id]">View Details</a>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

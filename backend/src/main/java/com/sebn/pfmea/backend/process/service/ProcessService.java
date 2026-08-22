@@ -6,6 +6,7 @@ import com.sebn.pfmea.backend.change.service.ChangeRequestService;
 import com.sebn.pfmea.backend.process.dto.request.ProcessCreateRequest;
 import com.sebn.pfmea.backend.process.dto.request.ProcessUpdateRequest;
 import com.sebn.pfmea.backend.process.dto.response.ProcessResponse;
+import com.sebn.pfmea.backend.process.dto.snapshot.ProcessSnapshot;
 import com.sebn.pfmea.backend.process.entity.Process;
 import com.sebn.pfmea.backend.process.mapper.ProcessMapper;
 import com.sebn.pfmea.backend.process.repository.ProcessRepository;
@@ -78,10 +79,17 @@ public class ProcessService {
         Process existingProcess = findById(id);
 
         if (currentUser.getRole() == Role.ADMIN) {
+
+            ProcessSnapshot oldData = new ProcessSnapshot(
+                    existingProcess.getId(),
+                    existingProcess.getName(),
+                    existingProcess.getProcessNumber()
+            );
+
             createChangeRequest(
                     ChangeRequestOperation.UPDATE,
                     id,
-                    existingProcess,
+                    oldData,
                     request,
                     currentUser
             );

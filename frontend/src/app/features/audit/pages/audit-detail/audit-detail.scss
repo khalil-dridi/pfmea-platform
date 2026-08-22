@@ -54,49 +54,115 @@
 }
 
 .audit-detail-card {
-  padding: 1.4rem 1.5rem 1.35rem;
+  padding: 1.35rem 1.45rem 1.3rem;
   margin-bottom: 1rem;
 }
 
-.audit-detail-grid {
+.audit-detail-card__header {
+  margin-bottom: 1rem;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin-top: 0.28rem;
+    color: #6b6685;
+    font-size: 0.88rem;
+  }
+}
+
+.audit-summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.05rem;
+  gap: 1.1rem 1.4rem;
   margin: 0;
 
   dt {
-    color: #8a86a0;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    color: #6b6685;
+    font-size: 0.78rem;
+    font-weight: 600;
   }
 
   dd {
-    margin: 0.35rem 0 0;
-    min-height: 2.7rem;
-    padding: 0.7rem 0.85rem;
+    margin: 0.38rem 0 0;
     color: #1e1b4b;
-    background: #f7f6fb;
-    border: 1px solid #ece9f5;
-    border-radius: 0.55rem;
-    font-size: 0.92rem;
-    line-height: 1.35;
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.4;
     word-break: break-word;
   }
 }
 
+.audit-summary__meta {
+  display: block;
+  margin-top: 0.2rem;
+  color: #6b6685;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.audit-technical__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  color: #1e1b4b;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #3b1699;
+    outline-offset: 3px;
+  }
+}
+
+.audit-technical__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin: 1rem 0 0;
+
+  dt {
+    color: #6b6685;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0.28rem 0 0;
+    color: #5b5674;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    word-break: break-all;
+  }
+}
+
 @media (max-width: 720px) {
-  .audit-detail-grid,
+  .audit-summary,
+  .audit-technical__grid,
   .audit-detail-page__back {
     width: 100%;
   }
 
-  .audit-detail-grid {
+  .audit-summary,
+  .audit-technical__grid {
     grid-template-columns: 1fr;
   }
 
   .audit-detail-card {
-    padding: 1.15rem 1rem 1.1rem;
+    padding: 1.1rem 1rem 1.05rem;
   }
 }

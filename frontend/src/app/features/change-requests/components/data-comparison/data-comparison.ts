@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { JsonDataComparison } from '../../../../shared/components/json-data-comparison/json-data-comparison';
 import { ChangeRequest } from '../../models/change-request.model';
 
@@ -9,8 +9,8 @@ import { ChangeRequest } from '../../models/change-request.model';
     <app-json-data-comparison
       [oldData]="request().oldData"
       [newData]="request().newData"
-      previousTitle="Previous Data"
-      newTitle="Proposed Changes"
+      [previousTitle]="isCreate() ? 'Previous Data' : 'Previous'"
+      [newTitle]="isCreate() ? 'New Data' : 'Proposed'"
       previousColumn="Previous"
       newColumn="Proposed"
     />
@@ -19,4 +19,6 @@ import { ChangeRequest } from '../../models/change-request.model';
 })
 export class DataComparison {
   readonly request = input.required<ChangeRequest>();
+
+  readonly isCreate = computed(() => this.request().operation === 'CREATE');
 }

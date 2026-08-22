@@ -1,17 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, finalize, map, merge, of, Subject, switchMap } from 'rxjs';
 import { AuditLog } from '../../models/audit-log.model';
+import { AuditResultStatus } from '../../models/audit-presentation.model';
 import { AuditService } from '../../services/audit.service';
-import {
-  actionLabel,
-  actionSummary,
-  badgeClass,
-  formatAuditDateTime,
-  resolveAuditApiError
-} from '../../utils/audit.utils';
+import { resultBadgeClass, toAuditPresentation } from '../../utils/audit-presentation';
+import { resolveAuditApiError } from '../../utils/audit.utils';
 
 @Component({
   selector: 'app-process-history',
@@ -30,6 +26,8 @@ export class ProcessHistory {
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
 
+  readonly items = computed(() => this.logs().map(log => toAuditPresentation(log)));
+
   constructor() {
     merge(
       toObservable(this.processId),
@@ -46,20 +44,8 @@ export class ProcessHistory {
     this.reload$.next();
   }
 
-  actionText(log: AuditLog): string {
-    return actionLabel(log.action);
-  }
-
-  actionBadge(log: AuditLog): string {
-    return badgeClass(log.action);
-  }
-
-  summary(log: AuditLog): string {
-    return actionSummary(log);
-  }
-
-  formatDate(value: string): string {
-    return formatAuditDateTime(value);
+  resultClass(status: AuditResultStatus): string {
+    return resultBadgeClass(status);
   }
 
   private fetchHistory(processId: string) {

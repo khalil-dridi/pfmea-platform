@@ -86,6 +86,11 @@
   background: #ede9fe;
 }
 
+.badge--pending {
+  color: #92400e;
+  background: #fef3c7;
+}
+
 .badge--danger {
   color: #991b1b;
   background: #fee2e2;
@@ -165,6 +170,11 @@
 
   &:hover:not(:disabled) {
     background: #f5f6fa;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3b1699;
+    outline-offset: 3px;
   }
 }
 

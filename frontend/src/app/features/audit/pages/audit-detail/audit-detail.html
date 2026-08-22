@@ -3,8 +3,8 @@
     <p class="audit-detail-page__crumb">
       <a routerLink="/audit">History</a>
     </p>
-    <h1>Audit Details</h1>
-    <p>Inspect a recorded action and the related data changes.</p>
+    <h1>Activity Details</h1>
+    <p>View the details of this platform activity.</p>
     <a routerLink="/audit" class="btn btn--ghost audit-detail-page__back">
       <span aria-hidden="true">←</span>
       Back to History
@@ -20,53 +20,92 @@
   @if (isLoading()) {
     <div class="audit-card audit-state audit-state--loading" role="status" aria-live="polite">
       <span class="spinner spinner--muted" aria-hidden="true"></span>
-      Loading audit record…
+      Loading activity…
     </div>
-  } @else if (log(); as currentLog) {
-    <div class="audit-card audit-detail-card">
-      <dl class="audit-detail-grid">
+  } @else if (item(); as currentItem) {
+    <section class="audit-card audit-detail-card" aria-labelledby="activity-summary-title">
+      <h2 id="activity-summary-title" class="visually-hidden">Activity summary</h2>
+      <dl class="audit-summary">
         <div>
-          <dt>Audit ID</dt>
-          <dd>{{ currentLog.id }}</dd>
+          <dt>What happened</dt>
+          <dd>{{ currentItem.whatHappened }}</dd>
         </div>
         <div>
-          <dt>Action</dt>
+          <dt>Module</dt>
+          <dd>{{ currentItem.typeLabel }}</dd>
+        </div>
+        <div>
+          <dt>Item</dt>
           <dd>
-            <span [class]="actionBadge(currentLog)">{{ actionText(currentLog) }}</span>
+            {{ currentItem.itemLabel }}
+            @if (currentItem.itemDetail) {
+              <span class="audit-summary__meta">{{ currentItem.itemDetail }}</span>
+            }
           </dd>
         </div>
         <div>
-          <dt>Entity Type</dt>
-          <dd>{{ currentLog.entityType }}</dd>
-        </div>
-        <div>
-          <dt>Entity ID</dt>
-          <dd>{{ currentLog.entityId || '—' }}</dd>
-        </div>
-        <div>
-          <dt>Performed By</dt>
-          <dd>{{ currentLog.performedByName }}</dd>
+          <dt>Performed by</dt>
+          <dd>{{ currentItem.performedByName }}</dd>
         </div>
         <div>
           <dt>Date</dt>
-          <dd>{{ formatDate(currentLog.createdAt) }}</dd>
+          <dd>{{ currentItem.datetimeLabel }}</dd>
+        </div>
+        <div>
+          <dt>Result</dt>
+          <dd>
+            <span [class]="resultClass()">{{ currentItem.resultLabel }}</span>
+          </dd>
         </div>
       </dl>
-    </div>
+    </section>
 
-    <div class="audit-card audit-detail-card">
+    <section class="audit-card audit-detail-card" aria-labelledby="activity-changes-title">
+      <header class="audit-detail-card__header">
+        <h2 id="activity-changes-title">Recorded changes</h2>
+        <p>Compare previous values with the recorded new values.</p>
+      </header>
       <app-json-data-comparison
-        [oldData]="currentLog.oldData"
-        [newData]="currentLog.newData"
+        [oldData]="log()?.oldData ?? null"
+        [newData]="log()?.newData ?? null"
         previousTitle="Previous Data"
         newTitle="New Data"
         previousColumn="Previous"
         newColumn="New"
       />
-    </div>
+    </section>
+
+    <section class="audit-card audit-detail-card audit-technical">
+      <button
+        type="button"
+        class="audit-technical__toggle"
+        [attr.aria-expanded]="technicalOpen()"
+        aria-controls="audit-technical-details"
+        (click)="toggleTechnical()"
+      >
+        Technical details
+        <span aria-hidden="true">{{ technicalOpen() ? '−' : '+' }}</span>
+      </button>
+      @if (technicalOpen()) {
+        <dl id="audit-technical-details" class="audit-technical__grid">
+          <div>
+            <dt>Audit ID</dt>
+            <dd>{{ currentItem.id }}</dd>
+          </div>
+          <div>
+            <dt>Entity Type</dt>
+            <dd>{{ currentItem.entityType }}</dd>
+          </div>
+          <div>
+            <dt>Entity ID</dt>
+            <dd>{{ currentItem.entityId || '—' }}</dd>
+          </div>
+        </dl>
+      }
+    </section>
   } @else {
     <div class="audit-card audit-empty" role="status">
-      <h2>Audit record not found</h2>
+      <h2>Activity not found</h2>
       <p>The requested history entry could not be displayed.</p>
       <button type="button" class="btn btn--ghost" (click)="back()">Back to History</button>
     </div>

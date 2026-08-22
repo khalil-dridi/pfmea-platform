@@ -32,49 +32,23 @@
       </div>
     }
 
-    @if (currentRequest.status === 'APPROVED') {
-      <div class="requests-alert requests-alert--success" role="status">
-        <div class="requests-alert__body">
-          <p><strong>Approved</strong></p>
-          <p>
-            Reviewed by {{ currentRequest.reviewedByName || '—' }}
-            on {{ formatDate(currentRequest.reviewedAt) }}.
-          </p>
-          @if (currentRequest.reviewComment) {
-            <p>{{ currentRequest.reviewComment }}</p>
-          }
-        </div>
-      </div>
-    }
+    <section class="requests-card request-section" aria-labelledby="request-summary-title">
+      <header class="request-section__header">
+        <h2 id="request-summary-title">Request Summary</h2>
+      </header>
 
-    @if (currentRequest.status === 'REJECTED') {
-      <div class="requests-alert requests-alert--rejected" role="status">
-        <div class="requests-alert__body">
-          <p><strong>Rejected</strong></p>
-          <p>
-            Reviewed by {{ currentRequest.reviewedByName || '—' }}
-            on {{ formatDate(currentRequest.reviewedAt) }}.
-          </p>
-          @if (currentRequest.reviewComment) {
-            <p class="request-detail__comment">{{ currentRequest.reviewComment }}</p>
-          }
-        </div>
-      </div>
-    }
-
-    <div class="requests-card request-detail-card">
-      <dl class="request-detail-grid">
-        <div>
-          <dt>Request ID</dt>
-          <dd>{{ currentRequest.id }}</dd>
-        </div>
-        <div>
-          <dt>Entity Type</dt>
-          <dd>{{ currentRequest.entityType }}</dd>
-        </div>
+      <dl class="request-summary">
         <div>
           <dt>Operation</dt>
-          <dd>{{ operationText(currentRequest) }}</dd>
+          <dd>
+            <span
+              class="badge badge--operation"
+              [class.badge--create]="currentRequest.operation === 'CREATE'"
+              [class.badge--update]="currentRequest.operation === 'UPDATE'"
+            >
+              {{ operationText(currentRequest) }}
+            </span>
+          </dd>
         </div>
         <div>
           <dt>Submitted By</dt>
@@ -88,7 +62,7 @@
           <dt>Status</dt>
           <dd>
             <span
-              class="badge"
+              class="badge badge--status"
               [class.badge--pending]="currentRequest.status === 'PENDING'"
               [class.badge--approved]="currentRequest.status === 'APPROVED'"
               [class.badge--rejected]="currentRequest.status === 'REJECTED'"
@@ -106,33 +80,71 @@
           <dt>Reviewed At</dt>
           <dd>{{ formatDate(currentRequest.reviewedAt) }}</dd>
         </div>
-        <div class="request-detail-grid__full">
+        <div
+          class="request-summary__full"
+          [class.request-summary__comment--rejected]="currentRequest.status === 'REJECTED'"
+        >
           <dt>Review Comment</dt>
-          <dd>{{ currentRequest.reviewComment || '—' }}</dd>
+          <dd>{{ reviewCommentText(currentRequest) }}</dd>
         </div>
       </dl>
-    </div>
+    </section>
 
-    <div class="requests-card request-detail-card">
+    <section class="requests-card request-section" aria-labelledby="proposed-changes-title">
+      <header class="request-section__header">
+        <h2 id="proposed-changes-title">Proposed Changes</h2>
+        <p>
+          {{
+            currentRequest.operation === 'CREATE'
+              ? 'Review the new data submitted for creation.'
+              : 'Compare the current values with the submitted changes.'
+          }}
+        </p>
+      </header>
       <app-data-comparison [request]="currentRequest" />
-    </div>
+    </section>
+
+    @if (currentRequest.status === 'APPROVED' || currentRequest.status === 'REJECTED') {
+      <section
+        class="request-decision"
+        [class.request-decision--approved]="currentRequest.status === 'APPROVED'"
+        [class.request-decision--rejected]="currentRequest.status === 'REJECTED'"
+        [attr.aria-label]="statusText(currentRequest)"
+      >
+        <p class="request-decision__title">{{ statusText(currentRequest) }}</p>
+        <p>{{ decisionLine(currentRequest) }}</p>
+        @if (currentRequest.status === 'REJECTED') {
+          <p class="request-decision__comment">{{ reviewCommentText(currentRequest) }}</p>
+        } @else if (currentRequest.reviewComment) {
+          <p class="request-decision__comment">{{ currentRequest.reviewComment }}</p>
+        }
+      </section>
+    }
 
     @if (currentRequest.status === 'PENDING' && isSuperAdmin()) {
-      <div class="requests-actions requests-actions--form">
+      <div class="requests-actions requests-actions--form request-detail-actions">
         <button
           type="button"
           class="btn btn--danger"
           [disabled]="isSubmitting()"
+          [attr.aria-busy]="isSubmitting()"
           (click)="openRejectDialog()"
         >
+          @if (isSubmitting() && pendingAction() === 'reject') {
+            <span class="spinner" aria-hidden="true"></span>
+          }
           Reject
         </button>
         <button
           type="button"
           class="btn btn--primary"
           [disabled]="isSubmitting()"
+          [attr.aria-busy]="isSubmitting()"
           (click)="openApproveDialog()"
         >
+          @if (isSubmitting() && pendingAction() === 'approve') {
+            <span class="spinner" aria-hidden="true"></span>
+          }
           Approve
         </button>
       </div>

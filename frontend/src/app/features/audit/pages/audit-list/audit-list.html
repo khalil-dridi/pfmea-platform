@@ -3,17 +3,17 @@
     <div>
       <h1>History</h1>
       <p>Track changes and actions across the P-FMEA platform.</p>
+      @if (isSuperAdmin()) {
+        <p class="audit-page__lede">Review platform activity, approvals and important changes.</p>
+      }
     </div>
   </header>
 
-  @if (isAdmin() && !isSuperAdmin()) {
-    <h2 class="audit-page__section-title">My History</h2>
-  }
-
-  @if (isSuperAdmin()) {
-    <p class="audit-page__hint">
-      Review actions performed by a selected user. Process-specific history is available from Process Details.
-    </p>
+  @if (isAdminOnly()) {
+    <div class="audit-page__context">
+      <h2>My History</h2>
+      <p>Track the change requests and actions you have performed.</p>
+    </div>
   }
 
   @if (errorMessage(); as error) {
@@ -34,38 +34,76 @@
           type="search"
           [value]="searchQuery()"
           (input)="onSearchInput($event)"
-          placeholder="Search by action, entity or user..."
+          [placeholder]="
+            isAdminOnly()
+              ? 'Search by action, process or status...'
+              : 'Search by action, module, user or item...'
+          "
           autocomplete="off"
         />
       </div>
 
-      <div class="field">
+      <div class="field field--compact">
         <label for="action-filter">Action</label>
         <select id="action-filter" [value]="actionFilter()" (change)="onActionFilterChange($event)">
-          <option value="ALL">All</option>
-          @for (action of actionOptions; track action) {
-            <option [value]="action">{{ actionText(action) }}</option>
+          @for (option of isAdminOnly() ? adminActionFilters : superAdminActionFilters; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
           }
         </select>
       </div>
 
       @if (isSuperAdmin()) {
-        <div class="field">
-          <label for="user-filter">Performed by</label>
-          <select id="user-filter" [value]="selectedUserId() ?? ''" (change)="onUserFilterChange($event)">
-            @if (currentUserId(); as currentId) {
-              @if (users().length === 0) {
-                <option [value]="currentId">My activity</option>
-              }
+        <div class="field field--compact">
+          <label for="module-filter">Module</label>
+          <select id="module-filter" [value]="moduleFilter()" (change)="onModuleFilterChange($event)">
+            @for (option of moduleFilters; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
             }
+          </select>
+        </div>
+
+        <div class="field field--compact">
+          <label for="result-filter">Result</label>
+          <select id="result-filter" [value]="resultFilter()" (change)="onResultFilterChange($event)">
+            <option value="ALL">All</option>
+            <option value="SUCCESSFUL">Successful</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="PENDING">Pending</option>
+          </select>
+        </div>
+
+        <div class="field field--performer">
+          <label for="user-filter">Performed by</label>
+          <select id="user-filter" [value]="performedByFilter()" (change)="onPerformedByChange($event)">
+            <option value="ALL">All</option>
             @for (user of users(); track user.id) {
               <option [value]="user.id">{{ userOptionLabel(user) }}</option>
             }
           </select>
         </div>
+      } @else {
+        <div class="field field--compact">
+          <label for="result-filter">Status</label>
+          <select id="result-filter" [value]="resultFilter()" (change)="onResultFilterChange($event)">
+            <option value="ALL">All</option>
+            <option value="PENDING">Pending</option>
+            <option value="SUCCESSFUL">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
       }
 
-      <button type="button" class="btn btn--ghost" [disabled]="searchQuery().length === 0" (click)="clearSearch()">
+      <div class="field field--date">
+        <label for="from-date">From</label>
+        <input id="from-date" type="date" [value]="fromDate()" (change)="onFromDateChange($event)" />
+      </div>
+
+      <div class="field field--date">
+        <label for="to-date">To</label>
+        <input id="to-date" type="date" [value]="toDate()" (change)="onToDateChange($event)" />
+      </div>
+
+      <button type="button" class="btn btn--ghost audit-toolbar__clear" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
         Clear
       </button>
     </form>
@@ -87,40 +125,97 @@
         <h2>No history available</h2>
         <p>No recorded actions were found.</p>
       </div>
-    } @else if (filteredLogs().length === 0) {
+    } @else if (filteredItems().length === 0) {
       <div class="audit-empty" role="status">
-        <h2>No history available</h2>
-        <p>No recorded actions match the current filters.</p>
+        <h2>No matching history</h2>
+        <p>No recorded actions match the selected filters.</p>
       </div>
     } @else {
       <div class="audit-table-wrap">
         <table class="audit-table">
-          <caption class="visually-hidden">Audit history</caption>
+          <caption class="visually-hidden">Platform history</caption>
           <thead>
-            <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Action</th>
-              <th scope="col">Entity</th>
-              <th scope="col">Entity ID</th>
-              <th scope="col">Performed By</th>
-              <th scope="col">Details</th>
-            </tr>
+            @if (isAdminOnly()) {
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">What you did</th>
+                <th scope="col">Item</th>
+                <th scope="col">Type</th>
+                <th scope="col">Status</th>
+                <th scope="col">Reviewed by</th>
+                <th scope="col">Reviewed at</th>
+                <th scope="col">Details</th>
+              </tr>
+            } @else {
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">What happened</th>
+                <th scope="col">Type</th>
+                <th scope="col">Item</th>
+                <th scope="col">Performed by</th>
+                <th scope="col">Result</th>
+                <th scope="col">Details</th>
+              </tr>
+            }
           </thead>
           <tbody>
-            @for (log of filteredLogs(); track log.id) {
+            @for (item of filteredItems(); track item.id) {
               <tr>
-                <td class="audit-table__date">{{ formatDate(log.createdAt) }}</td>
                 <td>
-                  <span [class]="actionBadge(log.action)">{{ actionText(log.action) }}</span>
+                  <div class="audit-date">
+                    <time [attr.datetime]="item.createdAt">{{ item.dateLabel }}</time>
+                    <span>{{ item.timeLabel }}</span>
+                  </div>
                 </td>
-                <td>{{ log.entityType }}</td>
+                @if (isAdminOnly()) {
+                  <td>
+                    <div class="audit-event">
+                      <span class="audit-event__icon" aria-hidden="true"></span>
+                      <div>
+                        <strong>{{ item.whatYouDid }}</strong>
+                        @if (item.eventContext) {
+                          <span>{{ item.eventContext }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ item.itemLabel }}</td>
+                  <td>{{ item.operationLabel }}</td>
+                  <td>
+                    <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
+                  </td>
+                  <td>{{ item.reviewedByName || '—' }}</td>
+                  <td>{{ item.reviewedAtLabel || '—' }}</td>
+                } @else {
+                  <td>
+                    <div class="audit-event">
+                      <span class="audit-event__icon" aria-hidden="true"></span>
+                      <div>
+                        <strong>{{ item.whatHappened }}</strong>
+                        @if (item.eventContext) {
+                          <span>{{ item.eventContext }}</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ item.typeLabel }}</td>
+                  <td>
+                    <div class="audit-item">
+                      <strong>{{ item.itemLabel }}</strong>
+                      @if (item.itemDetail) {
+                        <span>{{ item.itemDetail }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>{{ item.performedByName }}</td>
+                  <td>
+                    <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
+                  </td>
+                }
                 <td>
-                  <span [title]="log.entityId ?? ''">{{ entityId(log.entityId) }}</span>
-                </td>
-                <td>{{ log.performedByName }}</td>
-                <td>
-                  <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', log.id]">
+                  <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', item.id]">
                     View Details
+                    <span aria-hidden="true">→</span>
                   </a>
                 </td>
               </tr>
@@ -130,26 +225,32 @@
       </div>
 
       <ul class="audit-cards">
-        @for (log of filteredLogs(); track log.id) {
+        @for (item of filteredItems(); track item.id) {
           <li class="audit-item-card">
             <div class="audit-item-card__top">
-              <div>
-                <h2>{{ log.entityType }}</h2>
-                <p>{{ formatDate(log.createdAt) }}</p>
+              <div class="audit-event">
+                <span class="audit-event__icon" aria-hidden="true"></span>
+                <div>
+                  <h2>{{ isAdminOnly() ? item.whatYouDid : item.whatHappened }}</h2>
+                  <p>{{ item.itemLabel }}</p>
+                </div>
               </div>
-              <span [class]="actionBadge(log.action)">{{ actionText(log.action) }}</span>
+              <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
             </div>
             <dl>
               <div>
-                <dt>Performed By</dt>
-                <dd>{{ log.performedByName }}</dd>
+                <dt>Date</dt>
+                <dd>{{ item.datetimeLabel }}</dd>
               </div>
               <div>
-                <dt>Entity ID</dt>
-                <dd>{{ entityId(log.entityId) }}</dd>
+                <dt>Performed by</dt>
+                <dd>{{ item.performedByName }}</dd>
               </div>
             </dl>
-            <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', log.id]">View Details</a>
+            <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', item.id]">
+              View Details
+              <span aria-hidden="true">→</span>
+            </a>
           </li>
         }
       </ul>

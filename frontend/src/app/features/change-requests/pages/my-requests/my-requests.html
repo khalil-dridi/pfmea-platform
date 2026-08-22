@@ -16,7 +16,28 @@
   }
 
   <div class="requests-card">
-    <form class="requests-toolbar" (submit)="$event.preventDefault()">
+    <form class="requests-toolbar" role="search" (submit)="$event.preventDefault()">
+      <div class="field field--search">
+        <label class="visually-hidden" for="request-search">Search requests</label>
+        <input
+          id="request-search"
+          type="search"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          placeholder="Search by action, process or status..."
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="field">
+        <label for="action-filter">Action</label>
+        <select id="action-filter" [value]="actionFilter()" (change)="onActionFilterChange($event)">
+          <option value="ALL">All</option>
+          <option value="CREATE">Create</option>
+          <option value="UPDATE">Update</option>
+        </select>
+      </div>
+
       <div class="field">
         <label for="status-filter">Status</label>
         <select id="status-filter" [value]="statusFilter()" (change)="onStatusFilterChange($event)">
@@ -26,6 +47,32 @@
           <option value="REJECTED">Rejected</option>
         </select>
       </div>
+
+      <div class="field">
+        <label for="from-date">From</label>
+        <input
+          id="from-date"
+          type="date"
+          [value]="fromDate()"
+          (change)="onFromDateChange($event)"
+          placeholder="mm/dd/yyyy"
+        />
+      </div>
+
+      <div class="field">
+        <label for="to-date">To</label>
+        <input
+          id="to-date"
+          type="date"
+          [value]="toDate()"
+          (change)="onToDateChange($event)"
+          placeholder="mm/dd/yyyy"
+        />
+      </div>
+
+      <button type="button" class="btn btn--ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
+        Clear
+      </button>
     </form>
 
     @if (isLoading()) {
@@ -35,7 +82,6 @@
             <tr>
               <th scope="col">Entity</th>
               <th scope="col">Operation</th>
-              <th scope="col">Submitted By</th>
               <th scope="col">Status</th>
               <th scope="col">Submitted At</th>
               <th scope="col">Reviewed At</th>
@@ -45,7 +91,7 @@
           <tbody>
             @for (row of skeletonRows; track row) {
               <tr>
-                <td colspan="7"><span class="skeleton"></span></td>
+                <td colspan="6"><span class="skeleton"></span></td>
               </tr>
             }
           </tbody>
@@ -64,8 +110,8 @@
       </div>
     } @else if (filteredRequests().length === 0) {
       <div class="requests-empty" role="status">
-        <h2>No requests</h2>
-        <p>No change requests match the selected status.</p>
+        <h2>No matching requests</h2>
+        <p>No requests match the selected filters.</p>
       </div>
     } @else {
       <div class="requests-table-wrap">
@@ -75,7 +121,6 @@
             <tr>
               <th scope="col">Entity</th>
               <th scope="col">Operation</th>
-              <th scope="col">Submitted By</th>
               <th scope="col">Status</th>
               <th scope="col">Submitted At</th>
               <th scope="col">Reviewed At</th>
@@ -85,9 +130,15 @@
           <tbody>
             @for (request of filteredRequests(); track request.id) {
               <tr>
-                <td><strong>{{ request.entityType }}</strong></td>
+                <td>
+                  <div class="requests-entity">
+                    <strong>{{ entityName(request) || entityTypeText(request) }}</strong>
+                    @if (entityName(request)) {
+                      <span>{{ entityTypeText(request) }}</span>
+                    }
+                  </div>
+                </td>
                 <td>{{ operationText(request) }}</td>
-                <td class="requests-table__secondary">{{ request.requestedByName }}</td>
                 <td>
                   <span
                     class="badge"
@@ -117,8 +168,8 @@
           <li class="request-card">
             <div class="request-card__top">
               <div>
-                <h2>{{ request.entityType }} · {{ operationText(request) }}</h2>
-                <p class="requests-table__secondary">Submitted by {{ request.requestedByName }}</p>
+                <h2>{{ entityName(request) || entityTypeText(request) }}</h2>
+                <p>{{ entityTypeText(request) }} · {{ operationText(request) }}</p>
               </div>
               <span
                 class="badge"

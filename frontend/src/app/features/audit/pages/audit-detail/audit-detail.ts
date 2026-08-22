@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   OnInit,
@@ -13,12 +14,8 @@ import { finalize } from 'rxjs';
 import { JsonDataComparison } from '../../../../shared/components/json-data-comparison/json-data-comparison';
 import { AuditLog } from '../../models/audit-log.model';
 import { AuditService } from '../../services/audit.service';
-import {
-  actionLabel,
-  badgeClass,
-  formatAuditDateTime,
-  resolveAuditApiError
-} from '../../utils/audit.utils';
+import { resultBadgeClass, toAuditPresentation } from '../../utils/audit-presentation';
+import { resolveAuditApiError } from '../../utils/audit.utils';
 
 @Component({
   selector: 'app-audit-detail',
@@ -36,6 +33,12 @@ export class AuditDetail implements OnInit {
   readonly log = signal<AuditLog | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  readonly technicalOpen = signal(false);
+
+  readonly item = computed(() => {
+    const log = this.log();
+    return log ? toAuditPresentation(log) : null;
+  });
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -49,16 +52,13 @@ export class AuditDetail implements OnInit {
     this.loadAudit(id);
   }
 
-  actionText(log: AuditLog): string {
-    return actionLabel(log.action);
+  resultClass(): string {
+    const item = this.item();
+    return item ? resultBadgeClass(item.status) : '';
   }
 
-  actionBadge(log: AuditLog): string {
-    return badgeClass(log.action);
-  }
-
-  formatDate(value: string): string {
-    return formatAuditDateTime(value);
+  toggleTechnical(): void {
+    this.technicalOpen.update(open => !open);
   }
 
   back(): void {

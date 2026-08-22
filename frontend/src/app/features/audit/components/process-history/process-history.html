@@ -1,8 +1,8 @@
 <section class="process-history" aria-labelledby="process-history-title">
   <header class="process-history__header">
     <div>
-      <h2 id="process-history-title">History</h2>
-      <p>Recorded actions for this process.</p>
+      <h2 id="process-history-title">Process History</h2>
+      <p>View activity related to this process.</p>
     </div>
   </header>
 
@@ -28,17 +28,56 @@
       <p>No recorded actions were found.</p>
     </div>
   } @else {
-    <ul class="process-history__list">
-      @for (log of logs(); track log.id) {
+    <div class="process-history__table-wrap">
+      <table class="process-history__table">
+        <caption class="visually-hidden">Process activity</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">What happened</th>
+            <th scope="col">Performed by</th>
+            <th scope="col">Result</th>
+            <th scope="col">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+              <td>{{ item.datetimeLabel }}</td>
+              <td>
+                <div class="audit-event">
+                  <span class="audit-event__icon" aria-hidden="true"></span>
+                  <strong>{{ item.whatHappened }}</strong>
+                </div>
+              </td>
+              <td>{{ item.performedByName }}</td>
+              <td>
+                <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
+              </td>
+              <td>
+                <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', item.id]">
+                  View Details
+                  <span aria-hidden="true">→</span>
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="process-history__cards">
+      @for (item of items(); track item.id) {
         <li>
           <div class="process-history__meta">
-            <time [attr.datetime]="log.createdAt">{{ formatDate(log.createdAt) }}</time>
-            <span>{{ log.performedByName }}</span>
-            <span [class]="actionBadge(log)">{{ actionText(log) }}</span>
+            <time [attr.datetime]="item.createdAt">{{ item.datetimeLabel }}</time>
+            <span>{{ item.performedByName }}</span>
+            <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
           </div>
-          <p>{{ summary(log) }}</p>
-          <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', log.id]">
+          <p>{{ item.whatHappened }}</p>
+          <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', item.id]">
             View Details
+            <span aria-hidden="true">→</span>
           </a>
         </li>
       }

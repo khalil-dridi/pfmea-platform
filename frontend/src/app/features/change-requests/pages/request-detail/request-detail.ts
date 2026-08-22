@@ -85,6 +85,30 @@ export class RequestDetail implements OnInit {
     return formatRequestDateTime(value);
   }
 
+  reviewCommentText(request: ChangeRequest): string {
+    if (request.status === 'PENDING') {
+      return 'No review has been submitted yet.';
+    }
+
+    const comment = request.reviewComment?.trim();
+    return comment && comment.length > 0 ? comment : 'No review comment provided.';
+  }
+
+  decisionLine(request: ChangeRequest): string {
+    const reviewer = request.reviewedByName?.trim() || '—';
+    const reviewedAt = formatRequestDateTime(request.reviewedAt).replace(', ', ' at ');
+
+    if (request.status === 'APPROVED') {
+      return `Approved by ${reviewer} on ${reviewedAt}.`;
+    }
+
+    if (request.status === 'REJECTED') {
+      return `Rejected by ${reviewer} on ${reviewedAt}.`;
+    }
+
+    return '';
+  }
+
   onCommentInput(event: Event): void {
     const target = event.target;
 

@@ -1,0 +1,335 @@
+<section class="functions-panel">
+  <header class="functions-panel__header">
+    <div>
+      <h3>Functions</h3>
+      <p>Define and manage the functions associated with the selected P-FMEA structure.</p>
+    </div>
+    <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
+      + Add Function
+    </button>
+  </header>
+
+  @if (notice(); as currentNotice) {
+    <div
+      class="processes-alert"
+      [class.processes-alert--success]="currentNotice.kind === 'success'"
+      [class.processes-alert--pending]="currentNotice.kind === 'pending'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="processes-alert__body">
+        <p>{{ currentNotice.title }}</p>
+        @if (currentNotice.status) {
+          <p><strong>Status: {{ currentNotice.status }}</strong></p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="retry()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <div class="functions-types" role="tablist" aria-label="Function type">
+    @for (filter of typeFilters; track filter.id) {
+      <button
+        type="button"
+        role="tab"
+        class="functions-types__tab"
+        [class.functions-types__tab--active]="typeFilter() === filter.id"
+        [attr.aria-selected]="typeFilter() === filter.id"
+        (click)="selectTypeFilter(filter.id)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+
+  <form class="functions-toolbar" role="search" (submit)="$event.preventDefault()">
+    <div class="field field--search">
+      <label class="visually-hidden" for="function-search">Search functions</label>
+      <input
+        id="function-search"
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        placeholder="Search functions..."
+        autocomplete="off"
+      />
+    </div>
+  </form>
+
+  @if (isLoading()) {
+    <div class="functions-table-wrap" aria-hidden="true">
+      <table class="functions-table">
+        <thead>
+          <tr>
+            <th scope="col">Function</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of [0, 1, 2]; track row) {
+            <tr>
+              <td colspan="2"><span class="functions-skeleton"></span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="processes-state processes-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading functions…
+    </div>
+  } @else if (functions().length === 0 && errorMessage()) {
+    <div class="processes-state" role="status">Unable to display functions at this time.</div>
+  } @else if (emptyKind() === 'none') {
+    <div class="processes-empty" role="status">
+      <h2>No functions found</h2>
+      <p>No functions are currently defined for this P-FMEA structure.</p>
+      <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
+        + Add Function
+      </button>
+    </div>
+  } @else if (emptyKind() === 'category') {
+    <div class="processes-empty" role="status">
+      <h2>No functions in this category</h2>
+      <p>No functions of this type are currently defined.</p>
+      <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
+        + Add Function
+      </button>
+    </div>
+  } @else if (emptyKind() === 'search') {
+    <div class="processes-empty" role="status">
+      <h2>No matching functions</h2>
+      <p>No functions match the current search.</p>
+    </div>
+  } @else {
+    <div class="functions-table-wrap">
+      <table class="functions-table">
+        <caption class="visually-hidden">P-FMEA functions</caption>
+        <thead>
+          <tr>
+            <th scope="col">Function</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of filteredFunctions(); track item.id) {
+            <tr>
+              <td class="functions-table__function">
+                <span [title]="item.description">{{ item.description }}</span>
+              </td>
+              <td class="functions-table__actions">
+                <div class="functions-table__actions-group">
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--compact"
+                    title="View"
+                    [attr.aria-label]="'View function'"
+                    (click)="openView(item, $event)"
+                  >
+                    View
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--compact"
+                    title="Edit"
+                    [attr.aria-label]="'Edit function'"
+                    (click)="openEdit(item, $event)"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="functions-cards">
+      @for (item of filteredFunctions(); track item.id) {
+        <li class="functions-card">
+          <h4 [title]="item.description">{{ item.description }}</h4>
+          <div class="functions-table__actions-group">
+            <button type="button" class="btn btn--ghost btn--compact" title="View" (click)="openView(item, $event)">
+              View
+            </button>
+            <button type="button" class="btn btn--ghost btn--compact" title="Edit" (click)="openEdit(item, $event)">
+              Edit
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (editorMode(); as mode) {
+  <div class="functions-dialog" role="presentation" (click)="requestCloseEditor()">
+    <div
+      class="functions-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="function-editor-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="function-editor-title">{{ editorTitle() }}</h2>
+      <p>
+        @if (mode === 'view') {
+          Review the selected function.
+        } @else if (mode === 'edit') {
+          Update this function for the current P-FMEA structure.
+        } @else {
+          Add a function to the current P-FMEA structure.
+        }
+      </p>
+
+      @if (editorError(); as editorErrorMessage) {
+        <div class="processes-alert processes-alert--error" role="alert">{{ editorErrorMessage }}</div>
+      }
+
+      @if (mode === 'view' && editingFunction(); as currentFunction) {
+        <dl class="functions-details">
+          <div>
+            <dt>Function</dt>
+            <dd>{{ currentFunction.description }}</dd>
+          </div>
+          <div>
+            <dt>Type</dt>
+            <dd>
+              <span class="functions-type">{{ typeLabel(currentFunction.type) }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Associated with</dt>
+            <dd>{{ associationLabel(currentFunction) }}</dd>
+          </div>
+        </dl>
+
+        <div class="processes-actions processes-actions--form">
+          <button
+            #firstField
+            type="button"
+            class="btn btn--ghost"
+            (click)="requestCloseEditor()"
+          >
+            Close
+          </button>
+        </div>
+      } @else {
+        <form [formGroup]="editorForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="functions-form-grid">
+              <div class="field">
+                <label for="functionType">
+                  Type <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select
+                  #firstField
+                  id="functionType"
+                  formControlName="type"
+                  [attr.aria-invalid]="typeError() ? true : null"
+                  [attr.aria-describedby]="typeError() ? 'functionType-error' : null"
+                >
+                  @for (type of functionTypes; track type) {
+                    <option [value]="type">{{ typeLabel(type) }}</option>
+                  }
+                </select>
+                @if (typeError(); as message) {
+                  <p id="functionType-error" class="field__error">{{ message }}</p>
+                }
+              </div>
+
+              @if (mode === 'create' && selectedType() !== 'WORK_ELEMENT') {
+                <div class="field">
+                  <span class="field__label">Associated with</span>
+                  <p class="functions-readonly">
+                    {{ selectedType() === 'PROCESS_ITEM' ? processName() : processStepName() }}
+                  </p>
+                </div>
+              }
+
+              @if (showWorkElementField() && mode === 'create') {
+                <div class="field">
+                  <label for="functionWorkElement">
+                    Work Element <span class="field__required" aria-hidden="true">*</span>
+                  </label>
+                  <select
+                    id="functionWorkElement"
+                    formControlName="workElementId"
+                    [attr.aria-invalid]="workElementError() ? true : null"
+                    [attr.aria-describedby]="workElementError() ? 'functionWorkElement-error' : null"
+                  >
+                    <option value="">Select a work element</option>
+                    @for (element of workElements(); track element.id) {
+                      <option [value]="element.id">{{ element.name }}</option>
+                    }
+                  </select>
+                  @if (workElementError(); as message) {
+                    <p id="functionWorkElement-error" class="field__error">{{ message }}</p>
+                  }
+                  @if (workElements().length === 0) {
+                    <p class="field__error">Add a work element in Structure before creating this function type.</p>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (mode === 'edit' && editingFunction(); as currentFunction) {
+              <div class="field">
+                <span class="field__label">Associated with</span>
+                <p class="functions-readonly">{{ associationLabel(currentFunction) }}</p>
+              </div>
+            }
+
+            <div class="field">
+              <label for="functionDescription">
+                Description <span class="field__required" aria-hidden="true">*</span>
+              </label>
+              <textarea
+                id="functionDescription"
+                rows="5"
+                maxlength="1000"
+                formControlName="description"
+                [attr.aria-invalid]="descriptionError() ? true : null"
+                [attr.aria-describedby]="descriptionError() ? 'functionDescription-error' : null"
+              ></textarea>
+              @if (descriptionError(); as message) {
+                <p id="functionDescription-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+          </fieldset>
+
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ mode === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="action === 'discard' ? 'Discard' : 'Confirm'"
+    [cancelLabel]="action === 'discard' ? 'Stay' : 'Cancel'"
+    [variant]="action === 'discard' ? 'danger' : 'default'"
+    [isConfirming]="isSaving()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelConfirmation()"
+  />
+}

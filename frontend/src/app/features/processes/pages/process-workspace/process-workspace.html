@@ -192,12 +192,20 @@
             <div
               class="workspace-analysis__panel"
               [class.workspace-analysis__panel--structure]="activeSection() === 'structure'"
+              [class.workspace-analysis__panel--functions]="activeSection() === 'functions'"
               role="tabpanel"
               [id]="'workspace-section-' + activeSectionItem().id"
               [attr.aria-labelledby]="'workspace-tab-' + activeSectionItem().id"
             >
               @if (activeSection() === 'structure') {
                 <app-workspace-structure [processStepId]="step.id" />
+              } @else if (activeSection() === 'functions') {
+                <app-workspace-functions
+                  [processId]="currentProcess.id"
+                  [processStepId]="step.id"
+                  [processName]="currentProcess.name"
+                  [processStepName]="step.name"
+                />
               } @else {
                 <h3>{{ activeSectionItem().title }}</h3>
                 <p>{{ activeSectionItem().message }}</p>

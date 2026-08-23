@@ -15,6 +15,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { WorkspaceFunctions } from '../../components/workspace-functions/workspace-functions';
 import { WorkspaceStructure } from '../../components/workspace-structure/workspace-structure';
 import { Process } from '../../models/process.model';
 import { ProcessStep } from '../../models/process-step.model';
@@ -47,7 +48,7 @@ interface WorkspaceNotice {
 
 @Component({
   selector: 'app-process-workspace',
-  imports: [RouterLink, ReactiveFormsModule, ConfirmationDialog, WorkspaceStructure],
+  imports: [RouterLink, ReactiveFormsModule, ConfirmationDialog, WorkspaceStructure, WorkspaceFunctions],
   templateUrl: './process-workspace.html',
   styleUrl: './process-workspace.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

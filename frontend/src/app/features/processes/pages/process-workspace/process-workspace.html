@@ -193,6 +193,7 @@
               class="workspace-analysis__panel"
               [class.workspace-analysis__panel--structure]="activeSection() === 'structure'"
               [class.workspace-analysis__panel--functions]="activeSection() === 'functions'"
+              [class.workspace-analysis__panel--failure]="activeSection() === 'failure'"
               role="tabpanel"
               [id]="'workspace-section-' + activeSectionItem().id"
               [attr.aria-labelledby]="'workspace-tab-' + activeSectionItem().id"
@@ -206,6 +207,8 @@
                   [processName]="currentProcess.name"
                   [processStepName]="step.name"
                 />
+              } @else if (activeSection() === 'failure') {
+                <app-workspace-failure-analysis [processStepId]="step.id" />
               } @else {
                 <h3>{{ activeSectionItem().title }}</h3>
                 <p>{{ activeSectionItem().message }}</p>

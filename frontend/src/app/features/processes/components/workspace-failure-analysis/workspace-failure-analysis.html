@@ -1,0 +1,435 @@
+<section class="failure-panel">
+  <header class="failure-panel__header">
+    <div>
+      <h3>Failure Analysis</h3>
+      <p>Identify failure modes, their effects and their causes for the selected process step.</p>
+    </div>
+    <button type="button" class="btn btn--primary btn--compact" (click)="openCreateMode($event)">
+      + Add Failure Mode
+    </button>
+  </header>
+
+  @if (notice(); as currentNotice) {
+    <div
+      class="processes-alert"
+      [class.processes-alert--success]="currentNotice.kind === 'success'"
+      [class.processes-alert--pending]="currentNotice.kind === 'pending'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="processes-alert__body">
+        <p>{{ currentNotice.title }}</p>
+        @if (currentNotice.status) {
+          <p><strong>Status: {{ currentNotice.status }}</strong></p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="retry()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <form class="failure-toolbar" role="search" (submit)="$event.preventDefault()">
+    <div class="field field--search">
+      <label class="visually-hidden" for="failure-mode-search">Search failure modes</label>
+      <input
+        id="failure-mode-search"
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        placeholder="Search failure modes..."
+        autocomplete="off"
+      />
+    </div>
+  </form>
+
+  @if (isLoading()) {
+    <div class="failure-skeleton-list" aria-hidden="true">
+      @for (row of [0, 1]; track row) {
+        <div class="failure-card failure-card--skeleton">
+          <span class="failure-skeleton"></span>
+        </div>
+      }
+    </div>
+    <div class="processes-state processes-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading failure analysis…
+    </div>
+  } @else if (bundles().length === 0 && errorMessage()) {
+    <div class="processes-state" role="status">Unable to display failure analysis at this time.</div>
+  } @else if (bundles().length === 0) {
+    <div class="processes-empty" role="status">
+      <h2>No failure modes found</h2>
+      <p>No failure modes are currently defined for this process step.</p>
+      <button type="button" class="btn btn--primary btn--compact" (click)="openCreateMode($event)">
+        + Add Failure Mode
+      </button>
+    </div>
+  } @else if (filteredBundles().length === 0) {
+    <div class="processes-empty" role="status">
+      <h2>No matching failure modes</h2>
+      <p>No failure modes match the current search.</p>
+    </div>
+  } @else {
+    <ul class="failure-list">
+      @for (bundle of filteredBundles(); track bundle.mode.id) {
+        <li class="failure-card" [class.failure-card--open]="isExpanded(bundle.mode.id)">
+          <div class="failure-card__summary">
+            <button
+              type="button"
+              class="failure-card__toggle"
+              [attr.aria-expanded]="isExpanded(bundle.mode.id)"
+              [attr.aria-controls]="'failure-mode-body-' + bundle.mode.id"
+              (click)="toggleExpanded(bundle.mode.id)"
+            >
+              <span class="failure-card__chevron" aria-hidden="true"></span>
+              <span class="failure-card__title" [title]="bundle.mode.description">
+                {{ bundle.mode.description }}
+              </span>
+              @if (bundle.mode.failureCode) {
+                <span class="failure-chip">{{ bundle.mode.failureCode }}</span>
+              }
+              @if (bundle.effect) {
+                <span class="failure-chip failure-chip--severity">S {{ bundle.effect.severity }}</span>
+              }
+            </button>
+            <div class="failure-actions">
+              <button
+                type="button"
+                class="btn btn--ghost btn--compact"
+                title="View"
+                (click)="openViewMode(bundle.mode, $event)"
+              >
+                View
+              </button>
+              <button
+                type="button"
+                class="btn btn--ghost btn--compact"
+                title="Edit"
+                (click)="openEditMode(bundle.mode, $event)"
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+
+          @if (isExpanded(bundle.mode.id)) {
+            <div class="failure-card__body" [id]="'failure-mode-body-' + bundle.mode.id">
+              <section class="failure-block" [attr.aria-labelledby]="'effect-title-' + bundle.mode.id">
+                <header class="failure-block__header">
+                  <h4 [id]="'effect-title-' + bundle.mode.id">Failure Effect</h4>
+                  @if (bundle.effect; as effect) {
+                    <div class="failure-actions">
+                      <button type="button" class="btn btn--ghost btn--compact" (click)="openViewEffect(effect, $event)">
+                        View
+                      </button>
+                      <button type="button" class="btn btn--ghost btn--compact" (click)="openEditEffect(effect, $event)">
+                        Edit
+                      </button>
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--compact"
+                      (click)="openCreateEffect(bundle.mode.id, $event)"
+                    >
+                      + Add Failure Effect
+                    </button>
+                  }
+                </header>
+
+                @if (bundle.effect; as effect) {
+                  <dl class="failure-effect-grid">
+                    <div>
+                      <dt>Our Plant</dt>
+                      <dd [title]="displayText(effect.ourPlant)">{{ displayText(effect.ourPlant) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Ship to Plant</dt>
+                      <dd [title]="displayText(effect.shipToPlant)">{{ displayText(effect.shipToPlant) }}</dd>
+                    </div>
+                    <div>
+                      <dt>End User</dt>
+                      <dd [title]="displayText(effect.endUser)">{{ displayText(effect.endUser) }}</dd>
+                    </div>
+                    <div>
+                      <dt>Severity</dt>
+                      <dd>{{ effect.severity }}</dd>
+                    </div>
+                  </dl>
+                } @else {
+                  <p class="failure-block__empty">No failure effect defined</p>
+                }
+              </section>
+
+              <section class="failure-block" [attr.aria-labelledby]="'causes-title-' + bundle.mode.id">
+                <header class="failure-block__header">
+                  <h4 [id]="'causes-title-' + bundle.mode.id">Failure Causes</h4>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--compact"
+                    (click)="openCreateCause(bundle.mode.id, $event)"
+                  >
+                    + Add Cause
+                  </button>
+                </header>
+
+                @if (bundle.causes.length === 0) {
+                  <div class="failure-block__empty-wrap">
+                    <p class="failure-block__empty">No failure causes found</p>
+                    <button
+                      type="button"
+                      class="btn btn--primary btn--compact"
+                      (click)="openCreateCause(bundle.mode.id, $event)"
+                    >
+                      + Add Cause
+                    </button>
+                  </div>
+                } @else {
+                  <ul class="failure-causes">
+                    @for (cause of bundle.causes; track cause.id) {
+                      <li class="failure-cause">
+                        <span [title]="cause.description">{{ cause.description }}</span>
+                        <div class="failure-actions">
+                          <button
+                            type="button"
+                            class="btn btn--ghost btn--compact"
+                            title="View"
+                            (click)="openViewCause(cause, $event)"
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn--ghost btn--compact"
+                            title="Edit"
+                            (click)="openEditCause(cause, $event)"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (editorKind(); as kind) {
+  <div class="failure-dialog" role="presentation" (click)="requestCloseEditor()">
+    <div
+      class="failure-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="failure-editor-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="failure-editor-title">{{ editorTitle() }}</h2>
+      <p>
+        @if (editorMode() === 'view') {
+          Review the selected failure analysis record.
+        } @else if (editorMode() === 'edit') {
+          Update this record for the current process step.
+        } @else {
+          Add this record to the current process step.
+        }
+      </p>
+
+      @if (editorError(); as editorErrorMessage) {
+        <div class="processes-alert processes-alert--error" role="alert">{{ editorErrorMessage }}</div>
+      }
+
+      @if (editorMode() === 'view' && kind === 'mode' && editingMode(); as currentMode) {
+        <dl class="failure-details">
+          <div>
+            <dt>Description</dt>
+            <dd>{{ currentMode.description }}</dd>
+          </div>
+          <div>
+            <dt>Failure code</dt>
+            <dd>{{ displayText(currentMode.failureCode) }}</dd>
+          </div>
+        </dl>
+        <div class="processes-actions processes-actions--form">
+          <button #firstField type="button" class="btn btn--ghost" (click)="requestCloseEditor()">Close</button>
+        </div>
+      } @else if (editorMode() === 'view' && kind === 'effect' && editingEffect(); as currentEffect) {
+        <dl class="failure-details">
+          <div>
+            <dt>Our Plant</dt>
+            <dd>{{ displayText(currentEffect.ourPlant) }}</dd>
+          </div>
+          <div>
+            <dt>Ship to Plant</dt>
+            <dd>{{ displayText(currentEffect.shipToPlant) }}</dd>
+          </div>
+          <div>
+            <dt>End User</dt>
+            <dd>{{ displayText(currentEffect.endUser) }}</dd>
+          </div>
+          <div>
+            <dt>Severity</dt>
+            <dd>{{ currentEffect.severity }}</dd>
+          </div>
+        </dl>
+        <div class="processes-actions processes-actions--form">
+          <button #firstField type="button" class="btn btn--ghost" (click)="requestCloseEditor()">Close</button>
+        </div>
+      } @else if (editorMode() === 'view' && kind === 'cause' && editingCause(); as currentCause) {
+        <dl class="failure-details">
+          <div>
+            <dt>Description</dt>
+            <dd>{{ currentCause.description }}</dd>
+          </div>
+        </dl>
+        <div class="processes-actions processes-actions--form">
+          <button #firstField type="button" class="btn btn--ghost" (click)="requestCloseEditor()">Close</button>
+        </div>
+      } @else if (kind === 'mode') {
+        <form [formGroup]="modeForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="field">
+              <label for="failureModeDescription">
+                Description <span class="field__required" aria-hidden="true">*</span>
+              </label>
+              <textarea
+                #firstField
+                id="failureModeDescription"
+                rows="4"
+                maxlength="1000"
+                formControlName="description"
+                [attr.aria-invalid]="modeDescriptionError() ? true : null"
+              ></textarea>
+              @if (modeDescriptionError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+            <div class="field">
+              <label for="failureModeCode">Failure code</label>
+              <input id="failureModeCode" type="text" maxlength="100" formControlName="failureCode" />
+              @if (modeCodeError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+          </fieldset>
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      } @else if (kind === 'effect') {
+        <form [formGroup]="effectForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="field">
+              <label for="effectOurPlant">Our Plant</label>
+              <textarea
+                #firstField
+                id="effectOurPlant"
+                rows="3"
+                maxlength="1000"
+                formControlName="ourPlant"
+              ></textarea>
+              @if (effectPlantError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+            <div class="field">
+              <label for="effectShipToPlant">Ship to Plant</label>
+              <textarea id="effectShipToPlant" rows="3" maxlength="1000" formControlName="shipToPlant"></textarea>
+              @if (effectShipError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+            <div class="field">
+              <label for="effectEndUser">End User</label>
+              <textarea id="effectEndUser" rows="3" maxlength="1000" formControlName="endUser"></textarea>
+              @if (effectUserError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+            <div class="field">
+              <label for="effectSeverity">
+                Severity <span class="field__required" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="effectSeverity"
+                type="number"
+                formControlName="severity"
+                [attr.aria-invalid]="effectSeverityError() ? true : null"
+              />
+              @if (effectSeverityError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+          </fieldset>
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      } @else {
+        <form [formGroup]="causeForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="field">
+              <label for="failureCauseDescription">
+                Description <span class="field__required" aria-hidden="true">*</span>
+              </label>
+              <textarea
+                #firstField
+                id="failureCauseDescription"
+                rows="4"
+                maxlength="1000"
+                formControlName="description"
+                [attr.aria-invalid]="causeDescriptionError() ? true : null"
+              ></textarea>
+              @if (causeDescriptionError(); as message) {
+                <p class="field__error">{{ message }}</p>
+              }
+            </div>
+          </fieldset>
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="action === 'discard' ? 'Discard' : 'Confirm'"
+    [cancelLabel]="action === 'discard' ? 'Stay' : 'Cancel'"
+    [variant]="action === 'discard' ? 'danger' : 'default'"
+    [isConfirming]="isSaving()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelConfirmation()"
+  />
+}

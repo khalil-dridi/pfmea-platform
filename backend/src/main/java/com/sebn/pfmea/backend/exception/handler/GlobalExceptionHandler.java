@@ -3,6 +3,7 @@ package com.sebn.pfmea.backend.exception.handler;
 import com.sebn.pfmea.backend.exception.ConflictException;
 import com.sebn.pfmea.backend.exception.ResourceNotFoundException;
 import com.sebn.pfmea.backend.exception.dto.ErrorResponse;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -17,6 +18,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException exception
+    ) {
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(
+            EntityNotFoundException exception
     ) {
         return buildResponse(
                 HttpStatus.NOT_FOUND,

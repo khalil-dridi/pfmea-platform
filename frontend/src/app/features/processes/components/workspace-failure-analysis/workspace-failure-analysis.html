@@ -181,16 +181,7 @@
                 </header>
 
                 @if (bundle.causes.length === 0) {
-                  <div class="failure-block__empty-wrap">
-                    <p class="failure-block__empty">No failure causes found</p>
-                    <button
-                      type="button"
-                      class="btn btn--primary btn--compact"
-                      (click)="openCreateCause(bundle.mode.id, $event)"
-                    >
-                      + Add Cause
-                    </button>
-                  </div>
+                  <p class="failure-block__empty">No failure causes found</p>
                 } @else {
                   <ul class="failure-causes">
                     @for (cause of bundle.causes; track cause.id) {

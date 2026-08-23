@@ -1,0 +1,414 @@
+<section class="risk-panel">
+  <header class="risk-panel__header">
+    <div>
+      <h3>Risk Analysis</h3>
+      <p>Review occurrence, detection and action priority for each failure cause.</p>
+    </div>
+  </header>
+
+  @if (notice(); as currentNotice) {
+    <div
+      class="processes-alert"
+      [class.processes-alert--success]="currentNotice.kind === 'success'"
+      [class.processes-alert--pending]="currentNotice.kind === 'pending'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="processes-alert__body">
+        <p>{{ currentNotice.title }}</p>
+        @if (currentNotice.status) {
+          <p><strong>Status: {{ currentNotice.status }}</strong></p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="retry()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <div class="risk-toolbar">
+    <form class="risk-toolbar__search" role="search" (submit)="$event.preventDefault()">
+      <div class="field field--search">
+        <label class="visually-hidden" for="risk-analysis-search">Search failure causes</label>
+        <input
+          id="risk-analysis-search"
+          type="search"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          placeholder="Search failure causes..."
+          autocomplete="off"
+        />
+      </div>
+    </form>
+
+    <div class="risk-filters" role="tablist" aria-label="Action priority">
+      @for (filter of priorityFilters; track filter.id) {
+        <button
+          type="button"
+          role="tab"
+          class="risk-filters__tab"
+          [class.risk-filters__tab--active]="priorityFilter() === filter.id"
+          [attr.aria-selected]="priorityFilter() === filter.id"
+          (click)="selectPriorityFilter(filter.id)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ul class="risk-list" aria-hidden="true">
+      @for (row of [0, 1, 2]; track row) {
+        <li class="risk-card risk-card--skeleton">
+          <div class="risk-card__header">
+            <div class="risk-card__identity">
+              <div class="risk-card__field">
+                <span class="risk-skeleton risk-skeleton--label"></span>
+                <span class="risk-skeleton risk-skeleton--title"></span>
+              </div>
+              <div class="risk-card__field">
+                <span class="risk-skeleton risk-skeleton--label"></span>
+                <span class="risk-skeleton risk-skeleton--title"></span>
+              </div>
+            </div>
+            <span class="risk-skeleton risk-skeleton--actions"></span>
+          </div>
+          <div class="risk-card__body">
+            <span class="risk-skeleton"></span>
+            <span class="risk-skeleton"></span>
+            <span class="risk-skeleton risk-skeleton--metrics"></span>
+          </div>
+        </li>
+      }
+    </ul>
+    <span class="visually-hidden" role="status" aria-live="polite">Loading risk analysis…</span>
+  } @else if (rows().length === 0 && errorMessage()) {
+    <div class="processes-state" role="status">Unable to display risk analysis at this time.</div>
+  } @else if (emptyKind() === 'none') {
+    <div class="processes-empty" role="status">
+      <h2>No risk analysis available</h2>
+      <p>No failure causes are available for risk analysis.</p>
+    </div>
+  } @else if (emptyKind() === 'filter') {
+    <div class="processes-empty" role="status">
+      <h2>No matching records</h2>
+      <p>No failure causes match the current search or priority filter.</p>
+    </div>
+  } @else {
+    <ul class="risk-list">
+      @for (row of filteredRows(); track row.cause.id) {
+        <li class="risk-card">
+          <div class="risk-card__header">
+            <div class="risk-card__identity">
+              <div class="risk-card__field">
+                <span>Failure Mode</span>
+                <strong class="risk-card__mode" [title]="row.mode.description">{{ row.mode.description }}</strong>
+                @if (row.mode.failureCode) {
+                  <span class="risk-chip">{{ row.mode.failureCode }}</span>
+                }
+              </div>
+              <div class="risk-card__field">
+                <span>Failure Cause</span>
+                <strong class="risk-card__cause" [title]="row.cause.description">{{ row.cause.description }}</strong>
+              </div>
+            </div>
+            <div class="risk-card__actions">
+              @if (row.loadError) {
+                <button type="button" class="btn btn--ghost btn--compact" (click)="retryRow(row)">Retry</button>
+              } @else if (row.risk) {
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--compact"
+                  title="View"
+                  (click)="openView(row, $event)"
+                >
+                  View
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--compact"
+                  title="Edit"
+                  (click)="openEdit(row, $event)"
+                >
+                  Edit
+                </button>
+              } @else {
+                <button type="button" class="btn btn--ghost btn--compact" (click)="openCreate(row, $event)">
+                  + Add Risk Analysis
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (row.loadError; as loadError) {
+            <p class="risk-card__error">{{ loadError }}</p>
+          } @else if (row.risk; as risk) {
+            <div class="risk-card__body">
+              <div class="risk-card__control">
+                <span>Prevention Control</span>
+                <strong [title]="controlText(risk.currentPreventionControl, true)">
+                  {{ controlText(risk.currentPreventionControl, true) }}
+                </strong>
+              </div>
+              <div class="risk-card__control">
+                <span>Detection Control</span>
+                <strong [title]="controlText(risk.currentDetectionControl, true)">
+                  {{ controlText(risk.currentDetectionControl, true) }}
+                </strong>
+              </div>
+              <div class="risk-card__metrics">
+                <div>
+                  <span>O</span>
+                  <strong class="risk-metric">{{ risk.occurrence }}</strong>
+                </div>
+                <div>
+                  <span>D</span>
+                  <strong class="risk-metric">{{ risk.detection }}</strong>
+                </div>
+                <div>
+                  <span>AP</span>
+                  <strong [class]="apClass(risk.actionPriority)">{{ risk.actionPriority }}</strong>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <p class="risk-card__undefined">Risk analysis not defined</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (editorMode(); as mode) {
+  <div class="risk-dialog" role="presentation" (click)="requestCloseEditor()">
+    <div
+      class="risk-dialog__panel"
+      [class.risk-dialog__panel--wide]="mode !== 'view'"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="risk-editor-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="risk-editor-title">{{ editorTitle() }}</h2>
+      <p>
+        @if (mode === 'view') {
+          Review the complete risk analysis for this failure cause.
+        } @else if (mode === 'edit') {
+          Update the risk analysis for this failure cause.
+        } @else {
+          Add a risk analysis for the selected failure cause.
+        }
+      </p>
+
+      @if (editorError(); as editorErrorMessage) {
+        <div class="processes-alert processes-alert--error" role="alert">{{ editorErrorMessage }}</div>
+      }
+
+      @if (mode === 'view' && editingRow(); as currentRow) {
+        <dl class="risk-details">
+          <div>
+            <dt>Failure Mode</dt>
+            <dd>{{ currentRow.mode.description }}</dd>
+          </div>
+          <div>
+            <dt>Failure Cause</dt>
+            <dd>{{ currentRow.cause.description }}</dd>
+          </div>
+          <div>
+            <dt>Current Prevention Control</dt>
+            <dd>{{ displayText(currentRow.risk?.currentPreventionControl) }}</dd>
+          </div>
+          <div>
+            <dt>Occurrence</dt>
+            <dd>{{ numericText(currentRow.risk?.occurrence) }}</dd>
+          </div>
+          <div>
+            <dt>Current Detection Control</dt>
+            <dd>{{ displayText(currentRow.risk?.currentDetectionControl) }}</dd>
+          </div>
+          <div>
+            <dt>Detection</dt>
+            <dd>{{ numericText(currentRow.risk?.detection) }}</dd>
+          </div>
+          <div>
+            <dt>Detection Scope</dt>
+            <dd>
+              @if (currentRow.risk; as risk) {
+                {{ scopeLabel(risk.detectionScope) }}
+              } @else {
+                Not specified
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Action Priority</dt>
+            <dd>
+              @if (currentRow.risk; as risk) {
+                <span [class]="apClass(risk.actionPriority)">{{ risk.actionPriority }}</span>
+              } @else {
+                Not specified
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Special Process</dt>
+            <dd>{{ displayText(currentRow.risk?.specialProcess) }}</dd>
+          </div>
+          <div>
+            <dt>Special Characteristic</dt>
+            <dd>{{ displayText(currentRow.risk?.specialCharacteristic) }}</dd>
+          </div>
+        </dl>
+        <div class="processes-actions processes-actions--form">
+          <button #firstField type="button" class="btn btn--ghost" (click)="requestCloseEditor()">Close</button>
+        </div>
+      } @else {
+        <form [formGroup]="riskForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <section class="risk-form-section">
+              <h3>Prevention</h3>
+              <div class="risk-form-grid">
+                <div class="field risk-form-grid__full">
+                  <label for="riskPrevention">Current Prevention Control</label>
+                  <textarea
+                    #firstField
+                    id="riskPrevention"
+                    rows="2"
+                    maxlength="2000"
+                    formControlName="currentPreventionControl"
+                  ></textarea>
+                  @if (preventionError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+                <div class="field">
+                  <label for="riskOccurrence">
+                    Occurrence <span class="field__required" aria-hidden="true">*</span>
+                  </label>
+                  <input id="riskOccurrence" type="number" formControlName="occurrence" />
+                  @if (occurrenceError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+              </div>
+            </section>
+
+            <section class="risk-form-section">
+              <h3>Detection</h3>
+              <div class="risk-form-grid">
+                <div class="field risk-form-grid__full">
+                  <label for="riskDetectionControl">Current Detection Control</label>
+                  <textarea
+                    id="riskDetectionControl"
+                    rows="2"
+                    maxlength="2000"
+                    formControlName="currentDetectionControl"
+                  ></textarea>
+                  @if (detectionControlError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+                <div class="field">
+                  <label for="riskDetection">
+                    Detection <span class="field__required" aria-hidden="true">*</span>
+                  </label>
+                  <input id="riskDetection" type="number" formControlName="detection" />
+                  @if (detectionError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+                <div class="field">
+                  <label for="riskScope">
+                    Detection Scope <span class="field__required" aria-hidden="true">*</span>
+                  </label>
+                  <select id="riskScope" formControlName="detectionScope">
+                    <option [ngValue]="null">Select a scope</option>
+                    @for (scope of detectionScopes; track scope) {
+                      <option [ngValue]="scope">{{ scopeLabel(scope) }}</option>
+                    }
+                  </select>
+                  @if (scopeError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+              </div>
+            </section>
+
+            <section class="risk-form-section">
+              <h3>Priority</h3>
+              <div class="field">
+                <label for="riskPriority">
+                  Action Priority <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select id="riskPriority" formControlName="actionPriority">
+                  <option [ngValue]="null">Select a priority</option>
+                  @for (priority of actionPriorities; track priority) {
+                    <option [ngValue]="priority">{{ priority }}</option>
+                  }
+                </select>
+                @if (priorityError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+            </section>
+
+            <section class="risk-form-section">
+              <h3>Additional Information</h3>
+              <div class="risk-form-grid">
+                <div class="field">
+                  <label for="riskSpecialProcess">Special Process</label>
+                  <textarea id="riskSpecialProcess" rows="2" maxlength="1000" formControlName="specialProcess"></textarea>
+                  @if (specialProcessError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+                <div class="field">
+                  <label for="riskCharacteristic">Special Characteristic</label>
+                  <textarea
+                    id="riskCharacteristic"
+                    rows="2"
+                    maxlength="1000"
+                    formControlName="specialCharacteristic"
+                  ></textarea>
+                  @if (characteristicError(); as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+              </div>
+            </section>
+          </fieldset>
+
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ mode === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="action === 'discard' ? 'Discard' : 'Confirm'"
+    [cancelLabel]="action === 'discard' ? 'Stay' : 'Cancel'"
+    [variant]="action === 'discard' ? 'danger' : 'default'"
+    [isConfirming]="isSaving()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelConfirmation()"
+  />
+}

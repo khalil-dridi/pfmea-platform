@@ -17,6 +17,7 @@ import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { WorkspaceFailureAnalysis } from '../../components/workspace-failure-analysis/workspace-failure-analysis';
 import { WorkspaceFunctions } from '../../components/workspace-functions/workspace-functions';
+import { WorkspaceOptimization } from '../../components/workspace-optimization/workspace-optimization';
 import { WorkspaceRiskAnalysis } from '../../components/workspace-risk-analysis/workspace-risk-analysis';
 import { WorkspaceStructure } from '../../components/workspace-structure/workspace-structure';
 import { Process } from '../../models/process.model';
@@ -57,7 +58,8 @@ interface WorkspaceNotice {
     WorkspaceStructure,
     WorkspaceFunctions,
     WorkspaceFailureAnalysis,
-    WorkspaceRiskAnalysis
+    WorkspaceRiskAnalysis,
+    WorkspaceOptimization
   ],
   templateUrl: './process-workspace.html',
   styleUrl: './process-workspace.scss',

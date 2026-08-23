@@ -1,0 +1,712 @@
+<section class="opt-panel">
+  <header class="opt-panel__header">
+    <div>
+      <h3>Optimization</h3>
+      <p>Improve identified risks through prevention and detection actions.</p>
+    </div>
+  </header>
+
+  @if (notice(); as currentNotice) {
+    <div
+      class="processes-alert"
+      [class.processes-alert--success]="currentNotice.kind === 'success'"
+      [class.processes-alert--pending]="currentNotice.kind === 'pending'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="processes-alert__body">
+        <p>{{ currentNotice.title }}</p>
+        @if (currentNotice.status) {
+          <p><strong>Status: {{ currentNotice.status }}</strong></p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="retry()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <div class="opt-toolbar">
+    <form class="opt-toolbar__search" role="search" (submit)="$event.preventDefault()">
+      <div class="field field--search">
+        <label class="visually-hidden" for="optimization-search">Search failure causes</label>
+        <input
+          id="optimization-search"
+          type="search"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          placeholder="Search failure causes..."
+          autocomplete="off"
+        />
+      </div>
+    </form>
+
+    <div class="opt-filters" role="tablist" aria-label="Optimization action status">
+      @for (filter of statusFilters; track filter.id) {
+        <button
+          type="button"
+          role="tab"
+          class="opt-filters__tab"
+          [class.opt-filters__tab--active]="statusFilter() === filter.id"
+          [attr.aria-selected]="statusFilter() === filter.id"
+          (click)="selectStatusFilter(filter.id)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <ul class="opt-list" aria-hidden="true">
+      @for (row of [0, 1, 2]; track row) {
+        <li class="opt-card opt-card--skeleton">
+          <div class="opt-card__identity">
+            <div class="opt-card__field">
+              <span class="opt-skeleton opt-skeleton--label"></span>
+              <span class="opt-skeleton opt-skeleton--title"></span>
+            </div>
+            <div class="opt-card__field">
+              <span class="opt-skeleton opt-skeleton--label"></span>
+              <span class="opt-skeleton opt-skeleton--title"></span>
+            </div>
+          </div>
+          <div class="opt-compare">
+            <span class="opt-skeleton opt-skeleton--risk"></span>
+            <span class="opt-skeleton opt-skeleton--risk"></span>
+          </div>
+        </li>
+      }
+    </ul>
+    <span class="visually-hidden" role="status" aria-live="polite">Loading optimization…</span>
+  } @else if (rows().length === 0 && errorMessage()) {
+    <div class="processes-state" role="status">Unable to display optimization at this time.</div>
+  } @else if (emptyKind() === 'none') {
+    <div class="processes-empty" role="status">
+      <h2>No optimization available</h2>
+      <p>No failure causes available for optimization.</p>
+    </div>
+  } @else if (emptyKind() === 'filter') {
+    <div class="processes-empty" role="status">
+      <h2>No matching records</h2>
+      <p>No failure causes match the current search or status filter.</p>
+    </div>
+  } @else {
+    <ul class="opt-list">
+      @for (row of filteredRows(); track row.cause.id) {
+        <li [class]="cardClass(row)">
+          <div class="opt-card__header">
+            <div class="opt-card__identity">
+              <div class="opt-card__field opt-card__field--mode">
+                <span>Failure Mode</span>
+                <div class="opt-card__mode-row">
+                  <strong class="opt-card__mode" [title]="row.mode.description">{{ row.mode.description }}</strong>
+                  @if (row.mode.failureCode) {
+                    <span class="opt-chip" [title]="row.mode.failureCode">{{ row.mode.failureCode }}</span>
+                  }
+                </div>
+              </div>
+              <div class="opt-card__field opt-card__field--cause">
+                <span>Failure Cause</span>
+                <strong class="opt-card__cause" [title]="row.cause.description">{{ row.cause.description }}</strong>
+              </div>
+            </div>
+
+            @if (row.optimization) {
+              <div class="opt-card__actions">
+                <button type="button" class="btn btn--ghost btn--compact" (click)="openViewOptimization(row, $event)">
+                  View
+                </button>
+                <button type="button" class="btn btn--ghost btn--compact" (click)="openEditOptimization(row, $event)">
+                  Edit
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (row.loadError; as loadError) {
+            <p class="opt-card__error">{{ loadError }}</p>
+          } @else if (!row.risk) {
+            <div class="opt-empty">
+              <p>Risk analysis not defined</p>
+              <button type="button" class="btn btn--primary btn--compact" (click)="openCreateRisk(row, $event)">
+                + Add Risk Analysis
+              </button>
+            </div>
+          } @else {
+            <div class="opt-compare">
+              <div class="opt-risk-block opt-risk-block--current">
+                <p class="opt-risk-block__title">Current Risk</p>
+                <div class="opt-metrics">
+                  <div>
+                    <span>S</span>
+                    <strong class="opt-metric">{{ metricText(row.effect?.severity) }}</strong>
+                  </div>
+                  <div>
+                    <span>O</span>
+                    <strong class="opt-metric">{{ row.risk.occurrence }}</strong>
+                  </div>
+                  <div>
+                    <span>D</span>
+                    <strong class="opt-metric">{{ row.risk.detection }}</strong>
+                  </div>
+                  <div>
+                    <span>AP</span>
+                    <strong [class]="apClass(row.risk.actionPriority)">{{ row.risk.actionPriority }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="opt-compare__arrow" aria-hidden="true">
+                <span>→</span>
+              </div>
+
+              <div
+                class="opt-risk-block opt-risk-block--optimized"
+                [class.opt-risk-block--undefined]="!row.optimization"
+              >
+                <p class="opt-risk-block__title">Optimized Risk</p>
+                @if (row.optimization; as optimization) {
+                  <div class="opt-metrics">
+                    <div>
+                      <span>S</span>
+                      <strong class="opt-metric opt-metric--improved">{{ optimization.severity }}</strong>
+                    </div>
+                    <div>
+                      <span>O</span>
+                      <strong class="opt-metric opt-metric--improved">{{ optimization.occurrence }}</strong>
+                    </div>
+                    <div>
+                      <span>D</span>
+                      <strong class="opt-metric opt-metric--improved">{{ optimization.detection }}</strong>
+                    </div>
+                    <div>
+                      <span>AP</span>
+                      <strong [class]="apClass(optimization.actionPriority)">{{ optimization.actionPriority }}</strong>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="opt-empty opt-empty--inline">
+                    <p>Not defined</p>
+                    <button
+                      type="button"
+                      class="btn btn--primary btn--compact"
+                      (click)="openCreateOptimization(row, $event)"
+                    >
+                      + Add Optimization
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (row.optimization) {
+              <section class="opt-actions-block">
+                <header class="opt-actions-block__header">
+                  <h4>Optimization Actions ({{ row.actions.length }})</h4>
+                  @if (row.actions.length > 0) {
+                    <button type="button" class="btn btn--ghost btn--compact" (click)="openCreateAction(row, $event)">
+                      + Add Action
+                    </button>
+                  }
+                </header>
+
+                @if (row.actions.length === 0) {
+                  <div class="opt-empty">
+                    <p>No optimization actions defined.</p>
+                    <button type="button" class="btn btn--ghost btn--compact" (click)="openCreateAction(row, $event)">
+                      + Add Action
+                    </button>
+                  </div>
+                } @else {
+                  <ul class="opt-action-list">
+                    @for (action of row.actions; track action.id) {
+                      <li class="opt-action-row">
+                        <span [class]="typeClass(action.actionType)">{{ action.actionType }}</span>
+                        <div class="opt-action-row__body">
+                          <strong [title]="action.description">{{ action.description }}</strong>
+                          @if (action.responsiblePerson) {
+                            <span class="opt-action-row__meta" [title]="action.responsiblePerson">
+                              {{ action.responsiblePerson }}
+                            </span>
+                          }
+                        </div>
+                        <span
+                          [class]="statusClass(action.status)"
+                          [title]="action.status === 'CLOSED' ? 'Effectiveness demonstrated' : null"
+                        >
+                          {{ statusLabel(action.status) }}
+                        </span>
+                        <div class="opt-card__actions">
+                          <button
+                            type="button"
+                            class="btn btn--ghost btn--compact"
+                            (click)="openViewAction(row, action, $event)"
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn--ghost btn--compact"
+                            (click)="openEditAction(row, action, $event)"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (editorKind(); as kind) {
+  <div class="opt-dialog" role="presentation" (click)="requestCloseEditor()">
+    <div
+      class="opt-dialog__panel"
+      [class.opt-dialog__panel--wide]="editorMode() !== 'view'"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="optimization-editor-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="optimization-editor-title">{{ editorTitle() }}</h2>
+      <p>
+        @if (kind === 'risk') {
+          Add a risk analysis for the selected failure cause.
+        } @else if (editorMode() === 'view' && kind === 'action') {
+          Review the selected optimization action.
+        } @else if (editorMode() === 'view') {
+          Review the selected optimization record.
+        } @else if (editorMode() === 'edit') {
+          Update this record for the current process step.
+        } @else {
+          Add this record to the current process step.
+        }
+      </p>
+
+      @if (editorError(); as editorErrorMessage) {
+        <div class="processes-alert processes-alert--error" role="alert">{{ editorErrorMessage }}</div>
+      }
+
+      @if (editorMode() === 'view' && kind === 'optimization' && editingRow(); as currentRow) {
+        <div class="opt-view">
+          <div class="opt-view__identity">
+            <div>
+              <span>Failure Mode</span>
+              <strong>{{ currentRow.mode.description }}</strong>
+            </div>
+            <div>
+              <span>Failure Cause</span>
+              <strong>{{ currentRow.cause.description }}</strong>
+            </div>
+          </div>
+
+          <div class="opt-compare opt-compare--view">
+            <div class="opt-risk-block opt-risk-block--current">
+              <p class="opt-risk-block__title">Current Risk</p>
+              <div class="opt-metrics">
+                <div>
+                  <span>S</span>
+                  <strong class="opt-metric">{{ metricText(currentRow.effect?.severity) }}</strong>
+                </div>
+                <div>
+                  <span>O</span>
+                  <strong class="opt-metric">{{ metricText(currentRow.risk?.occurrence) }}</strong>
+                </div>
+                <div>
+                  <span>D</span>
+                  <strong class="opt-metric">{{ metricText(currentRow.risk?.detection) }}</strong>
+                </div>
+                <div>
+                  <span>AP</span>
+                  @if (currentRow.risk; as risk) {
+                    <strong [class]="apClass(risk.actionPriority)">{{ risk.actionPriority }}</strong>
+                  } @else {
+                    <strong>Not specified</strong>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="opt-compare__arrow" aria-hidden="true">
+              <span>→</span>
+            </div>
+
+            <div class="opt-risk-block opt-risk-block--optimized">
+              <p class="opt-risk-block__title">Optimized Risk</p>
+              <div class="opt-metrics">
+                <div>
+                  <span>S</span>
+                  <strong class="opt-metric opt-metric--improved">
+                    {{ metricText(currentRow.optimization?.severity) }}
+                  </strong>
+                </div>
+                <div>
+                  <span>O</span>
+                  <strong class="opt-metric opt-metric--improved">
+                    {{ metricText(currentRow.optimization?.occurrence) }}
+                  </strong>
+                </div>
+                <div>
+                  <span>D</span>
+                  <strong class="opt-metric opt-metric--improved">
+                    {{ metricText(currentRow.optimization?.detection) }}
+                  </strong>
+                </div>
+                <div>
+                  <span>AP</span>
+                  @if (currentRow.optimization; as optimization) {
+                    <strong [class]="apClass(optimization.actionPriority)">{{ optimization.actionPriority }}</strong>
+                  } @else {
+                    <strong>Not specified</strong>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <dl class="opt-details">
+            <div>
+              <dt>Special Process</dt>
+              <dd>{{ displayText(currentRow.optimization?.specialProcess) }}</dd>
+            </div>
+            <div>
+              <dt>Special Characteristic</dt>
+              <dd>{{ displayText(currentRow.optimization?.specialCharacteristic) }}</dd>
+            </div>
+            <div>
+              <dt>Remarks</dt>
+              <dd>{{ displayText(currentRow.optimization?.remarks) }}</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="processes-actions processes-actions--form">
+          <button #firstField type="button" class="btn btn--ghost" (click)="requestCloseEditor()">Close</button>
+        </div>
+      } @else if (editorMode() === 'view' && kind === 'action' && editingAction(); as currentAction) {
+        <dl class="opt-details">
+          <div>
+            <dt>Action Type</dt>
+            <dd>
+              <span [class]="typeClass(currentAction.actionType)">{{ currentAction.actionType }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Description</dt>
+            <dd>{{ currentAction.description }}</dd>
+          </div>
+          <div>
+            <dt>Responsible Person</dt>
+            <dd>{{ displayText(currentAction.responsiblePerson) }}</dd>
+          </div>
+          <div>
+            <dt>Target Completion Date</dt>
+            <dd>{{ dateText(currentAction.targetCompletionDate) }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <span [class]="statusClass(currentAction.status)">{{ statusLabel(currentAction.status) }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Evidence</dt>
+            <dd>{{ displayText(currentAction.evidence) }}</dd>
+          </div>
+          <div>
+            <dt>Completion Date</dt>
+            <dd>{{ dateText(currentAction.completionDate) }}</dd>
+          </div>
+        </dl>
+        <div class="processes-actions processes-actions--form">
+          <button #firstField type="button" class="btn btn--ghost" (click)="requestCloseEditor()">Close</button>
+        </div>
+      } @else if (kind === 'risk') {
+        <form [formGroup]="riskForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="opt-form-grid">
+              <div class="field opt-form-grid__full">
+                <label for="optRiskPrevention">Current Prevention Control</label>
+                <textarea
+                  #firstField
+                  id="optRiskPrevention"
+                  rows="2"
+                  maxlength="2000"
+                  formControlName="currentPreventionControl"
+                ></textarea>
+                @if (riskPreventionError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optRiskOccurrence">
+                  Occurrence <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input id="optRiskOccurrence" type="number" formControlName="occurrence" />
+                @if (riskOccurrenceError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field opt-form-grid__full">
+                <label for="optRiskDetectionControl">Current Detection Control</label>
+                <textarea
+                  id="optRiskDetectionControl"
+                  rows="2"
+                  maxlength="2000"
+                  formControlName="currentDetectionControl"
+                ></textarea>
+                @if (riskDetectionControlError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optRiskDetection">
+                  Detection <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input id="optRiskDetection" type="number" formControlName="detection" />
+                @if (riskDetectionError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optRiskScope">
+                  Detection Scope <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select id="optRiskScope" formControlName="detectionScope">
+                  <option [ngValue]="null">Select a scope</option>
+                  @for (scope of detectionScopes; track scope) {
+                    <option [ngValue]="scope">{{ scopeLabel(scope) }}</option>
+                  }
+                </select>
+                @if (riskScopeError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optRiskPriority">
+                  Action Priority <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select id="optRiskPriority" formControlName="actionPriority">
+                  <option [ngValue]="null">Select a priority</option>
+                  @for (priority of actionPriorities; track priority) {
+                    <option [ngValue]="priority">{{ priority }}</option>
+                  }
+                </select>
+                @if (riskPriorityError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optRiskSpecialProcess">Special Process</label>
+                <textarea
+                  id="optRiskSpecialProcess"
+                  rows="2"
+                  maxlength="1000"
+                  formControlName="specialProcess"
+                ></textarea>
+                @if (riskSpecialProcessError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optRiskCharacteristic">Special Characteristic</label>
+                <textarea
+                  id="optRiskCharacteristic"
+                  rows="2"
+                  maxlength="1000"
+                  formControlName="specialCharacteristic"
+                ></textarea>
+                @if (riskCharacteristicError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+            </div>
+          </fieldset>
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">Create</button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      } @else if (kind === 'optimization') {
+        <form [formGroup]="optimizationForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="opt-form-grid">
+              <div class="field">
+                <label for="optSeverity">
+                  Severity <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input #firstField id="optSeverity" type="number" formControlName="severity" />
+                @if (severityError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optOccurrence">
+                  Occurrence <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input id="optOccurrence" type="number" formControlName="occurrence" />
+                @if (occurrenceError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optDetection">
+                  Detection <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input id="optDetection" type="number" formControlName="detection" />
+                @if (detectionError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optPriority">
+                  Action Priority <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select id="optPriority" formControlName="actionPriority">
+                  <option [ngValue]="null">Select a priority</option>
+                  @for (priority of actionPriorities; track priority) {
+                    <option [ngValue]="priority">{{ priority }}</option>
+                  }
+                </select>
+                @if (priorityError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optSpecialProcess">Special Process</label>
+                <textarea id="optSpecialProcess" rows="2" maxlength="1000" formControlName="specialProcess"></textarea>
+                @if (specialProcessError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="optCharacteristic">Special Characteristic</label>
+                <textarea id="optCharacteristic" rows="2" maxlength="1000" formControlName="specialCharacteristic"></textarea>
+                @if (characteristicError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field opt-form-grid__full">
+                <label for="optRemarks">Remarks</label>
+                <textarea id="optRemarks" rows="2" maxlength="2000" formControlName="remarks"></textarea>
+                @if (remarksError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+            </div>
+          </fieldset>
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      } @else {
+        <form [formGroup]="actionForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="opt-form-grid">
+              <div class="field">
+                <label for="actionType">
+                  Action Type <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select #firstField id="actionType" formControlName="actionType">
+                  <option [ngValue]="null">Select a type</option>
+                  @for (type of actionTypes; track type) {
+                    <option [ngValue]="type">{{ typeLabel(type) }}</option>
+                  }
+                </select>
+                @if (actionTypeError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="actionStatus">
+                  Status <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select id="actionStatus" formControlName="status">
+                  <option [ngValue]="null">Select a status</option>
+                  @for (status of actionStatuses; track status) {
+                    <option [ngValue]="status">{{ statusLabel(status) }}</option>
+                  }
+                </select>
+                @if (actionStatusError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field opt-form-grid__full">
+                <label for="actionDescription">
+                  Description <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <textarea id="actionDescription" rows="3" maxlength="2000" formControlName="description"></textarea>
+                @if (actionDescriptionError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="actionResponsible">Responsible Person</label>
+                <input id="actionResponsible" type="text" maxlength="255" formControlName="responsiblePerson" />
+                @if (responsibleError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="actionTargetDate">Target Completion Date</label>
+                <input id="actionTargetDate" type="date" formControlName="targetCompletionDate" />
+              </div>
+              <div class="field opt-form-grid__full">
+                <label for="actionEvidence">Evidence</label>
+                <textarea id="actionEvidence" rows="2" maxlength="2000" formControlName="evidence"></textarea>
+                @if (evidenceError(); as message) {
+                  <p class="field__error">{{ message }}</p>
+                }
+              </div>
+              <div class="field">
+                <label for="actionCompletionDate">Completion Date</label>
+                <input id="actionCompletionDate" type="date" formControlName="completionDate" />
+              </div>
+            </div>
+          </fieldset>
+          <div class="processes-actions processes-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="action === 'discard' ? 'Discard' : 'Confirm'"
+    [cancelLabel]="action === 'discard' ? 'Stay' : 'Cancel'"
+    [variant]="action === 'discard' ? 'danger' : 'default'"
+    [isConfirming]="isSaving()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelConfirmation()"
+  />
+}

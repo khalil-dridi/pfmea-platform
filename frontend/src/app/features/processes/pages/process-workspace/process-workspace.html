@@ -195,6 +195,7 @@
               [class.workspace-analysis__panel--functions]="activeSection() === 'functions'"
               [class.workspace-analysis__panel--failure]="activeSection() === 'failure'"
               [class.workspace-analysis__panel--risk]="activeSection() === 'risk'"
+              [class.workspace-analysis__panel--optimization]="activeSection() === 'optimization'"
               role="tabpanel"
               [id]="'workspace-section-' + activeSectionItem().id"
               [attr.aria-labelledby]="'workspace-tab-' + activeSectionItem().id"
@@ -212,6 +213,8 @@
                 <app-workspace-failure-analysis [processStepId]="step.id" />
               } @else if (activeSection() === 'risk') {
                 <app-workspace-risk-analysis [processStepId]="step.id" />
+              } @else if (activeSection() === 'optimization') {
+                <app-workspace-optimization [processStepId]="step.id" />
               } @else {
                 <h3>{{ activeSectionItem().title }}</h3>
                 <p>{{ activeSectionItem().message }}</p>

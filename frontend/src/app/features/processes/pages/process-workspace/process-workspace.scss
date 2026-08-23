@@ -321,7 +321,8 @@
 .workspace-analysis__panel--structure,
 .workspace-analysis__panel--functions,
 .workspace-analysis__panel--failure,
-.workspace-analysis__panel--risk {
+.workspace-analysis__panel--risk,
+.workspace-analysis__panel--optimization {
   justify-items: stretch;
   padding: 1.15rem 1.15rem 1.25rem;
 
@@ -344,7 +345,8 @@
   }
 }
 
-.workspace-analysis__panel--risk {
+.workspace-analysis__panel--risk,
+.workspace-analysis__panel--optimization {
   min-width: 0;
 }
 

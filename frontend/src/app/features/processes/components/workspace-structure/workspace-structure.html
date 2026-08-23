@@ -1,0 +1,274 @@
+<section class="structure-panel">
+  <header class="structure-panel__header">
+    <div>
+      <h3>Process Work Elements</h3>
+      <p>Define and manage the work elements associated with this process step.</p>
+    </div>
+    <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
+      + Add Work Element
+    </button>
+  </header>
+
+  @if (notice(); as currentNotice) {
+    <div
+      class="processes-alert"
+      [class.processes-alert--success]="currentNotice.kind === 'success'"
+      [class.processes-alert--pending]="currentNotice.kind === 'pending'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="processes-alert__body">
+        <p>{{ currentNotice.title }}</p>
+        @if (currentNotice.status) {
+          <p><strong>Status: {{ currentNotice.status }}</strong></p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="retry()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <form class="structure-toolbar" role="search" (submit)="$event.preventDefault()">
+    <div class="field field--search">
+      <label class="visually-hidden" for="work-element-search">Search work elements</label>
+      <input
+        id="work-element-search"
+        type="search"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        placeholder="Search work elements..."
+        autocomplete="off"
+      />
+    </div>
+  </form>
+
+  @if (isLoading()) {
+    <div class="structure-table-wrap" aria-hidden="true">
+      <table class="structure-table">
+        <thead>
+          <tr>
+            <th scope="col">Element Number</th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of [0, 1, 2]; track row) {
+            <tr>
+              <td colspan="4"><span class="structure-skeleton"></span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="processes-state processes-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading work elements…
+    </div>
+  } @else if (workElements().length === 0 && errorMessage()) {
+    <div class="processes-state" role="status">Unable to display work elements at this time.</div>
+  } @else if (workElements().length === 0) {
+    <div class="processes-empty" role="status">
+      <h2>No work elements found</h2>
+      <p>This process step does not contain any work elements yet.</p>
+      <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
+        + Add Work Element
+      </button>
+    </div>
+  } @else if (filteredWorkElements().length === 0) {
+    <div class="processes-empty" role="status">
+      <h2>No matching work elements</h2>
+      <p>No work elements match the current search.</p>
+    </div>
+  } @else {
+    <div class="structure-table-wrap">
+      <table class="structure-table">
+        <caption class="visually-hidden">Process work elements</caption>
+        <thead>
+          <tr>
+            <th scope="col">Element Number</th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (element of filteredWorkElements(); track element.id) {
+            <tr>
+              <td>
+                <span class="structure-number">{{ element.elementNumber }}</span>
+              </td>
+              <td>
+                <strong>{{ element.name }}</strong>
+              </td>
+              <td class="structure-table__description">{{ descriptionText(element.description) }}</td>
+              <td>
+                <div class="processes-actions">
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--compact"
+                    title="View"
+                    [attr.aria-label]="'View ' + element.name"
+                    (click)="openView(element, $event)"
+                  >
+                    View
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--compact"
+                    title="Edit"
+                    [attr.aria-label]="'Edit ' + element.name"
+                    (click)="openEdit(element, $event)"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="structure-cards">
+      @for (element of filteredWorkElements(); track element.id) {
+        <li class="structure-card">
+          <div class="structure-card__top">
+            <div>
+              <h4>{{ element.name }}</h4>
+              <p>Element {{ element.elementNumber }}</p>
+            </div>
+          </div>
+          <p class="structure-card__description">{{ descriptionText(element.description) }}</p>
+          <div class="processes-actions">
+            <button type="button" class="btn btn--ghost btn--compact" (click)="openView(element, $event)">View</button>
+            <button type="button" class="btn btn--ghost btn--compact" (click)="openEdit(element, $event)">Edit</button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (editorMode(); as mode) {
+  <div class="structure-dialog" role="presentation" (click)="requestCloseEditor()">
+    <div
+      class="structure-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'work-element-editor-title'"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="work-element-editor-title">{{ editorTitle() }}</h2>
+      <p>
+        @if (mode === 'view') {
+          Review the selected work element.
+        } @else if (mode === 'edit') {
+          Update this work element for the selected process step.
+        } @else {
+          Add a work element to the selected process step.
+        }
+      </p>
+
+      @if (editorError(); as editorErrorMessage) {
+        <div class="processes-alert processes-alert--error" role="alert">{{ editorErrorMessage }}</div>
+      }
+
+      <form [formGroup]="editorForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+        <fieldset [disabled]="isSaving() || mode === 'view'">
+          <div class="structure-form-grid">
+            <div class="field">
+              <label for="elementNumber">
+                Element Number
+                @if (mode !== 'view') {
+                  <span class="field__required" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                #firstField
+                id="elementNumber"
+                type="number"
+                min="1"
+                step="1"
+                formControlName="elementNumber"
+                [attr.aria-invalid]="numberError() ? true : null"
+                [attr.aria-describedby]="numberError() ? 'elementNumber-error' : null"
+              />
+              @if (numberError(); as message) {
+                <p id="elementNumber-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field">
+              <label for="elementName">
+                Name
+                @if (mode !== 'view') {
+                  <span class="field__required" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                id="elementName"
+                type="text"
+                maxlength="150"
+                formControlName="name"
+                autocomplete="off"
+                [attr.aria-invalid]="nameError() ? true : null"
+                [attr.aria-describedby]="nameError() ? 'elementName-error' : null"
+              />
+              @if (nameError(); as message) {
+                <p id="elementName-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="elementDescription">Description</label>
+            <textarea
+              id="elementDescription"
+              rows="4"
+              maxlength="500"
+              formControlName="description"
+              [attr.aria-invalid]="descriptionError() ? true : null"
+              [attr.aria-describedby]="descriptionError() ? 'elementDescription-error' : null"
+            ></textarea>
+            @if (descriptionError(); as message) {
+              <p id="elementDescription-error" class="field__error">{{ message }}</p>
+            }
+          </div>
+        </fieldset>
+
+        <div class="processes-actions processes-actions--form">
+          @if (mode !== 'view') {
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ mode === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+          }
+          <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+            {{ mode === 'view' ? 'Close' : 'Cancel' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="action === 'discard' ? 'Discard' : 'Confirm'"
+    [cancelLabel]="action === 'discard' ? 'Stay' : 'Cancel'"
+    [variant]="action === 'discard' ? 'danger' : 'default'"
+    [isConfirming]="isSaving()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelConfirmation()"
+  />
+}

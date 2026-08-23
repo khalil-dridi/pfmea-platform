@@ -1,0 +1,334 @@
+<section class="workspace-page">
+  @if (isLoading()) {
+    <div class="processes-card processes-state processes-state--loading" role="status" aria-live="polite">
+      <span class="spinner spinner--muted" aria-hidden="true"></span>
+      Loading workspace…
+    </div>
+  } @else if (errorMessage(); as error) {
+    <header class="workspace-page__header">
+      <p class="workspace-page__crumb">
+        <a routerLink="/processes">Processes</a>
+        <span aria-hidden="true">/</span>
+        <span>Workspace</span>
+      </p>
+      <h1>P-FMEA Workspace</h1>
+    </header>
+    <div class="processes-alert processes-alert--error" role="alert" aria-live="assertive">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn--ghost btn--compact" (click)="retry()">Retry</button>
+    </div>
+    <div class="processes-card processes-empty" role="status">
+      <h2>Unable to open workspace</h2>
+      <p>{{ error }}</p>
+      <button type="button" class="btn btn--ghost" (click)="back()">Back to Processes</button>
+    </div>
+  } @else if (process(); as currentProcess) {
+    <header class="workspace-page__header">
+      <div>
+        <nav class="workspace-page__crumb" aria-label="Breadcrumb">
+          <a routerLink="/processes">Processes</a>
+          <span aria-hidden="true">/</span>
+          <span>{{ currentProcess.name }}</span>
+          <span aria-hidden="true">/</span>
+          <span>Workspace</span>
+        </nav>
+        <h1>{{ currentProcess.name }}</h1>
+        <p>P-FMEA Workspace</p>
+      </div>
+      <a routerLink="/processes" class="btn btn--ghost">Back to Processes</a>
+    </header>
+
+    <section class="processes-card workspace-summary" aria-labelledby="workspace-summary-title">
+      <h2 id="workspace-summary-title" class="visually-hidden">Process summary</h2>
+      <dl>
+        <div>
+          <dt>Process Name</dt>
+          <dd>{{ currentProcess.name }}</dd>
+        </div>
+        <div>
+          <dt>Process Number</dt>
+          <dd>{{ currentProcess.processNumber }}</dd>
+        </div>
+        <div>
+          <dt>Created At</dt>
+          <dd>{{ formatDate(currentProcess.createdAt) }}</dd>
+        </div>
+        <div>
+          <dt>Updated At</dt>
+          <dd>{{ formatDate(currentProcess.updatedAt) }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="workspace-layout">
+      <aside class="processes-card workspace-steps" aria-labelledby="workspace-steps-title">
+        <header class="workspace-steps__header">
+          <div class="workspace-steps__heading">
+            <h2 id="workspace-steps-title">Process Steps</h2>
+            <button type="button" class="btn btn--primary btn--compact" (click)="openCreateStep($event)">
+              + Add Process Step
+            </button>
+          </div>
+          <div class="field">
+            <label class="visually-hidden" for="step-search">Search steps</label>
+            <input
+              id="step-search"
+              type="search"
+              [value]="searchQuery()"
+              (input)="onSearchInput($event)"
+              placeholder="Search steps..."
+              autocomplete="off"
+            />
+          </div>
+        </header>
+
+        @if (notice(); as currentNotice) {
+          <div
+            class="processes-alert"
+            [class.processes-alert--success]="currentNotice.kind === 'success'"
+            [class.processes-alert--pending]="currentNotice.kind === 'pending'"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="processes-alert__body">
+              <p>{{ currentNotice.title }}</p>
+              @if (currentNotice.status) {
+                <p><strong>Status: {{ currentNotice.status }}</strong></p>
+              }
+            </div>
+          </div>
+        }
+
+        @if (stepsErrorMessage(); as stepsError) {
+          <div class="workspace-steps__state" role="alert">
+            <p>{{ stepsError }}</p>
+            <button type="button" class="btn btn--ghost btn--compact" (click)="retry()">Retry</button>
+          </div>
+        } @else if (steps().length === 0) {
+          <div class="workspace-steps__state" role="status">
+            <h3>No process steps</h3>
+            <p>This process does not contain any process steps yet.</p>
+            <button type="button" class="btn btn--primary btn--compact" (click)="openCreateStep($event)">
+              + Add Process Step
+            </button>
+          </div>
+        } @else if (filteredSteps().length === 0) {
+          <div class="workspace-steps__state" role="status">
+            <h3>No matching steps</h3>
+            <p>No process steps match the current search.</p>
+          </div>
+        } @else {
+          <ul class="workspace-steps__list">
+            @for (step of filteredSteps(); track step.id) {
+              <li>
+                <div
+                  class="workspace-step"
+                  [class.workspace-step--active]="step.id === selectedStepId()"
+                >
+                  <button
+                    type="button"
+                    class="workspace-step__select"
+                    [attr.aria-current]="step.id === selectedStepId() ? 'true' : null"
+                    (click)="selectStep(step.id)"
+                  >
+                    <span class="workspace-step__number">Step {{ step.stepNumber }}</span>
+                    <span class="workspace-step__name">{{ step.name }}</span>
+                  </button>
+                  <div class="workspace-step__actions">
+                    <button
+                      type="button"
+                      class="workspace-step__action"
+                      title="View"
+                      [attr.aria-label]="'View ' + step.name"
+                      (click)="openViewStep(step, $event)"
+                    >
+                      View
+                    </button>
+                    <button
+                      type="button"
+                      class="workspace-step__action"
+                      title="Edit"
+                      [attr.aria-label]="'Edit ' + step.name"
+                      (click)="openEditStep(step, $event)"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </aside>
+
+      <section class="workspace-main" aria-live="polite">
+        @if (selectedStep(); as step) {
+          <article class="processes-card workspace-step-header">
+            <p>Step {{ step.stepNumber }}</p>
+            <h2>{{ step.name }}</h2>
+            @if (step.description) {
+              <p class="workspace-step-header__description">{{ step.description }}</p>
+            }
+          </article>
+
+          <div class="processes-card workspace-analysis">
+            <div class="workspace-tabs" role="tablist" aria-label="P-FMEA workspace sections">
+              @for (section of sections; track section.id) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="workspace-tabs__tab"
+                  [class.workspace-tabs__tab--active]="section.id === activeSection()"
+                  [attr.aria-selected]="section.id === activeSection()"
+                  [attr.aria-controls]="'workspace-section-' + section.id"
+                  [id]="'workspace-tab-' + section.id"
+                  (click)="selectSection(section.id)"
+                >
+                  {{ section.title }}
+                </button>
+              }
+            </div>
+
+            <div
+              class="workspace-analysis__panel"
+              [class.workspace-analysis__panel--structure]="activeSection() === 'structure'"
+              role="tabpanel"
+              [id]="'workspace-section-' + activeSectionItem().id"
+              [attr.aria-labelledby]="'workspace-tab-' + activeSectionItem().id"
+            >
+              @if (activeSection() === 'structure') {
+                <app-workspace-structure [processStepId]="step.id" />
+              } @else {
+                <h3>{{ activeSectionItem().title }}</h3>
+                <p>{{ activeSectionItem().message }}</p>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="processes-card processes-empty" role="status">
+            <h2>No process steps</h2>
+            <p>This process does not contain any process steps yet.</p>
+            <button type="button" class="btn btn--primary btn--compact" (click)="openCreateStep($event)">
+              + Add Process Step
+            </button>
+          </div>
+        }
+      </section>
+    </div>
+  }
+</section>
+
+@if (editorMode(); as mode) {
+  <div class="workspace-dialog" role="presentation" (click)="requestCloseEditor()">
+    <div
+      class="workspace-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="process-step-editor-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="process-step-editor-title">{{ editorTitle() }}</h2>
+      <p>
+        @if (mode === 'view') {
+          Review the selected process step.
+        } @else if (mode === 'edit') {
+          Update this process step for the current process.
+        } @else {
+          Add a process step to the current process.
+        }
+      </p>
+
+      @if (editorError(); as editorErrorMessage) {
+        <div class="processes-alert processes-alert--error" role="alert">{{ editorErrorMessage }}</div>
+      }
+
+      <form [formGroup]="stepForm" (submit)="$event.preventDefault(); requestSaveStep()" novalidate>
+        <fieldset [disabled]="isSaving() || mode === 'view'">
+          <div class="workspace-dialog__grid">
+            <div class="field">
+              <label for="stepNumber">
+                Step Number
+                @if (mode !== 'view') {
+                  <span class="field__required" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                #stepFirstField
+                id="stepNumber"
+                type="number"
+                min="1"
+                step="1"
+                formControlName="stepNumber"
+                [attr.aria-invalid]="numberError() ? true : null"
+                [attr.aria-describedby]="numberError() ? 'stepNumber-error' : null"
+              />
+              @if (numberError(); as message) {
+                <p id="stepNumber-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+
+            <div class="field">
+              <label for="stepName">
+                Name
+                @if (mode !== 'view') {
+                  <span class="field__required" aria-hidden="true">*</span>
+                }
+              </label>
+              <input
+                id="stepName"
+                type="text"
+                maxlength="150"
+                formControlName="name"
+                autocomplete="off"
+                [attr.aria-invalid]="nameError() ? true : null"
+                [attr.aria-describedby]="nameError() ? 'stepName-error' : null"
+              />
+              @if (nameError(); as message) {
+                <p id="stepName-error" class="field__error">{{ message }}</p>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="stepDescription">Description</label>
+            <textarea
+              id="stepDescription"
+              rows="4"
+              maxlength="500"
+              formControlName="description"
+              [attr.aria-invalid]="descriptionError() ? true : null"
+              [attr.aria-describedby]="descriptionError() ? 'stepDescription-error' : null"
+            ></textarea>
+            @if (descriptionError(); as message) {
+              <p id="stepDescription-error" class="field__error">{{ message }}</p>
+            }
+          </div>
+        </fieldset>
+
+        <div class="processes-actions processes-actions--form">
+          @if (mode !== 'view') {
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              {{ mode === 'edit' ? 'Save Changes' : 'Create' }}
+            </button>
+          }
+          <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
+            {{ mode === 'view' ? 'Close' : 'Cancel' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (pendingAction(); as action) {
+  <app-confirmation-dialog
+    [title]="confirmTitle()"
+    [message]="confirmMessage()"
+    [confirmLabel]="action === 'discard' ? 'Discard' : 'Confirm'"
+    [cancelLabel]="action === 'discard' ? 'Stay' : 'Cancel'"
+    [variant]="action === 'discard' ? 'danger' : 'default'"
+    [isConfirming]="isSaving()"
+    (confirmed)="confirmPendingAction()"
+    (cancelled)="cancelConfirmation()"
+  />
+}

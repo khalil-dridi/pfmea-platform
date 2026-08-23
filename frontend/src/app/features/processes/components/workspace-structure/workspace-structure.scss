@@ -1,0 +1,223 @@
+@use '../../styles/processes-ui';
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.structure-panel {
+  width: 100%;
+}
+
+.structure-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3,
+  p {
+    margin: 0;
+  }
+
+  h3 {
+    color: #1e1b4b;
+    font-size: 1.08rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin-top: 0.28rem;
+    max-width: 36rem;
+    color: #6b6685;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+}
+
+.structure-toolbar {
+  margin-bottom: 0.85rem;
+}
+
+.structure-table-wrap {
+  overflow-x: auto;
+}
+
+.structure-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 42rem;
+
+  th,
+  td {
+    padding: 0.8rem 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid #eeeaf6;
+  }
+
+  th {
+    color: #8a86a0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  td {
+    color: #1e1b4b;
+    font-size: 0.88rem;
+  }
+}
+
+.structure-table__description {
+  color: #5b5674;
+  max-width: 22rem;
+}
+
+.structure-number {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.12rem 0.5rem;
+  color: #3b1699;
+  background: #ede9fe;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.structure-skeleton {
+  display: block;
+  height: 0.78rem;
+  border-radius: 0.4rem;
+  background: #f0eef6;
+}
+
+.structure-cards {
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structure-card {
+  padding: 0.95rem 0;
+  border-top: 1px solid #eeeaf6;
+
+  h4,
+  p {
+    margin: 0;
+  }
+
+  h4 {
+    color: #1e1b4b;
+    font-size: 0.98rem;
+  }
+}
+
+.structure-card__top p,
+.structure-card__description {
+  margin-top: 0.25rem;
+  color: #6b6685;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.structure-card .processes-actions {
+  margin-top: 0.75rem;
+}
+
+.structure-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(20, 12, 48, 0.42);
+}
+
+.structure-dialog__panel {
+  width: min(100%, 38rem);
+  max-height: calc(100vh - 2.5rem);
+  overflow: auto;
+  padding: 1.4rem 1.4rem 1.25rem;
+  background: #fff;
+  border-top: 4px solid #3b1699;
+  border-radius: 1.15rem;
+  box-shadow: 0 22px 50px rgba(40, 28, 90, 0.18);
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  > p {
+    margin-top: 0.4rem;
+    margin-bottom: 1.1rem;
+    color: #6b6685;
+    font-size: 0.9rem;
+  }
+}
+
+.structure-form-grid {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.structure-dialog textarea {
+  width: 100%;
+  min-height: 6rem;
+  padding: 0.7rem 0.85rem;
+  color: #141420;
+  background: #fff;
+  border: 1px solid #e0e1e5;
+  border-radius: 0.55rem;
+  font: inherit;
+  font-size: 0.92rem;
+  resize: vertical;
+
+  &:focus {
+    border-color: #6b51aa;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 22, 153, 0.12);
+  }
+}
+
+@media (max-width: 820px) {
+  .structure-table-wrap {
+    display: none;
+  }
+
+  .structure-cards {
+    display: block;
+  }
+}
+
+@media (max-width: 640px) {
+  .structure-panel__header,
+  .structure-panel__header .btn,
+  .structure-form-grid,
+  .structure-dialog .processes-actions--form,
+  .structure-dialog .btn {
+    width: 100%;
+  }
+
+  .structure-panel__header {
+    flex-direction: column;
+  }
+
+  .structure-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

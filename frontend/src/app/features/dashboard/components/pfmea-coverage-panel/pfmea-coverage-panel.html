@@ -1,0 +1,72 @@
+<section
+  class="dash-panel coverage-panel"
+  [class.dash-panel--refreshing]="refreshing()"
+  aria-labelledby="coverage-title"
+>
+  <div class="dash-panel__body">
+    <p class="dash-eyebrow">Coverage</p>
+    <h2 id="coverage-title" class="dash-title">P-FMEA Coverage</h2>
+    <p class="dash-hint">Current analysis structure within the selected scope.</p>
+
+    @if (loading()) {
+      <ul class="coverage-panel__grid" aria-hidden="true">
+        @for (item of [0, 1, 2, 3, 4, 5]; track item) {
+          <li class="coverage-panel__item">
+            <span class="dash-skeleton coverage-panel__sk-label"></span>
+            <span class="dash-skeleton coverage-panel__sk-value"></span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <ul class="coverage-panel__grid">
+        @for (item of items(); track item.key) {
+          <li class="coverage-panel__item">
+            <span class="coverage-panel__icon" aria-hidden="true">
+              @switch (item.key) {
+                @case ('processes') {
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="4" y="4" width="7" height="7" rx="1.4" stroke="currentColor" stroke-width="1.7" />
+                    <rect x="13" y="13" width="7" height="7" rx="1.4" stroke="currentColor" stroke-width="1.7" />
+                    <path d="M11 7.5h2.5A3.5 3.5 0 0 1 17 11v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                }
+                @case ('processSteps') {
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 7h12M6 12h12M6 17h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                }
+                @case ('workElements') {
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4 19 8v8l-7 4-7-4V8l7-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                  </svg>
+                }
+                @case ('functions') {
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.7" />
+                    <path d="M12 5v2.2M12 16.8V19M5 12h2.2M16.8 12H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                }
+                @case ('failureModes') {
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5 20 19H4L12 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                    <path d="M12 10v4.2M12 16.6h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                }
+                @default {
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.7" />
+                    <path d="m16 16 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                  </svg>
+                }
+              }
+            </span>
+            <span class="coverage-panel__label">{{ item.label }}</span>
+            <strong>
+              <app-animated-metric [value]="item.value" />
+            </strong>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

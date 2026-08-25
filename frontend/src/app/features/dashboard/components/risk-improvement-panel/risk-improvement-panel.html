@@ -1,0 +1,53 @@
+<section
+  class="dash-panel dash-panel--focus improvement-panel"
+  [class.dash-panel--refreshing]="refreshing()"
+  aria-labelledby="risk-improvement-title"
+>
+  <div class="dash-panel__body">
+    <p class="dash-eyebrow">Improvement</p>
+    <h2 id="risk-improvement-title" class="dash-title">Risk Improvement</h2>
+    <p class="dash-hint">Current risk distribution compared with the optimized state.</p>
+
+    @if (loading()) {
+      <div class="improvement-panel__skeleton" aria-hidden="true">
+        @for (row of [0, 1, 2, 3]; track row) {
+          <span class="dash-skeleton"></span>
+        }
+      </div>
+    } @else if (isEmpty()) {
+      <div class="dash-empty dash-empty--compact">No risk data available</div>
+    } @else {
+      <div class="improvement-panel__legend">
+        <span><i class="improvement-panel__swatch improvement-panel__swatch--current"></i> Current</span>
+        <span><i class="improvement-panel__swatch improvement-panel__swatch--optimized"></i> Optimized</span>
+      </div>
+      <ul class="improvement-panel__rows">
+        @for (row of rows(); track row.key) {
+          <li>
+            <span class="improvement-panel__label">{{ row.label }}</span>
+            <div class="improvement-panel__pair">
+              <div class="improvement-panel__bar">
+                <span class="visually-hidden">Current {{ row.label }}</span>
+                <div class="improvement-panel__rail">
+                  <span class="improvement-panel__track improvement-panel__track--current" [style.width.%]="row.currentWidth"></span>
+                </div>
+                <strong>
+                  <app-animated-metric [value]="row.current" />
+                </strong>
+              </div>
+              <div class="improvement-panel__bar">
+                <span class="visually-hidden">Optimized {{ row.label }}</span>
+                <div class="improvement-panel__rail">
+                  <span class="improvement-panel__track improvement-panel__track--optimized" [style.width.%]="row.optimizedWidth"></span>
+                </div>
+                <strong>
+                  <app-animated-metric [value]="row.optimized" />
+                </strong>
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

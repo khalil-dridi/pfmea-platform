@@ -1,0 +1,66 @@
+<div
+  class="scope-bar"
+  [class.scope-bar--refreshing]="refreshing()"
+  [attr.aria-busy]="refreshing()"
+>
+  <p class="dash-eyebrow">Analysis Scope</p>
+
+  <div class="scope-bar__controls">
+    <div class="field">
+      <label for="dashboard-process-filter">Process</label>
+      <select
+        id="dashboard-process-filter"
+        [value]="processId() ?? ''"
+        (change)="onProcessChange($event)"
+      >
+        <option value="">All Processes</option>
+        @for (process of processes(); track process.id) {
+          <option [value]="process.id">{{ process.processNumber }} — {{ process.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="dashboard-step-filter">Process Step</label>
+      <select
+        id="dashboard-step-filter"
+        [value]="processStepId() ?? ''"
+        [disabled]="processId() === null"
+        (change)="onStepChange($event)"
+      >
+        <option value="">All Steps</option>
+        @for (step of steps(); track step.id) {
+          <option [value]="step.id">Step {{ step.stepNumber }} · {{ step.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="scope-bar__status" aria-live="polite">
+    <p class="scope-bar__current">Current scope</p>
+    @if (selectedProcess(); as process) {
+      <p>
+        <span>Process:</span>
+        <strong>{{ process.name }}</strong>
+      </p>
+      @if (selectedStep(); as step) {
+        <p>
+          <span>Process Step:</span>
+          <strong>Step {{ step.stepNumber }} · {{ step.name }}</strong>
+        </p>
+      } @else {
+        <p>
+          <span>Process Step:</span>
+          <strong>All Steps</strong>
+        </p>
+      }
+    } @else {
+      <p>
+        <strong>All Processes</strong>
+      </p>
+    }
+    <p class="scope-bar__caption">{{ scopeCaption() }}</p>
+  </div>
+
+  <span class="scope-bar__progress" aria-hidden="true"></span>
+</div>

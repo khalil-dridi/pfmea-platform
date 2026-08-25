@@ -5,6 +5,6 @@ export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
     component: Dashboard,
-    data: { title: 'Tableau de bord' }
+    data: { title: 'P-FMEA Control Center' }
   }
 ];

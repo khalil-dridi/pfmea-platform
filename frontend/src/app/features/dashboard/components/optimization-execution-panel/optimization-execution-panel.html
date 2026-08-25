@@ -1,0 +1,61 @@
+<section
+  class="dash-panel execution-panel"
+  [class.dash-panel--refreshing]="refreshing()"
+  aria-labelledby="execution-title"
+>
+  <div class="dash-panel__body">
+    <p class="dash-eyebrow">Execution</p>
+    <h2 id="execution-title" class="dash-title">Optimization Execution</h2>
+    <p class="dash-hint">Status of prevention and detection actions.</p>
+
+    @if (loading()) {
+      <div class="execution-panel__skeleton" aria-hidden="true">
+        <span class="dash-skeleton"></span>
+        <span class="dash-skeleton"></span>
+      </div>
+    } @else if (isEmpty()) {
+      <div class="dash-empty dash-empty--compact">No optimization actions have been defined yet.</div>
+    } @else {
+      <dl class="execution-panel__stats">
+        <div>
+          <dt>Total Actions</dt>
+          <dd>
+            <app-animated-metric [value]="total()" />
+          </dd>
+        </div>
+        <div>
+          <dt>In Application</dt>
+          <dd>
+            <app-animated-metric [value]="inApplication()" />
+          </dd>
+        </div>
+        <div>
+          <dt>Closed</dt>
+          <dd>
+            <app-animated-metric [value]="closed()" />
+          </dd>
+        </div>
+      </dl>
+
+      @if (completionRate(); as completion) {
+        <div class="execution-panel__completion">
+          <div class="execution-panel__completion-head">
+            <span>Closed / Total</span>
+            <strong>
+              <app-animated-metric [value]="completion" kind="percent" />%
+            </strong>
+          </div>
+          <div
+            class="execution-panel__rail"
+            role="meter"
+            [attr.aria-valuenow]="completionWidth()"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <span [style.width.%]="completionWidth()"></span>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</section>

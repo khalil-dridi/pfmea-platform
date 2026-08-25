@@ -11,4 +11,8 @@ public interface FailureCauseRepository
     List<FailureCause> findByFailureModeIdOrderByIdAsc(
             UUID failureModeId
     );
+
+    long countByFailureModeProcessStepId(UUID processStepId);
+
+    long countByFailureModeProcessStepProcessId(UUID processId);
 }

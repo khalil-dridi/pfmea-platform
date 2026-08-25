@@ -1,0 +1,81 @@
+<section
+  class="dash-panel dash-panel--focus posture-panel"
+  [class.dash-panel--refreshing]="refreshing()"
+  aria-labelledby="risk-posture-title"
+>
+  <div class="dash-panel__body">
+    <p class="dash-eyebrow">Risk</p>
+    <h2 id="risk-posture-title" class="dash-title">Risk Posture</h2>
+    <p class="dash-hint">Current action-priority distribution across failure causes.</p>
+
+    @if (loading()) {
+      <div class="posture-panel__layout" aria-hidden="true">
+        <span class="dash-skeleton posture-panel__donut-sk"></span>
+        <div class="posture-panel__legend">
+          @for (row of [0, 1, 2, 3]; track row) {
+            <span class="dash-skeleton posture-panel__legend-sk"></span>
+          }
+        </div>
+      </div>
+    } @else if (total() === 0) {
+      <div class="dash-empty dash-empty--compact">No risk data available</div>
+    } @else {
+      <div class="posture-panel__layout">
+        <div
+          class="posture-panel__chart"
+          role="img"
+          [attr.aria-label]="'Risk posture for ' + total() + ' failure causes'"
+        >
+          <svg viewBox="0 0 160 160" aria-hidden="true">
+            <g transform="rotate(-90 80 80)">
+              <circle class="posture-panel__track" cx="80" cy="80" [attr.r]="radius" fill="none" stroke-width="18" />
+              @for (segment of segments(); track segment.key) {
+                <circle
+                  class="posture-panel__arc"
+                  [class.posture-panel__arc--dim]="highlighted() !== null && highlighted() !== segment.key"
+                  cx="80"
+                  cy="80"
+                  [attr.r]="radius"
+                  fill="none"
+                  stroke-width="18"
+                  [attr.stroke]="segment.color"
+                  [attr.stroke-dasharray]="segment.dashArray"
+                  [attr.stroke-dashoffset]="segment.dashOffset"
+                />
+              }
+            </g>
+          </svg>
+          <div class="posture-panel__center">
+            <strong>
+              <app-animated-metric [value]="total()" />
+            </strong>
+            <span>Total Failure Causes</span>
+          </div>
+        </div>
+
+        <div class="posture-panel__side">
+          <ul class="posture-panel__legend">
+            @for (segment of segments(); track segment.key) {
+              <li
+                [class.posture-panel__legend-item--active]="highlighted() === segment.key"
+                [title]="segment.label + ': ' + segment.value"
+                (mouseenter)="highlight(segment.key)"
+                (mouseleave)="highlight(null)"
+              >
+                <span class="posture-panel__swatch" [style.background]="segment.color"></span>
+                <span>{{ segment.label }}</span>
+                <strong>
+                  <app-animated-metric [value]="segment.value" />
+                </strong>
+              </li>
+            }
+          </ul>
+          <p class="posture-panel__insight">
+            <app-animated-metric [value]="undefinedCount()" />
+            failure causes still require risk analysis.
+          </p>
+        </div>
+      </div>
+    }
+  </div>
+</section>

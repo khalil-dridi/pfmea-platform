@@ -11,4 +11,5 @@ public interface ProcessStepRepository
     List<ProcessStep> findByProcessIdOrderByStepNumberAsc(
             UUID processId
     );
+    long countByProcessId(UUID processId);
 }

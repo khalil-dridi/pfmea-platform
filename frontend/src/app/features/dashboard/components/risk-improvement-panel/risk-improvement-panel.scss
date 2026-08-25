@@ -1,0 +1,132 @@
+@use '../../styles/dashboard-ui';
+
+.improvement-panel {
+  height: 100%;
+}
+
+.improvement-panel__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  color: #5b5674;
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+  }
+}
+
+.improvement-panel__swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.42rem;
+  border-radius: 999px;
+}
+
+.improvement-panel__swatch--current {
+  background: #c9c4d8;
+}
+
+.improvement-panel__swatch--optimized {
+  background: #3b1699;
+}
+
+.improvement-panel__rows {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: 5.4rem minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.22rem 0.28rem;
+    border-radius: 0.45rem;
+    transition: background 160ms ease-out;
+  }
+
+  li:hover {
+    background: #f8f7fb;
+  }
+}
+
+.improvement-panel__label {
+  color: #5b5674;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.improvement-panel__pair {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.improvement-panel__bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.9rem;
+  align-items: center;
+  gap: 0.4rem;
+
+  strong {
+    color: #1e1b4b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.improvement-panel__rail {
+  height: 0.48rem;
+  overflow: hidden;
+  background: #f3f1f8;
+  border-radius: 999px;
+}
+
+.improvement-panel__track {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.improvement-panel__track--current {
+  background: #d8d4e6;
+}
+
+.improvement-panel__track--optimized {
+  background: #3b1699;
+}
+
+.improvement-panel__skeleton {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.8rem;
+
+  span {
+    height: 1.45rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .improvement-panel__rows li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.22rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .improvement-panel__track {
+    transition: none;
+  }
+}

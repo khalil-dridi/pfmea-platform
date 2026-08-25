@@ -12,4 +12,7 @@ public interface ProcessWorkElementRepository
     List<ProcessWorkElement> findByProcessStepIdOrderByElementNumberAsc(
             UUID processStepId
     );
+    long countByProcessStepId(UUID processStepId);
+
+    long countByProcessStepProcessId(UUID processId);
 }

@@ -34,10 +34,10 @@ export interface ImprovementRow {
 }
 
 const RISK_BANDS: readonly { key: RiskBand; label: string; color: string }[] = [
-  { key: 'high', label: 'High', color: '#c2414b' },
-  { key: 'medium', label: 'Medium', color: '#d97706' },
-  { key: 'low', label: 'Low', color: '#3d9b6a' },
-  { key: 'notDefined', label: 'Not defined', color: '#8b889c' }
+  { key: 'high', label: 'High', color: '#c45d66' },
+  { key: 'medium', label: 'Medium', color: '#c9923a' },
+  { key: 'low', label: 'Low', color: '#4f9d73' },
+  { key: 'notDefined', label: 'Not defined', color: '#8a8798' }
 ];
 
 const DONUT_RADIUS = 54;

@@ -4,17 +4,18 @@
   aria-labelledby="completeness-title"
 >
   <div class="dash-panel__body">
-    <p class="dash-eyebrow">Completeness</p>
-    <h2 id="completeness-title" class="dash-title">Analysis Completeness</h2>
-    <p class="dash-hint">How much of the selected scope has been analyzed and optimized.</p>
+    <header class="dash-head">
+      <h2 id="completeness-title">Analysis Completeness</h2>
+      <p>How much of the selected scope has been analyzed and optimized.</p>
+    </header>
 
     @if (loading()) {
-      <div class="completeness-panel__rings" aria-hidden="true">
+      <div class="completeness-panel__well completeness-panel__well--loading" aria-hidden="true">
         <span class="dash-skeleton completeness-panel__ring-sk"></span>
         <span class="dash-skeleton completeness-panel__ring-sk"></span>
       </div>
     } @else {
-      <div class="completeness-panel__rings">
+      <div class="completeness-panel__well">
         <article>
           <div
             class="completeness-panel__ring"
@@ -25,14 +26,14 @@
             aria-label="Risk analysis coverage"
           >
             <svg viewBox="0 0 96 96" aria-hidden="true">
-              <circle class="completeness-panel__track" cx="48" cy="48" [attr.r]="radius" fill="none" stroke-width="8" />
+              <circle class="completeness-panel__track" cx="48" cy="48" [attr.r]="radius" fill="none" stroke-width="7" />
               <circle
                 class="completeness-panel__value"
                 cx="48"
                 cy="48"
                 [attr.r]="radius"
                 fill="none"
-                stroke-width="8"
+                stroke-width="7"
                 [attr.stroke-dasharray]="circumference"
                 [attr.stroke-dashoffset]="riskOffset()"
                 transform="rotate(-90 48 48)"
@@ -47,6 +48,8 @@
           <p><app-animated-metric [value]="riskMissing()" /> not analyzed</p>
         </article>
 
+        <span class="completeness-panel__split" aria-hidden="true"></span>
+
         <article>
           <div
             class="completeness-panel__ring"
@@ -57,14 +60,14 @@
             aria-label="Optimization coverage"
           >
             <svg viewBox="0 0 96 96" aria-hidden="true">
-              <circle class="completeness-panel__track" cx="48" cy="48" [attr.r]="radius" fill="none" stroke-width="8" />
+              <circle class="completeness-panel__track" cx="48" cy="48" [attr.r]="radius" fill="none" stroke-width="7" />
               <circle
-                class="completeness-panel__value completeness-panel__value--opt"
+                class="completeness-panel__value"
                 cx="48"
                 cy="48"
                 [attr.r]="radius"
                 fill="none"
-                stroke-width="8"
+                stroke-width="7"
                 [attr.stroke-dasharray]="circumference"
                 [attr.stroke-dashoffset]="optimizationOffset()"
                 transform="rotate(-90 48 48)"
@@ -79,17 +82,6 @@
           <p><app-animated-metric [value]="optimizationMissing()" /> not optimized</p>
         </article>
       </div>
-
-      <ul class="completeness-panel__insights">
-        <li>
-          <app-animated-metric [value]="causesWithoutRisk()" />
-          failure causes still have no risk analysis.
-        </li>
-        <li>
-          <app-animated-metric [value]="risksWithoutOptimization()" />
-          analyzed risks still have no optimization.
-        </li>
-      </ul>
     }
   </div>
 </section>

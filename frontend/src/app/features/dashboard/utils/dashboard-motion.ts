@@ -1,8 +1,8 @@
 export const MOTION = {
-  micro: 180,
-  value: 380,
-  chart: 420,
-  panel: 280
+  micro: 160,
+  value: 320,
+  chart: 400,
+  panel: 260
 } as const;
 
 const EASE_OUT = (t: number): number => 1 - (1 - t) ** 3;

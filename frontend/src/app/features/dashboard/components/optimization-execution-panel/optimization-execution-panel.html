@@ -4,9 +4,10 @@
   aria-labelledby="execution-title"
 >
   <div class="dash-panel__body">
-    <p class="dash-eyebrow">Execution</p>
-    <h2 id="execution-title" class="dash-title">Optimization Execution</h2>
-    <p class="dash-hint">Status of prevention and detection actions.</p>
+    <header class="dash-head">
+      <h2 id="execution-title">Optimization Execution</h2>
+      <p>Status of prevention and detection actions.</p>
+    </header>
 
     @if (loading()) {
       <div class="execution-panel__skeleton" aria-hidden="true">
@@ -14,11 +15,16 @@
         <span class="dash-skeleton"></span>
       </div>
     } @else if (isEmpty()) {
-      <div class="dash-empty dash-empty--compact">No optimization actions have been defined yet.</div>
+      <div class="execution-panel__empty">
+        <p>No optimization actions have been defined yet.</p>
+        @if (workspaceRoute(); as route) {
+          <a [routerLink]="route">Create actions from the Optimization workspace →</a>
+        }
+      </div>
     } @else {
       <dl class="execution-panel__stats">
         <div>
-          <dt>Total Actions</dt>
+          <dt>Total</dt>
           <dd>
             <app-animated-metric [value]="total()" />
           </dd>
@@ -51,6 +57,7 @@
             [attr.aria-valuenow]="completionWidth()"
             aria-valuemin="0"
             aria-valuemax="100"
+            [attr.aria-label]="'Completion ' + completionWidth() + ' percent'"
           >
             <span [style.width.%]="completionWidth()"></span>
           </div>

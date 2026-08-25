@@ -58,6 +58,11 @@ export class Dashboard {
     return processId ? `/processes/${processId}/workspace` : '/processes';
   });
 
+  readonly optimizationWorkspaceRoute = computed(() => {
+    const processId = this.processId();
+    return processId ? `/processes/${processId}/workspace` : null;
+  });
+
   readonly isEmptyScope = computed(() => {
     const overview = this.overview();
     return !this.isLoading() && overview !== null && isDashboardEmpty(overview);

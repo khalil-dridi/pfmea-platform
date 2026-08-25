@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AreasNeedingAttention } from '../../models/dashboard-overview.model';
@@ -12,7 +13,7 @@ interface AttentionItem {
 
 @Component({
   selector: 'app-engineering-attention-panel',
-  imports: [RouterLink, AnimatedMetric],
+  imports: [NgTemplateOutlet, RouterLink, AnimatedMetric],
   templateUrl: './engineering-attention-panel.html',
   styleUrl: './engineering-attention-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

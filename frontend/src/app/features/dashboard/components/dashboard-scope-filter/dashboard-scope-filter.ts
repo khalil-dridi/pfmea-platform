@@ -28,16 +28,19 @@ export class DashboardScopeFilter {
     return this.steps().find(step => step.id === processStepId) ?? null;
   });
 
-  readonly scopeCaption = computed(() => {
-    if (!this.selectedProcess()) {
-      return 'Showing data for all processes';
+  readonly scopeLine = computed(() => {
+    const process = this.selectedProcess();
+    const step = this.selectedStep();
+
+    if (!process) {
+      return 'All Processes';
     }
 
-    if (!this.selectedStep()) {
-      return 'Showing data for selected process';
+    if (!step) {
+      return `${process.name} · All Steps`;
     }
 
-    return 'Showing data for selected process and step';
+    return `${process.name} · Step ${step.stepNumber} · ${step.name}`;
   });
 
   onProcessChange(event: Event): void {

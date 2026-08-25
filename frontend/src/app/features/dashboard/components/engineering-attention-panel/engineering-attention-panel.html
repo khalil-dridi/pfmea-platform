@@ -4,14 +4,42 @@
   aria-labelledby="attention-title"
 >
   <div class="dash-panel__body">
-    <p class="dash-eyebrow">Attention</p>
-    <h2 id="attention-title" class="dash-title">Engineering Attention</h2>
-    <p class="dash-hint">Areas that currently require engineering focus.</p>
+    <header class="dash-head">
+      <h2 id="attention-title">Engineering Attention</h2>
+      <p>Areas that currently require engineering focus.</p>
+    </header>
+
+    <ng-template #attentionIcon let-id>
+      @switch (id) {
+        @case ('high-priority') {
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 5 20 19H4L12 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          </svg>
+        }
+        @case ('actions-in-application') {
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.7" />
+            <path d="M12 8v4l2.5 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        }
+        @case ('risk-without-optimization') {
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        }
+        @default {
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.7" />
+            <path d="m16 16 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        }
+      }
+    </ng-template>
 
     @if (loading()) {
       <ul class="attention-panel__grid" aria-hidden="true">
         @for (row of [0, 1, 2, 3]; track row) {
-          <li class="attention-panel__row">
+          <li class="attention-panel__item">
             <span class="dash-skeleton attention-panel__sk-value"></span>
             <span class="dash-skeleton attention-panel__sk-label"></span>
           </li>
@@ -23,36 +51,13 @@
           <li>
             @if (targetRoute(); as route) {
               <a
-                class="attention-panel__row"
-                [class.attention-panel__row--active]="item.value > 0"
-                [class.attention-panel__row--priority]="item.emphasis && item.value > 0"
+                class="attention-panel__item"
+                [class.attention-panel__item--active]="item.value > 0"
+                [class.attention-panel__item--priority]="item.emphasis && item.value > 0"
                 [routerLink]="route"
               >
                 <span class="attention-panel__icon" aria-hidden="true">
-                  @switch (item.id) {
-                    @case ('high-priority') {
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M12 5 20 19H4L12 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
-                      </svg>
-                    }
-                    @case ('actions-in-application') {
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.7" />
-                        <path d="M12 8v4l2.5 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                      </svg>
-                    }
-                    @case ('risk-without-optimization') {
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M5 12h14M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    }
-                    @default {
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.7" />
-                        <path d="m16 16 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                      </svg>
-                    }
-                  }
+                  <ng-container [ngTemplateOutlet]="attentionIcon" [ngTemplateOutletContext]="{ $implicit: item.id }" />
                 </span>
                 <strong>
                   <app-animated-metric [value]="item.value" />
@@ -62,10 +67,13 @@
               </a>
             } @else {
               <div
-                class="attention-panel__row"
-                [class.attention-panel__row--active]="item.value > 0"
-                [class.attention-panel__row--priority]="item.emphasis && item.value > 0"
+                class="attention-panel__item"
+                [class.attention-panel__item--active]="item.value > 0"
+                [class.attention-panel__item--priority]="item.emphasis && item.value > 0"
               >
+                <span class="attention-panel__icon" aria-hidden="true">
+                  <ng-container [ngTemplateOutlet]="attentionIcon" [ngTemplateOutletContext]="{ $implicit: item.id }" />
+                </span>
                 <strong>
                   <app-animated-metric [value]="item.value" />
                 </strong>

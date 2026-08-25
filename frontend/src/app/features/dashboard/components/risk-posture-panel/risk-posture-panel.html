@@ -1,12 +1,13 @@
 <section
-  class="dash-panel dash-panel--focus posture-panel"
+  class="dash-panel posture-panel"
   [class.dash-panel--refreshing]="refreshing()"
   aria-labelledby="risk-posture-title"
 >
   <div class="dash-panel__body">
-    <p class="dash-eyebrow">Risk</p>
-    <h2 id="risk-posture-title" class="dash-title">Risk Posture</h2>
-    <p class="dash-hint">Current action-priority distribution across failure causes.</p>
+    <header class="dash-head">
+      <h2 id="risk-posture-title">Risk Posture</h2>
+      <p>Current action-priority distribution across failure causes.</p>
+    </header>
 
     @if (loading()) {
       <div class="posture-panel__layout" aria-hidden="true">
@@ -24,11 +25,11 @@
         <div
           class="posture-panel__chart"
           role="img"
-          [attr.aria-label]="'Risk posture for ' + total() + ' failure causes'"
+          [attr.aria-label]="'Risk posture for ' + total() + ' failure causes. High ' + (distribution()?.high ?? 0) + ', medium ' + (distribution()?.medium ?? 0) + ', low ' + (distribution()?.low ?? 0) + ', not defined ' + (distribution()?.notDefined ?? 0) + '.'"
         >
           <svg viewBox="0 0 160 160" aria-hidden="true">
             <g transform="rotate(-90 80 80)">
-              <circle class="posture-panel__track" cx="80" cy="80" [attr.r]="radius" fill="none" stroke-width="18" />
+              <circle class="posture-panel__track" cx="80" cy="80" [attr.r]="radius" fill="none" stroke-width="13" />
               @for (segment of segments(); track segment.key) {
                 <circle
                   class="posture-panel__arc"
@@ -37,10 +38,12 @@
                   cy="80"
                   [attr.r]="radius"
                   fill="none"
-                  stroke-width="18"
+                  stroke-width="13"
                   [attr.stroke]="segment.color"
                   [attr.stroke-dasharray]="segment.dashArray"
                   [attr.stroke-dashoffset]="segment.dashOffset"
+                  (mouseenter)="highlight(segment.key)"
+                  (mouseleave)="highlight(null)"
                 />
               }
             </g>
@@ -57,12 +60,15 @@
           <ul class="posture-panel__legend">
             @for (segment of segments(); track segment.key) {
               <li
+                tabindex="0"
                 [class.posture-panel__legend-item--active]="highlighted() === segment.key"
-                [title]="segment.label + ': ' + segment.value"
+                [attr.aria-label]="segment.label + ': ' + segment.value"
                 (mouseenter)="highlight(segment.key)"
                 (mouseleave)="highlight(null)"
+                (focus)="highlight(segment.key)"
+                (blur)="highlight(null)"
               >
-                <span class="posture-panel__swatch" [style.background]="segment.color"></span>
+                <i class="posture-panel__swatch" [style.background]="segment.color"></i>
                 <span>{{ segment.label }}</span>
                 <strong>
                   <app-animated-metric [value]="segment.value" />
@@ -70,10 +76,12 @@
               </li>
             }
           </ul>
-          <p class="posture-panel__insight">
-            <app-animated-metric [value]="undefinedCount()" />
-            failure causes still require risk analysis.
-          </p>
+          @if (undefinedCount() > 0) {
+            <p class="posture-panel__insight">
+              <app-animated-metric [value]="undefinedCount()" />
+              failure causes still require risk analysis.
+            </p>
+          }
         </div>
       </div>
     }

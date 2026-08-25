@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { AreasNeedingAttention, OptimizationCoverage, RiskAnalysisCoverage } from '../../models/dashboard-overview.model';
+import { OptimizationCoverage, RiskAnalysisCoverage } from '../../models/dashboard-overview.model';
 import {
   clampPercent,
   RING_CIRCUMFERENCE_PX,
@@ -18,7 +18,6 @@ import { AnimatedMetric } from '../animated-metric/animated-metric';
 export class AnalysisCompletenessPanel {
   readonly riskCoverage = input<RiskAnalysisCoverage | null>(null);
   readonly optimizationCoverage = input<OptimizationCoverage | null>(null);
-  readonly attention = input<AreasNeedingAttention | null>(null);
   readonly loading = input(false);
   readonly refreshing = input<boolean>(false);
 
@@ -36,6 +35,4 @@ export class AnalysisCompletenessPanel {
   readonly riskMissing = computed(() => this.riskCoverage()?.withoutRiskAnalysis ?? 0);
   readonly optimizationDone = computed(() => this.optimizationCoverage()?.withOptimization ?? 0);
   readonly optimizationMissing = computed(() => this.optimizationCoverage()?.withoutOptimization ?? 0);
-  readonly causesWithoutRisk = computed(() => this.attention()?.failureCausesWithoutRiskAnalysis ?? 0);
-  readonly risksWithoutOptimization = computed(() => this.attention()?.riskAnalysesWithoutOptimization ?? 0);
 }

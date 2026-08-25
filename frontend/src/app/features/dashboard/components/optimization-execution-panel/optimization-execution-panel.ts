@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { OptimizationActions } from '../../models/dashboard-overview.model';
 import { actionCompletionRate, barWidth } from '../../utils/dashboard.utils';
 import { AnimatedMetric } from '../animated-metric/animated-metric';
 
 @Component({
   selector: 'app-optimization-execution-panel',
-  imports: [AnimatedMetric],
+  imports: [AnimatedMetric, RouterLink],
   templateUrl: './optimization-execution-panel.html',
   styleUrl: './optimization-execution-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -14,6 +15,7 @@ export class OptimizationExecutionPanel {
   readonly actions = input<OptimizationActions | null>(null);
   readonly loading = input(false);
   readonly refreshing = input<boolean>(false);
+  readonly workspaceRoute = input<string | null>(null);
 
   readonly isEmpty = computed(() => {
     const actions = this.actions();

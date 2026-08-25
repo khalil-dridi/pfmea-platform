@@ -1,6 +1,6 @@
 <section class="dashboard-page">
-  <header class="dashboard-page__header">
-    <div>
+  <header class="dashboard-page__command">
+    <div class="dashboard-page__identity">
       <h1>P-FMEA Control Center</h1>
       <p>Engineering overview of P-FMEA coverage, risk exposure and improvement status.</p>
     </div>
@@ -44,46 +44,58 @@
       [class.dashboard-page__stack--refreshing]="isRefreshing()"
       [attr.aria-busy]="isLoading()"
     >
-      <app-pfmea-coverage-panel
-        [coverage]="overview()?.coverage ?? null"
-        [loading]="isInitialLoad()"
-        [refreshing]="isRefreshing()"
-      />
+      <section class="dash-chapter" aria-label="P-FMEA structure">
+        <p class="dash-chapter__label"><span>01</span> Structure</p>
+        <app-pfmea-coverage-panel
+          [coverage]="overview()?.coverage ?? null"
+          [loading]="isInitialLoad()"
+          [refreshing]="isRefreshing()"
+        />
+      </section>
 
-      <div class="dashboard-page__row dashboard-page__row--posture">
-        <app-risk-posture-panel
-          [distribution]="overview()?.riskDistribution ?? null"
-          [loading]="isInitialLoad()"
-          [refreshing]="isRefreshing()"
-        />
-        <app-analysis-completeness-panel
-          [riskCoverage]="overview()?.riskAnalysisCoverage ?? null"
-          [optimizationCoverage]="overview()?.optimizationCoverage ?? null"
-          [attention]="overview()?.areasNeedingAttention ?? null"
-          [loading]="isInitialLoad()"
-          [refreshing]="isRefreshing()"
-        />
-      </div>
+      <section class="dash-chapter" aria-label="Risk and analysis completeness">
+        <p class="dash-chapter__label"><span>02</span> Risk</p>
+        <div class="dashboard-page__row dashboard-page__row--posture">
+          <app-risk-posture-panel
+            [distribution]="overview()?.riskDistribution ?? null"
+            [loading]="isInitialLoad()"
+            [refreshing]="isRefreshing()"
+          />
+          <app-analysis-completeness-panel
+            [riskCoverage]="overview()?.riskAnalysisCoverage ?? null"
+            [optimizationCoverage]="overview()?.optimizationCoverage ?? null"
+            [loading]="isInitialLoad()"
+            [refreshing]="isRefreshing()"
+          />
+        </div>
+      </section>
 
-      <div class="dashboard-page__row dashboard-page__row--improvement">
-        <app-risk-improvement-panel
-          [improvement]="overview()?.riskImprovement ?? null"
-          [loading]="isInitialLoad()"
-          [refreshing]="isRefreshing()"
-        />
-        <app-optimization-execution-panel
-          [actions]="overview()?.optimizationActions ?? null"
-          [loading]="isInitialLoad()"
-          [refreshing]="isRefreshing()"
-        />
-      </div>
+      <section class="dash-chapter" aria-label="Risk improvement and optimization execution">
+        <p class="dash-chapter__label"><span>03</span> Improvement</p>
+        <div class="dashboard-page__row dashboard-page__row--improvement">
+          <app-risk-improvement-panel
+            [improvement]="overview()?.riskImprovement ?? null"
+            [loading]="isInitialLoad()"
+            [refreshing]="isRefreshing()"
+          />
+          <app-optimization-execution-panel
+            [actions]="overview()?.optimizationActions ?? null"
+            [loading]="isInitialLoad()"
+            [refreshing]="isRefreshing()"
+            [workspaceRoute]="optimizationWorkspaceRoute()"
+          />
+        </div>
+      </section>
 
-      <app-engineering-attention-panel
-        [areas]="overview()?.areasNeedingAttention ?? null"
-        [loading]="isInitialLoad()"
-        [refreshing]="isRefreshing()"
-        [targetRoute]="attentionRoute()"
-      />
+      <section class="dash-chapter" aria-label="Engineering attention">
+        <p class="dash-chapter__label"><span>04</span> Focus</p>
+        <app-engineering-attention-panel
+          [areas]="overview()?.areasNeedingAttention ?? null"
+          [loading]="isInitialLoad()"
+          [refreshing]="isRefreshing()"
+          [targetRoute]="attentionRoute()"
+        />
+      </section>
     </div>
   }
 </section>

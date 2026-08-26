@@ -1,0 +1,12 @@
+<div class="suggested-prompts" role="group" aria-label="Suggested questions">
+  @for (prompt of prompts; track prompt) {
+    <button
+      type="button"
+      class="suggested-prompts__chip"
+      [disabled]="disabled()"
+      (click)="selected.emit(prompt)"
+    >
+      {{ prompt }}
+    </button>
+  }
+</div>

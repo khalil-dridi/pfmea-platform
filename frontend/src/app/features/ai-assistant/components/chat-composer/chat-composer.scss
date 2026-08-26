@@ -1,0 +1,46 @@
+@use '../../styles/ai-assistant-ui';
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.composer__field {
+  margin: 0;
+
+  textarea {
+    min-height: 3.05rem;
+    max-height: 7rem;
+    background: #fff;
+    border-color: #dcd7e8;
+    box-shadow: inset 0 1px 2px rgba(40, 28, 90, 0.025);
+  }
+}
+
+.composer .ai-btn {
+  min-width: 5.6rem;
+  min-height: 3.05rem;
+  align-self: end;
+}
+
+@media (max-width: 560px) {
+  .composer .ai-btn {
+    min-width: 3.05rem;
+    width: 3.05rem;
+    padding: 0;
+
+    span:not(.ai-spinner) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  }
+}

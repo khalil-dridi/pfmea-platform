@@ -34,6 +34,11 @@ export const routes: Routes = [
         data: { title: 'Recherche' }
       },
       {
+        path: 'ai-assistant',
+        loadChildren: () =>
+          import('./features/ai-assistant/ai-assistant.routes').then(m => m.AI_ASSISTANT_ROUTES)
+      },
+      {
         path: 'actions',
         component: FeaturePlaceholder,
         data: { title: 'Actions' }

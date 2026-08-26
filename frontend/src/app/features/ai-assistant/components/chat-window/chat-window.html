@@ -1,0 +1,57 @@
+<section class="ai-card chat-window" aria-label="AI conversation">
+  <header class="chat-window__header">
+    <div class="chat-window__identity">
+      <span class="chat-window__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 4.5 13.2 8.2 17 9.5 13.2 10.8 12 14.5 10.8 10.8 7 9.5 10.8 8.2 12 4.5Z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+      <div>
+        <h2>AI Assistant</h2>
+        @if (scopeLine()) {
+          <p>{{ scopeLine() }}</p>
+        }
+      </div>
+    </div>
+    <span class="chat-window__badge">Active</span>
+  </header>
+
+  <div
+    #transcript
+    class="chat-window__transcript"
+    [attr.aria-busy]="sending()"
+    (scroll)="onTranscriptScroll($event)"
+  >
+    @for (message of messages(); track message.id) {
+      <app-chat-message [message]="message" />
+    }
+
+    @if (sending()) {
+      <app-chat-loading />
+    }
+
+    @if (sendError(); as error) {
+      <div class="ai-alert ai-alert--error" role="alert">
+        <p>{{ error }}</p>
+        <button
+          type="button"
+          class="ai-btn ai-btn--ghost"
+          [disabled]="sending()"
+          (click)="retry.emit()"
+        >
+          Retry
+        </button>
+      </div>
+    }
+  </div>
+
+  <div class="chat-window__footer">
+    <app-suggested-prompts [disabled]="composerLocked()" (selected)="promptSelected.emit($event)" />
+    <app-chat-composer [disabled]="disabled()" [sending]="sending()" (send)="send.emit($event)" />
+  </div>
+</section>

@@ -13,6 +13,10 @@ public interface RiskAnalysisRepository
 
     Optional<RiskAnalysis> findByFailureCauseId(UUID failureCauseId);
 
+    List<RiskAnalysis> findByFailureCauseIdIn(
+            List<UUID> failureCauseIds
+    );
+
     @Query("""
         SELECT
             COUNT(CASE WHEN r.actionPriority = com.sebn.pfmea.backend.riskAnalysis.enums.ActionPriority.HIGH THEN 1 END),

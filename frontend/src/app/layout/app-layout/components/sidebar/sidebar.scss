@@ -41,10 +41,27 @@
 .sidebar__nav {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.95rem;
   flex: 1 1 auto;
-  padding: 0.9rem 0.7rem;
+  padding: 0.85rem 0.7rem 1rem;
   overflow: auto;
+}
+
+.sidebar__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.sidebar__section-label {
+  margin: 0 0 0.08rem;
+  padding: 0 0.7rem;
+  color: rgba(221, 214, 254, 0.48);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .sidebar__link {
@@ -143,6 +160,11 @@
     padding-right: 0.55rem;
   }
 
+  .sidebar__section {
+    align-items: center;
+    width: 100%;
+  }
+
   .sidebar__logo {
     width: 2.2rem;
     height: 2.2rem;
@@ -179,6 +201,10 @@
       align-items: stretch;
       padding-left: 0.9rem;
       padding-right: 0.9rem;
+    }
+
+    .sidebar__section {
+      align-items: stretch;
     }
 
     .sidebar__logo {

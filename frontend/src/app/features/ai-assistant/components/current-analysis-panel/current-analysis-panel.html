@@ -1,0 +1,85 @@
+<section class="ai-card current-panel" aria-labelledby="current-analysis-title">
+  <div class="current-panel__head">
+    <div>
+      <p class="current-panel__eyebrow">Scope</p>
+      <h2 id="current-analysis-title">Current Analysis</h2>
+    </div>
+    <span class="current-panel__badge">Active</span>
+  </div>
+
+  <dl class="current-panel__meta">
+    <div>
+      <dt>Process</dt>
+      <dd>{{ selectedProcess()?.name ?? '—' }}</dd>
+    </div>
+    <div>
+      <dt>Process Step</dt>
+      <dd>
+        @if (selectedStep(); as step) {
+          {{ step.stepNumber }} - {{ step.name }}
+        } @else {
+          —
+        }
+      </dd>
+    </div>
+  </dl>
+
+  <div class="current-panel__fields">
+    <div class="ai-field">
+      <label for="ai-active-process-select">Process</label>
+      <select
+        id="ai-active-process-select"
+        [value]="processId() ?? ''"
+        [disabled]="busy() || resetting()"
+        (change)="onProcessChange($event)"
+      >
+        <option value="">Select Process</option>
+        @for (process of processes(); track process.id) {
+          <option [value]="process.id">{{ process.processNumber }} — {{ process.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="ai-field">
+      <label for="ai-active-step-select">Process Step</label>
+      <select
+        id="ai-active-step-select"
+        [value]="processStepId() ?? ''"
+        [disabled]="busy() || resetting() || processId() === null"
+        (change)="onStepChange($event)"
+      >
+        <option value="">Select Process Step</option>
+        @for (step of steps(); track step.id) {
+          <option [value]="step.id">Step {{ step.stepNumber }} · {{ step.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="ai-btn ai-btn--ghost current-panel__reset"
+    [disabled]="busy() || resetting()"
+    (click)="newChat.emit()"
+  >
+    @if (resetting()) {
+      <span class="ai-spinner ai-spinner--dark" aria-hidden="true"></span>
+      Resetting...
+    } @else {
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.8 12a7.2 7.2 0 1 0 1.7-4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        <path d="M4.8 5.4v4.1h4.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      New Chat
+    }
+  </button>
+
+  @if (resetError(); as error) {
+    <div class="ai-alert ai-alert--error" role="alert">
+      <p>{{ error }}</p>
+      <button type="button" class="ai-btn ai-btn--ghost" [disabled]="resetting()" (click)="retryReset.emit()">
+        Retry
+      </button>
+    </div>
+  }
+</section>

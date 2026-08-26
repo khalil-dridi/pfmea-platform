@@ -34,4 +34,16 @@ public interface FunctionRepository
        OR f.workElement.processStep.id = :processStepId
 """)
     long countByProcessStepScope(@Param("processStepId") UUID processStepId);
+
+    @Query("""
+    SELECT DISTINCT f
+    FROM Function f
+    WHERE f.process.id = :processId
+       OR f.processStep.id = :processStepId
+       OR f.workElement.processStep.id = :processStepId
+""")
+    List<Function> findAllForProcessStepScope(
+            @Param("processId") UUID processId,
+            @Param("processStepId") UUID processStepId
+    );
 }

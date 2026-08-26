@@ -53,4 +53,8 @@ public interface OptimizationRepository
     List<Object[]> countOptimizedRiskDistributionByProcess(
             @Param("processId") UUID processId
     );
+
+    List<Optimization> findByRiskAnalysisIdIn(
+            List<UUID> riskAnalysisIds
+    );
 }

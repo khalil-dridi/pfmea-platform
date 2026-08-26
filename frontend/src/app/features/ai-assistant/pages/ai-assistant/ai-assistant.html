@@ -1,0 +1,99 @@
+<section class="ai-page">
+  <app-ai-assistant-header />
+
+  @if (expired()) {
+    <div class="ai-card ai-page__expired" role="status">
+      <span class="ai-page__expired-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 7.5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <path d="M12 16.5h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+          <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6" />
+        </svg>
+      </span>
+      <h2>This AI conversation is no longer available.</h2>
+      <p>The in-memory session ended. Start a new analysis to continue.</p>
+      <button type="button" class="ai-btn ai-btn--primary" (click)="recoverFromExpiry()">
+        Start New Analysis
+      </button>
+    </div>
+  } @else if (isActive()) {
+    <div class="ai-page__workspace">
+      <app-current-analysis-panel
+        [processes]="processes()"
+        [steps]="steps()"
+        [processId]="processId()"
+        [processStepId]="processStepId()"
+        [busy]="chatBusy()"
+        [resetting]="isResetting()"
+        [resetError]="resetError()"
+        (processChange)="onProcessChange($event)"
+        (processStepChange)="onProcessStepChange($event)"
+        (newChat)="requestNewChat()"
+        (retryReset)="retryReset()"
+      />
+      <app-chat-window
+        [messages]="messages()"
+        [sending]="isSending()"
+        [sendError]="sendError()"
+        [scopeLine]="scopeLine()"
+        [disabled]="chatBusy() && !isSending()"
+        (send)="sendChatMessage($event)"
+        (retry)="retrySend()"
+        (promptSelected)="sendChatMessage($event)"
+      />
+    </div>
+  } @else {
+    <div class="ai-page__setup">
+      <app-analysis-scope-panel
+        [processes]="processes()"
+        [steps]="steps()"
+        [processId]="processId()"
+        [processStepId]="processStepId()"
+        [loadingProcesses]="isLoadingProcesses()"
+        [loadingSteps]="isLoadingSteps()"
+        [starting]="isStarting()"
+        [startError]="startError()"
+        [processLoadError]="processLoadError()"
+        (processChange)="onProcessChange($event)"
+        (processStepChange)="onProcessStepChange($event)"
+        (start)="startAnalysis()"
+        (retry)="startAnalysis()"
+      />
+
+      <aside class="ai-card ai-page__welcome" aria-label="Welcome">
+        <div class="ai-page__welcome-head">
+          <span class="ai-page__welcome-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 4.5 13.2 8.2 17 9.5 13.2 10.8 12 14.5 10.8 10.8 7 9.5 10.8 8.2 12 4.5Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18 14.5 18.7 16.6 20.8 17.3 18.7 18 18 20.1 17.3 18 15.2 17.3 17.3 16.6 18 14.5Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <div>
+            <p class="ai-page__welcome-eyebrow">P-FMEA intelligence</p>
+            <h2>Turn process context into clear decisions.</h2>
+          </div>
+        </div>
+        <p class="ai-page__welcome-copy">
+          Explore your selected Process Step with an assistant grounded in your current analysis
+          context.
+        </p>
+        <ul class="ai-page__capabilities">
+          <li>Prioritize failure risks and their potential impact</li>
+          <li>Understand causes, controls, and detection gaps</li>
+          <li>Identify focused improvement opportunities</li>
+        </ul>
+        <p class="ai-page__welcome-note">Select a Process and Process Step to begin.</p>
+      </aside>
+    </div>
+  }
+</section>

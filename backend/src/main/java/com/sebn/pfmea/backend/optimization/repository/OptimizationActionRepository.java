@@ -54,4 +54,8 @@ public interface OptimizationActionRepository
     List<Object[]> countOptimizationActionsByProcess(
             @Param("processId") UUID processId
     );
+
+    List<OptimizationAction> findByOptimizationIdInOrderByTargetCompletionDateAsc(
+            List<UUID> optimizationIds
+    );
 }

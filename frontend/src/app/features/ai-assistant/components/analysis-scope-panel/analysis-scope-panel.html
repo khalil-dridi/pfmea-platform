@@ -1,0 +1,76 @@
+<section class="ai-card scope-panel" aria-labelledby="start-analysis-title">
+  <h2 id="start-analysis-title">Start New Analysis</h2>
+  <p class="scope-panel__lead">Select the scope of your analysis to start a conversation.</p>
+
+  @if (processLoadError(); as loadError) {
+    <div class="ai-alert ai-alert--error" role="alert">
+      <p>{{ loadError }}</p>
+    </div>
+  }
+
+  <div class="scope-panel__fields">
+    <div class="ai-field">
+      <label for="ai-process-select">
+        Process <span class="ai-field__required" aria-hidden="true">*</span>
+      </label>
+      <select
+        id="ai-process-select"
+        [value]="processId() ?? ''"
+        [disabled]="controlsDisabled()"
+        (change)="onProcessChange($event)"
+      >
+        <option value="">Select Process</option>
+        @for (process of processes(); track process.id) {
+          <option [value]="process.id">{{ process.processNumber }} — {{ process.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="ai-field">
+      <label for="ai-step-select">
+        Process Step <span class="ai-field__required" aria-hidden="true">*</span>
+      </label>
+      <select
+        id="ai-step-select"
+        [value]="processStepId() ?? ''"
+        [disabled]="stepDisabled()"
+        (change)="onStepChange($event)"
+      >
+        <option value="">Select Process Step</option>
+        @for (step of steps(); track step.id) {
+          <option [value]="step.id">Step {{ step.stepNumber }} · {{ step.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <p class="ai-hint">{{ helperText() }}</p>
+
+  <button
+    type="button"
+    class="ai-btn ai-btn--primary"
+    [disabled]="!canStart()"
+    (click)="start.emit()"
+  >
+    @if (starting()) {
+      <span class="ai-spinner" aria-hidden="true"></span>
+      Loading P-FMEA context...
+    } @else {
+      Start Analysis
+    }
+  </button>
+
+  @if (startError(); as error) {
+    <div class="ai-alert ai-alert--error" role="alert">
+      <p>Unable to start the AI analysis.</p>
+      <p>{{ error }}</p>
+      <button type="button" class="ai-btn ai-btn--ghost" [disabled]="starting()" (click)="retry.emit()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <p class="scope-panel__note">
+    The AI Assistant will load the P-FMEA context for the selected Process and Step.
+  </p>
+</section>

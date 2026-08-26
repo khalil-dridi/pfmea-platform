@@ -1,0 +1,68 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.1rem 0 0.15rem;
+  animation: ai-header-enter 280ms ease-out both;
+}
+
+.ai-header__icon {
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex-shrink: 0;
+  color: #fff;
+  background: linear-gradient(145deg, #4b20a8 0%, #2f117d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.78rem;
+  box-shadow: 0 7px 18px rgba(59, 22, 153, 0.18);
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  color: #1e1b4b;
+  font-size: clamp(1.3rem, 2vw, 1.5rem);
+  font-weight: 740;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+p {
+  margin-top: 0.25rem;
+  color: #6b6685;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+@keyframes ai-header-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-header {
+    animation: none;
+  }
+}

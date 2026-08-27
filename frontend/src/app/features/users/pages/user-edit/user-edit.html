@@ -1,10 +1,20 @@
 <section class="user-form-page">
   <header class="user-form-page__header">
-    <p class="user-form-page__crumb">
-      <a routerLink="/users">User Management</a>
-    </p>
-    <h1>Edit User</h1>
-    <p>Update the account information of this user.</p>
+    <span class="user-form-page__mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M5 16.8V19h2.2L17.6 8.6l-2.2-2.2L5 16.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        <path d="m14.2 7.6 2.2 2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <div>
+      <p class="user-form-page__crumb">
+        <a routerLink="/users">User Management</a>
+        <span aria-hidden="true">/</span>
+        Edit
+      </p>
+      <h1>Edit User</h1>
+      <p>Update the account information of this user.</p>
+    </div>
     <a routerLink="/users" class="btn btn--ghost user-form-page__back">
       <span aria-hidden="true">←</span>
       Back to User Management
@@ -13,140 +23,179 @@
 
   @if (errorMessage(); as error) {
     <div class="users-alert users-alert--error" role="alert" aria-live="assertive">
-      {{ error }}
+      <span class="users-alert__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 8v5M12 16.2h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <span>{{ error }}</span>
     </div>
   }
 
   @if (isLoading()) {
-    <div class="users-card users-state users-state--loading" role="status" aria-live="polite">
-      <span class="spinner spinner--muted" aria-hidden="true"></span>
-      Loading user…
+    <div class="user-edit-layout user-edit-layout--loading" role="status" aria-live="polite">
+      <div class="users-card user-edit-identity" aria-hidden="true">
+        <span class="user-edit-skeleton user-edit-skeleton--avatar"></span>
+        <span class="user-edit-skeleton user-edit-skeleton--title"></span>
+        <span class="user-edit-skeleton user-edit-skeleton--line"></span>
+      </div>
+      <div class="users-card user-form-card user-form-card--loading">
+        <span class="spinner spinner--muted" aria-hidden="true"></span>
+        Loading user…
+      </div>
     </div>
   } @else if (user(); as currentUser) {
-    <div class="users-card user-form-card">
-      <div class="user-edit-meta">
-        <span
-          class="badge"
-          [class.badge--admin]="currentUser.role === 'ADMIN'"
-          [class.badge--super-admin]="currentUser.role === 'SUPER_ADMIN'"
-        >
-          {{ currentUser.role }}
-        </span>
-        <span
-          class="badge"
-          [class.badge--active]="currentUser.enabled"
-          [class.badge--inactive]="!currentUser.enabled"
-        >
-          <span class="badge__dot" aria-hidden="true"></span>
-          {{ statusLabel() }}
-        </span>
-        <p>Password is managed from the user's profile.</p>
-      </div>
+    <div class="user-edit-layout">
+      <aside class="users-card user-edit-identity">
+        <div class="user-edit-identity__avatar" aria-hidden="true">{{ initials() }}</div>
+        <p class="user-edit-identity__eyebrow">Editing account</p>
+        <h2>{{ displayName() }}</h2>
+        <p class="user-edit-identity__email">{{ currentUser.email }}</p>
+        <div class="user-edit-identity__badges">
+          <span
+            class="badge"
+            [class.badge--admin]="currentUser.role === 'ADMIN'"
+            [class.badge--super-admin]="currentUser.role === 'SUPER_ADMIN'"
+          >
+            {{ currentUser.role }}
+          </span>
+          <span
+            class="badge"
+            [class.badge--active]="currentUser.enabled"
+            [class.badge--inactive]="!currentUser.enabled"
+          >
+            <span class="badge__dot" aria-hidden="true"></span>
+            {{ statusLabel() }}
+          </span>
+        </div>
+        <dl class="user-edit-identity__meta">
+          <div>
+            <dt>Created on</dt>
+            <dd>{{ createdOn() }}</dd>
+          </div>
+        </dl>
+      </aside>
 
-      <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
-        <fieldset [disabled]="isSaving()">
-          <div class="user-form-grid">
-            <div class="field">
-              <label for="firstName">
-                First Name <span class="field__required" aria-hidden="true">*</span>
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                formControlName="firstName"
-                autocomplete="given-name"
-                maxlength="100"
-                [attr.aria-invalid]="firstNameError() ? true : null"
-                [attr.aria-describedby]="firstNameError() ? 'firstName-error' : null"
-                [attr.aria-required]="true"
-              />
-              @if (firstNameError(); as message) {
-                <p id="firstName-error" class="field__error">{{ message }}</p>
-              }
-            </div>
+      <div class="users-card user-form-card">
+        <div class="user-form-card__heading">
+          <div>
+            <h2>Account information</h2>
+            <p>Password is managed from the user's profile.</p>
+          </div>
+        </div>
 
-            <div class="field">
-              <label for="lastName">
-                Last Name <span class="field__required" aria-hidden="true">*</span>
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                formControlName="lastName"
-                autocomplete="family-name"
-                maxlength="100"
-                [attr.aria-invalid]="lastNameError() ? true : null"
-                [attr.aria-describedby]="lastNameError() ? 'lastName-error' : null"
-                [attr.aria-required]="true"
-              />
-              @if (lastNameError(); as message) {
-                <p id="lastName-error" class="field__error">{{ message }}</p>
-              }
-            </div>
+        <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <div class="user-form-grid">
+              <div class="field">
+                <label for="firstName">
+                  First Name <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  formControlName="firstName"
+                  autocomplete="given-name"
+                  maxlength="100"
+                  [attr.aria-invalid]="firstNameError() ? true : null"
+                  [attr.aria-describedby]="firstNameError() ? 'firstName-error' : null"
+                  [attr.aria-required]="true"
+                />
+                @if (firstNameError(); as message) {
+                  <p id="firstName-error" class="field__error">{{ message }}</p>
+                }
+              </div>
 
-            <div class="field">
-              <label for="email">
-                Email Address <span class="field__required" aria-hidden="true">*</span>
-              </label>
-              <input
-                id="email"
-                type="email"
-                formControlName="email"
-                autocomplete="email"
-                maxlength="254"
-                [attr.aria-invalid]="emailError() ? true : null"
-                [attr.aria-describedby]="emailError() ? 'email-error' : null"
-                [attr.aria-required]="true"
-              />
-              @if (emailError(); as message) {
-                <p id="email-error" class="field__error">{{ message }}</p>
-              }
-            </div>
+              <div class="field">
+                <label for="lastName">
+                  Last Name <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  formControlName="lastName"
+                  autocomplete="family-name"
+                  maxlength="100"
+                  [attr.aria-invalid]="lastNameError() ? true : null"
+                  [attr.aria-describedby]="lastNameError() ? 'lastName-error' : null"
+                  [attr.aria-required]="true"
+                />
+                @if (lastNameError(); as message) {
+                  <p id="lastName-error" class="field__error">{{ message }}</p>
+                }
+              </div>
 
-            <div class="field">
-              <label for="role">
-                Role <span class="field__required" aria-hidden="true">*</span>
-              </label>
-              <select
-                id="role"
-                formControlName="role"
-                [attr.aria-invalid]="roleError() ? true : null"
-                [attr.aria-describedby]="roleError() ? 'role-error' : null"
-                [attr.aria-required]="true"
-              >
-                <option value="ADMIN">ADMIN</option>
-                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-              </select>
-              @if (roleError(); as message) {
-                <p id="role-error" class="field__error">{{ message }}</p>
-              }
-            </div>
+              <div class="field">
+                <label for="email">
+                  Email Address <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  autocomplete="email"
+                  maxlength="254"
+                  [attr.aria-invalid]="emailError() ? true : null"
+                  [attr.aria-describedby]="emailError() ? 'email-error' : null"
+                  [attr.aria-required]="true"
+                />
+                @if (emailError(); as message) {
+                  <p id="email-error" class="field__error">{{ message }}</p>
+                }
+              </div>
 
-            <div class="field field--full">
-              <span class="field__label">Account Status</span>
-              <div class="field__value field__value--status">
-                <span
-                  class="badge"
-                  [class.badge--active]="currentUser.enabled"
-                  [class.badge--inactive]="!currentUser.enabled"
+              <div class="field">
+                <label for="role">
+                  Role <span class="field__required" aria-hidden="true">*</span>
+                </label>
+                <select
+                  id="role"
+                  formControlName="role"
+                  [attr.aria-invalid]="roleError() ? true : null"
+                  [attr.aria-describedby]="roleError() ? 'role-error' : null"
+                  [attr.aria-required]="true"
                 >
-                  <span class="badge__dot" aria-hidden="true"></span>
-                  {{ statusLabel() }}
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                </select>
+                @if (roleError(); as message) {
+                  <p id="role-error" class="field__error">{{ message }}</p>
+                }
+              </div>
+
+              <div class="field field--full">
+                <span class="field__label">
+                  Account Status
+                  <span class="field__lock">Locked</span>
                 </span>
+                <div class="field__value field__value--status">
+                  <span
+                    class="badge"
+                    [class.badge--active]="currentUser.enabled"
+                    [class.badge--inactive]="!currentUser.enabled"
+                  >
+                    <span class="badge__dot" aria-hidden="true"></span>
+                    {{ statusLabel() }}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </fieldset>
+          </fieldset>
 
-        <div class="users-actions users-actions--form">
-          <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
-            Save Changes
-          </button>
-          <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancel()">
-            Cancel
-          </button>
-        </div>
-      </form>
+          <div class="users-actions users-actions--form">
+            <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+              @if (isSaving()) {
+                <span class="spinner" aria-hidden="true"></span>
+              }
+              Save Changes
+            </button>
+            <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancel()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   }
 </section>

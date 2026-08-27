@@ -20,9 +20,12 @@ import { UserService } from '../../services/user.service';
 import {
   emailError,
   firstNameError,
+  formatUserDate,
   lastNameError,
   resolveUserApiError,
-  roleError
+  roleError,
+  userFullName,
+  userInitials
 } from '../../utils/user.utils';
 
 interface PendingUserUpdate {
@@ -56,6 +59,21 @@ export class UserEdit implements OnInit {
   readonly statusLabel = computed(() => {
     const user = this.user();
     return user?.enabled ? 'Active' : 'Disabled';
+  });
+
+  readonly displayName = computed(() => {
+    const user = this.user();
+    return user ? userFullName(user) : '';
+  });
+
+  readonly initials = computed(() => {
+    const user = this.user();
+    return user ? userInitials(user) : '';
+  });
+
+  readonly createdOn = computed(() => {
+    const user = this.user();
+    return user ? formatUserDate(user.createdAt) : '';
   });
 
   readonly userForm = this.formBuilder.nonNullable.group({

@@ -1,0 +1,47 @@
+<form class="user-filters" role="search" (submit)="$event.preventDefault()">
+  <div class="field field--search">
+    <label class="visually-hidden" for="user-search">Search for a user</label>
+    <span class="user-filters__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <input
+      id="user-search"
+      type="search"
+      [value]="query()"
+      [disabled]="disabled()"
+      (input)="onQueryInput($event)"
+      placeholder="Search for a user..."
+      autocomplete="off"
+    />
+  </div>
+
+  <div class="field">
+    <label class="visually-hidden" for="role-filter">Role</label>
+    <select id="role-filter" [value]="role()" [disabled]="disabled()" (change)="onRoleChange($event)">
+      <option value="ALL">All Roles</option>
+      <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+      <option value="ADMIN">ADMIN</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="visually-hidden" for="status-filter">Status</label>
+    <select id="status-filter" [value]="status()" [disabled]="disabled()" (change)="onStatusChange($event)">
+      <option value="ALL">All Statuses</option>
+      <option value="ACTIVE">Active</option>
+      <option value="DISABLED">Disabled</option>
+    </select>
+  </div>
+
+  <button
+    type="button"
+    class="btn btn--ghost"
+    [disabled]="disabled() || !canClear()"
+    (click)="cleared.emit()"
+  >
+    Clear filters
+  </button>
+</form>

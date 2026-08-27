@@ -3,15 +3,26 @@
   [attr.inert]="isPasswordPanelOpen() || pendingConfirmation() ? '' : null"
 >
   <header class="profile-page__header">
-    @if (isEditing()) {
-      <p class="profile-page__crumb">
-        <button type="button" (click)="cancelEdit()">Profile</button>
-      </p>
-      <h1>Edit Profile</h1>
-    } @else {
-      <h1>My Profile</h1>
-      <p>View and update your personal information and change your password.</p>
-    }
+    <span class="profile-page__mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7" />
+        <path d="M5.5 19c1.2-3.2 3.4-4.8 6.5-4.8S16.8 15.8 18.5 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <div>
+      @if (isEditing()) {
+        <p class="profile-page__crumb">
+          <button type="button" (click)="cancelEdit()">Profile</button>
+          <span aria-hidden="true">/</span>
+          Edit
+        </p>
+        <h1>Edit Profile</h1>
+        <p>Update your first and last name. Email, role and status stay locked.</p>
+      } @else {
+        <h1>My Profile</h1>
+        <p>View and update your personal information and change your password.</p>
+      }
+    </div>
   </header>
 
   @if (successMessage(); as success) {
@@ -39,14 +50,22 @@
   }
 
   @if (isLoading()) {
-    <div class="profile-alert profile-alert--neutral profile-alert--loading" role="status" aria-live="polite">
-      <span class="spinner spinner--muted" aria-hidden="true"></span>
-      Loading profile…
+    <div class="profile-grid profile-grid--loading" role="status" aria-live="polite">
+      <div class="profile-card profile-identity profile-skeleton" aria-hidden="true">
+        <span class="profile-skeleton__avatar"></span>
+        <span class="profile-skeleton__line profile-skeleton__line--title"></span>
+        <span class="profile-skeleton__line profile-skeleton__line--email"></span>
+      </div>
+      <div class="profile-card profile-details profile-skeleton">
+        <span class="spinner spinner--muted" aria-hidden="true"></span>
+        Loading profile…
+      </div>
     </div>
   } @else if (profile(); as user) {
     <div class="profile-grid">
       <aside class="profile-card profile-identity">
         <div class="profile-identity__avatar" aria-hidden="true">{{ initials() }}</div>
+        <p class="profile-identity__eyebrow">Signed in as</p>
         <h2>{{ displayName() }}</h2>
         <p class="profile-identity__email">{{ user.email }}</p>
         <div class="profile-identity__badges">
@@ -68,10 +87,15 @@
         </div>
       </aside>
 
-      <div class="profile-card profile-details">
+      <div class="profile-card profile-details" [class.profile-details--editing]="isEditing()">
         <div class="profile-details__heading">
-          <h2>Personal Information</h2>
-          <p>Email address, role and account status cannot be changed.</p>
+          <div>
+            <h2>Personal Information</h2>
+            <p>Email address, role and account status cannot be changed.</p>
+          </div>
+          @if (isEditing()) {
+            <span class="profile-details__mode">Editing</span>
+          }
         </div>
 
         <form [formGroup]="profileForm" (ngSubmit)="requestSaveProfile()" novalidate>
@@ -121,17 +145,26 @@
               </div>
 
               <div class="field">
-                <span class="field__label">Email Address</span>
+                <span class="field__label">
+                  Email Address
+                  <span class="field__lock" aria-hidden="true">Locked</span>
+                </span>
                 <p class="field__value field__value--readonly">{{ user.email }}</p>
               </div>
 
               <div class="field">
-                <span class="field__label">Role</span>
+                <span class="field__label">
+                  Role
+                  <span class="field__lock" aria-hidden="true">Locked</span>
+                </span>
                 <p class="field__value field__value--readonly">{{ roleBadge() }}</p>
               </div>
 
               <div class="field field--full">
-                <span class="field__label">Account Status</span>
+                <span class="field__label">
+                  Account Status
+                  <span class="field__lock" aria-hidden="true">Locked</span>
+                </span>
                 <div class="field__value field__value--readonly field__value--status">
                   <span
                     class="badge"
@@ -149,6 +182,9 @@
           <div class="profile-actions">
             @if (isEditing()) {
               <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
+                @if (isSaving()) {
+                  <span class="spinner" aria-hidden="true"></span>
+                }
                 Save Changes
               </button>
               <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="cancelEdit()">
@@ -156,9 +192,17 @@
               </button>
             } @else {
               <button type="button" class="btn btn--primary" (click)="startEdit()">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 16.8V19h2.2L17.6 8.6l-2.2-2.2L5 16.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                  <path d="m14.2 7.6 2.2 2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
                 Edit Profile
               </button>
               <button type="button" class="btn btn--secondary" (click)="openPasswordPanel()">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="6" y="11" width="12" height="8.5" rx="1.6" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M8.5 11V8.6a3.5 3.5 0 0 1 7 0V11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
                 Change Password
               </button>
             }
@@ -185,8 +229,21 @@
       (click)="$event.stopPropagation()"
     >
       <header class="profile-dialog__header">
-        <h2 id="password-dialog-title">Change Password</h2>
-        <p id="password-dialog-subtitle">Enter your current password, then choose a new password.</p>
+        <div>
+          <h2 id="password-dialog-title">Change Password</h2>
+          <p id="password-dialog-subtitle">Enter your current password, then choose a new password.</p>
+        </div>
+        <button
+          type="button"
+          class="profile-dialog__close"
+          aria-label="Close change password dialog"
+          [disabled]="isChangingPassword() || pendingConfirmation() === 'password'"
+          (click)="closePasswordPanel()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m8 8 8 8M16 8l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
       </header>
 
       @if (passwordErrorMessage(); as message) {
@@ -285,6 +342,9 @@
 
         <div class="profile-actions">
           <button type="submit" class="btn btn--primary" [disabled]="isChangingPassword()">
+            @if (isChangingPassword()) {
+              <span class="spinner" aria-hidden="true"></span>
+            }
             Save Changes
           </button>
           <button type="button" class="btn btn--ghost" [disabled]="isChangingPassword()" (click)="closePasswordPanel()">

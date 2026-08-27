@@ -1,0 +1,125 @@
+<article
+  class="user-card"
+  [class.user-card--disabled]="!user().enabled"
+  [style.--i]="index()"
+>
+  <header class="user-card__head">
+    <span
+      class="badge"
+      [class.badge--active]="user().enabled"
+      [class.badge--inactive]="!user().enabled"
+    >
+      <span class="badge__dot" aria-hidden="true"></span>
+      {{ statusLabel() }}
+    </span>
+
+    <div class="user-card__menu">
+      <button
+        type="button"
+        class="user-card__menu-btn"
+        [attr.aria-expanded]="menuOpen()"
+        aria-haspopup="menu"
+        [attr.aria-label]="'More actions for ' + fullName()"
+        (click)="toggleMenu($event)"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="6" r="1.45" />
+          <circle cx="12" cy="12" r="1.45" />
+          <circle cx="12" cy="18" r="1.45" />
+        </svg>
+      </button>
+
+      @if (menuOpen()) {
+        <div class="user-card__dropdown" role="menu">
+          <a role="menuitem" [routerLink]="editLink()" (click)="closeMenu()">View / Edit</a>
+          <button
+            type="button"
+            role="menuitem"
+            [disabled]="isUpdating() || (user().enabled && isCurrentUser())"
+            [attr.title]="
+              user().enabled && isCurrentUser() ? 'You cannot disable your own account.' : null
+            "
+            (click)="onStatusAction($event)"
+          >
+            {{ statusAction() }}
+          </button>
+        </div>
+      }
+    </div>
+  </header>
+
+  <div class="user-card__identity">
+    <span class="user-card__avatar" aria-hidden="true">{{ initials() }}</span>
+    <h2>{{ fullName() }}</h2>
+    <p>{{ user().email }}</p>
+    <span
+      class="badge"
+      [class.badge--admin]="user().role === 'ADMIN'"
+      [class.badge--super-admin]="user().role === 'SUPER_ADMIN'"
+    >
+      {{ user().role }}
+    </span>
+  </div>
+
+  <dl class="user-card__meta">
+    <div>
+      <dt>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="4.5" y="6" width="15" height="13.5" rx="2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8 4.8v2.6M16 4.8v2.6M4.5 10.2h15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        Created on
+      </dt>
+      <dd>{{ createdOn() }}</dd>
+    </div>
+    <div>
+      <dt>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="7.4" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 8.5V12l2.6 1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        Last updated
+      </dt>
+      <dd>{{ updatedOn() }}</dd>
+    </div>
+  </dl>
+
+  <div class="user-card__actions">
+    <a class="btn btn--secondary btn--compact" [routerLink]="editLink()">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3.8 12s2.8-6.2 8.2-6.2S20.2 12 20.2 12s-2.8 6.2-8.2 6.2S3.8 12 3.8 12Z" stroke="currentColor" stroke-width="1.7" />
+        <circle cx="12" cy="12" r="2.3" stroke="currentColor" stroke-width="1.7" />
+      </svg>
+      View / Edit
+    </a>
+
+    @if (user().enabled) {
+      <button
+        type="button"
+        class="btn btn--danger btn--compact"
+        [disabled]="isCurrentUser() || isUpdating()"
+        [attr.title]="isCurrentUser() ? 'You cannot disable your own account.' : null"
+        (click)="statusToggle.emit(user())"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="6" y="11" width="12" height="8.5" rx="1.6" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8.5 11V8.6a3.5 3.5 0 0 1 7 0V11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        Disable
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="btn btn--success btn--compact"
+        [disabled]="isUpdating()"
+        (click)="statusToggle.emit(user())"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="6" y="11" width="12" height="8.5" rx="1.6" stroke="currentColor" stroke-width="1.7" />
+          <path d="M9.2 11V8.8a2.8 2.8 0 0 1 5.6 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        Enable
+      </button>
+    }
+  </div>
+</article>

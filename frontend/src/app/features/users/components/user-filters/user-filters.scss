@@ -1,0 +1,67 @@
+@use '../../styles/users-ui';
+
+:host {
+  display: block;
+}
+
+.user-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 11rem 11rem auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #f0eef6;
+}
+
+.user-filters .field {
+  margin: 0;
+}
+
+.field--search {
+  position: relative;
+}
+
+.user-filters__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.85rem;
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: #8a86a0;
+  transform: translateY(-50%);
+  pointer-events: none;
+
+  svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+}
+
+.field--search input {
+  height: 2.7rem;
+  padding-left: 2.45rem;
+}
+
+.user-filters select {
+  height: 2.7rem;
+}
+
+@media (max-width: 960px) {
+  .user-filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .field--search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-filters,
+  .user-filters .btn {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+}

@@ -1,0 +1,18 @@
+<div class="user-skeleton-grid" role="status" aria-live="polite" aria-label="Loading users">
+  @for (item of placeholders; track item) {
+    <article class="user-skeleton-card" aria-hidden="true">
+      <span class="user-skeleton__chip"></span>
+      <span class="user-skeleton__avatar"></span>
+      <span class="user-skeleton__line user-skeleton__line--name"></span>
+      <span class="user-skeleton__line user-skeleton__line--email"></span>
+      <span class="user-skeleton__chip user-skeleton__chip--role"></span>
+      <span class="user-skeleton__rule"></span>
+      <span class="user-skeleton__line user-skeleton__line--meta"></span>
+      <span class="user-skeleton__line user-skeleton__line--meta"></span>
+      <div class="user-skeleton__actions">
+        <span></span>
+        <span></span>
+      </div>
+    </article>
+  }
+</div>

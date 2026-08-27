@@ -4,22 +4,28 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   OnInit,
-  signal
+  signal,
+  untracked
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
-import { UserRole } from '../../../auth/models/login-response.model';
+import { UserCard } from '../../components/user-card/user-card';
+import { UserEmptyState } from '../../components/user-empty-state/user-empty-state';
+import { UserFilters } from '../../components/user-filters/user-filters';
+import { UserSkeleton } from '../../components/user-skeleton/user-skeleton';
+import { UserRoleFilter, UserStatusFilter } from '../../models/user-filters.model';
 import { User } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
-import { formatUserDate, userFullName } from '../../utils/user.utils';
+import { userFullName } from '../../utils/user.utils';
 
-type RoleFilter = 'ALL' | UserRole;
-type StatusFilter = 'ALL' | 'ACTIVE' | 'DISABLED';
+const PAGE_SIZES = [6, 12, 24] as const;
+const DEFAULT_PAGE_SIZE = 12;
 
 interface StatusConfirmation {
   user: User;
@@ -28,7 +34,7 @@ interface StatusConfirmation {
 
 @Component({
   selector: 'app-user-list',
-  imports: [RouterLink, ConfirmationDialog],
+  imports: [RouterLink, ConfirmationDialog, UserCard, UserEmptyState, UserFilters, UserSkeleton],
   templateUrl: './user-list.html',
   styleUrl: './user-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -40,15 +46,18 @@ export class UserList implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly pageSizes = PAGE_SIZES;
   readonly users = signal<User[]>([]);
   readonly isLoading = signal(true);
   readonly isUpdatingStatus = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly searchQuery = signal('');
-  readonly roleFilter = signal<RoleFilter>('ALL');
-  readonly statusFilter = signal<StatusFilter>('ALL');
+  readonly roleFilter = signal<UserRoleFilter>('ALL');
+  readonly statusFilter = signal<UserStatusFilter>('ALL');
   readonly confirmation = signal<StatusConfirmation | null>(null);
+  readonly page = signal(0);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
 
   readonly currentUserId = computed(() => this.authService.currentUser()?.userId ?? null);
 
@@ -72,6 +81,31 @@ export class UserList implements OnInit {
       return matchesQuery && matchesRole && matchesStatus;
     });
   });
+
+  readonly totalFiltered = computed(() => this.filteredUsers().length);
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.totalFiltered() / this.pageSize()))
+  );
+  readonly pagedUsers = computed(() => {
+    const start = this.page() * this.pageSize();
+    return this.filteredUsers().slice(start, start + this.pageSize());
+  });
+  readonly canPrev = computed(() => this.page() > 0);
+  readonly canNext = computed(() => this.page() + 1 < this.totalPages() && this.totalFiltered() > 0);
+  readonly displayPage = computed(() => this.page() + 1);
+  readonly hasActiveFilters = computed(
+    () => this.searchQuery().length > 0 || this.roleFilter() !== 'ALL' || this.statusFilter() !== 'ALL'
+  );
+
+  constructor() {
+    effect(() => {
+      this.searchQuery();
+      this.roleFilter();
+      this.statusFilter();
+      this.pageSize();
+      untracked(() => this.page.set(0));
+    });
+  }
 
   ngOnInit(): void {
     this.route.queryParamMap
@@ -114,44 +148,51 @@ export class UserList implements OnInit {
       });
   }
 
-  onSearchInput(event: Event): void {
-    const target = event.target;
+  onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+  }
 
-    if (target instanceof HTMLInputElement) {
-      this.searchQuery.set(target.value);
+  onRoleChange(value: UserRoleFilter): void {
+    this.roleFilter.set(value);
+  }
+
+  onStatusChange(value: UserStatusFilter): void {
+    this.statusFilter.set(value);
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.roleFilter.set('ALL');
+    this.statusFilter.set('ALL');
+    this.page.set(0);
+  }
+
+  previousPage(): void {
+    if (this.canPrev()) {
+      this.page.update(page => page - 1);
     }
   }
 
-  onRoleFilterChange(event: Event): void {
+  nextPage(): void {
+    if (this.canNext()) {
+      this.page.update(page => page + 1);
+    }
+  }
+
+  onPageSizeChange(event: Event): void {
     const target = event.target;
 
     if (target instanceof HTMLSelectElement) {
-      this.roleFilter.set(this.parseRoleFilter(target.value));
+      this.pageSize.set(Number(target.value));
     }
-  }
-
-  onStatusFilterChange(event: Event): void {
-    const target = event.target;
-
-    if (target instanceof HTMLSelectElement) {
-      this.statusFilter.set(this.parseStatusFilter(target.value));
-    }
-  }
-
-  fullName(user: User): string {
-    return userFullName(user);
-  }
-
-  createdAt(user: User): string {
-    return formatUserDate(user.createdAt);
-  }
-
-  statusLabel(user: User): string {
-    return user.enabled ? 'Active' : 'Disabled';
   }
 
   isCurrentUser(user: User): boolean {
     return user.id === this.currentUserId();
+  }
+
+  fullName(user: User): string {
+    return userFullName(user);
   }
 
   openStatusConfirmation(user: User): void {
@@ -224,22 +265,6 @@ export class UserList implements OnInit {
       queryParams: {},
       replaceUrl: true
     });
-  }
-
-  private parseRoleFilter(value: string): RoleFilter {
-    if (value === 'ADMIN' || value === 'SUPER_ADMIN') {
-      return value;
-    }
-
-    return 'ALL';
-  }
-
-  private parseStatusFilter(value: string): StatusFilter {
-    if (value === 'ACTIVE' || value === 'DISABLED') {
-      return value;
-    }
-
-    return 'ALL';
   }
 
   private resolveError(error: HttpErrorResponse, fallback: string): string {

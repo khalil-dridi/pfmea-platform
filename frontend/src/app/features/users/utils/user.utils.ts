@@ -7,6 +7,14 @@ export function userFullName(user: Pick<User, 'firstName' | 'lastName' | 'email'
   return fullName || user.email;
 }
 
+export function userInitials(user: Pick<User, 'firstName' | 'lastName' | 'email'>): string {
+  const first = (user.firstName ?? '').trim().charAt(0);
+  const last = (user.lastName ?? '').trim().charAt(0);
+  const initials = `${first}${last}`.toUpperCase();
+
+  return initials || user.email.charAt(0).toUpperCase();
+}
+
 export function formatUserDate(value: string): string {
   const date = new Date(value);
 

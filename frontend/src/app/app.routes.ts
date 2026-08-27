@@ -30,8 +30,7 @@ export const routes: Routes = [
       },
       {
         path: 'search',
-        component: FeaturePlaceholder,
-        data: { title: 'Recherche' }
+        loadChildren: () => import('./features/search/search.routes').then(m => m.SEARCH_ROUTES)
       },
       {
         path: 'ai-assistant',

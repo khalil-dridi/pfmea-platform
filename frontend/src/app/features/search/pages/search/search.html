@@ -1,0 +1,78 @@
+<section class="search-page">
+  <app-search-header />
+
+  <section class="search-card search-page__composer">
+    <div class="search-page__intro">
+      <h2>Search the P-FMEA platform</h2>
+      <p>
+        Find processes, process steps, functions, failure modes, causes, risks, optimizations and
+        actions from one place.
+      </p>
+    </div>
+
+    <app-search-bar
+      [query]="query()"
+      [loading]="isSearching()"
+      (queryChange)="onQueryChange($event)"
+      (submitted)="submitSearch()"
+    />
+
+    <app-search-filters
+      [processes]="processes()"
+      [steps]="steps()"
+      [entityType]="entityType()"
+      [processId]="processId()"
+      [processStepId]="processStepId()"
+      [status]="status()"
+      [priority]="priority()"
+      [disabled]="isSearching()"
+      (entityTypeChange)="onEntityTypeChange($event)"
+      (processChange)="onProcessChange($event)"
+      (processStepChange)="onProcessStepChange($event)"
+      (statusChange)="onStatusChange($event)"
+      (priorityChange)="onPriorityChange($event)"
+    />
+
+    <app-search-scope
+      [processName]="selectedProcess()?.name ?? null"
+      [processStepName]="selectedStep()?.name ?? null"
+      [canClear]="hasActiveFilters()"
+      [disabled]="isSearching()"
+      (clear)="clearFilters()"
+    />
+  </section>
+
+  <section class="search-card search-page__panel">
+    @switch (pageState()) {
+      @case ('error') {
+        <div class="search-page__state">
+          <app-search-error [message]="errorMessage() ?? 'Unable to complete the search.'" [disabled]="isSearching()" (retry)="retry()" />
+        </div>
+      }
+      @case ('idle') {
+        <app-search-empty-state kind="idle" />
+      }
+      @case ('loading') {
+        <app-search-loading />
+      }
+      @case ('empty') {
+        <app-search-empty-state kind="none" (clearFilters)="clearFilters()" />
+      }
+      @default {
+        <app-search-results
+          [results]="results()"
+          [query]="submittedQuery() ?? ''"
+          [totalElements]="totalElements()"
+          [totalPages]="totalPages()"
+          [page]="page()"
+          [size]="pageSize()"
+          [viewMode]="viewMode()"
+          [loading]="isSearching()"
+          (viewModeChange)="onViewModeChange($event)"
+          (pageChange)="onPageChange($event)"
+          (sizeChange)="onPageSizeChange($event)"
+        />
+      }
+    }
+  </section>
+</section>

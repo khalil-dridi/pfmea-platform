@@ -1,0 +1,5 @@
+<div class="search-result-grid">
+  @for (result of results(); track result.entityType + ':' + result.id; let index = $index) {
+    <app-search-result-item [result]="result" [query]="query()" layout="grid" [index]="index" />
+  }
+</div>

@@ -1,0 +1,51 @@
+@use '../../styles/search-ui';
+
+:host {
+  display: block;
+}
+
+.search-scope {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.72rem 0.85rem;
+  background: #f8f7fb;
+  border: 1px solid #efeaf8;
+  border-radius: 0.65rem;
+}
+
+.search-scope__copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+
+  span {
+    color: #8a86a0;
+    font-size: 0.62rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    overflow: hidden;
+    color: #1e1b4b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-scope {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-scope .btn {
+    width: 100%;
+  }
+}

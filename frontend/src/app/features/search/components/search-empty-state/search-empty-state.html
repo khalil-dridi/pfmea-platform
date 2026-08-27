@@ -1,0 +1,31 @@
+<div class="search-empty" role="status">
+  <span class="search-empty__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+      <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+    </svg>
+  </span>
+
+  @if (kind() === 'none') {
+    <h2>No results found</h2>
+    <p>No results match your current search and filters.</p>
+    <ul>
+      <li>Check the spelling</li>
+      <li>Try a broader search term</li>
+      <li>Remove some filters</li>
+    </ul>
+    <button type="button" class="btn btn--ghost" (click)="clearFilters.emit()">Clear Filters</button>
+  } @else {
+    <h2>Search across your P-FMEA data</h2>
+    <p>
+      Use the search bar above to find processes, failure modes, risks, optimizations and actions.
+    </p>
+    <p>Try searching for:</p>
+    <ul>
+      <li>a process name</li>
+      <li>a failure code</li>
+      <li>a failure cause</li>
+      <li>an optimization action</li>
+    </ul>
+  }
+</div>

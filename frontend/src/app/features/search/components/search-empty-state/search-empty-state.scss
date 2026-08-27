@@ -1,0 +1,68 @@
+@use '../../styles/search-ui';
+
+:host {
+  display: block;
+}
+
+.search-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 2.4rem 1.4rem;
+  text-align: center;
+  animation: search-enter 240ms ease-out both;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.08rem;
+    font-weight: 720;
+  }
+
+  p {
+    max-width: 32rem;
+    color: #6b6685;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  ul {
+    margin: 0.35rem 0 0.2rem;
+    padding: 0;
+    color: #5b5674;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    list-style: none;
+  }
+
+  li::before {
+    color: #3b1699;
+    content: '• ';
+  }
+}
+
+.search-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.35rem;
+  color: #3b1699;
+  background: #f3effc;
+  border-radius: 0.85rem;
+
+  svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-empty {
+    animation: none;
+  }
+}

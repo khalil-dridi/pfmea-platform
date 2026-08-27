@@ -1,0 +1,9 @@
+@use '../../styles/search-ui';
+
+:host {
+  display: block;
+}
+
+.search-alert .btn {
+  flex-shrink: 0;
+}

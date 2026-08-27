@@ -1,0 +1,79 @@
+<div class="search-filters">
+  <p class="search-filters__label">Filters</p>
+
+  <div class="search-filters__grid">
+    <div class="field">
+      <label for="search-entity-type">Entity Type</label>
+      <select
+        id="search-entity-type"
+        [value]="entityType() ?? ''"
+        [disabled]="disabled()"
+        (change)="onEntityTypeChange($event)"
+      >
+        @for (option of entityTypes; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="search-process">Process</label>
+      <select
+        id="search-process"
+        [value]="processId() ?? ''"
+        [disabled]="disabled()"
+        (change)="onProcessSelect($event)"
+      >
+        <option value="">All Processes</option>
+        @for (process of processes(); track process.id) {
+          <option [value]="process.id">{{ process.processNumber }} — {{ process.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="search-process-step">Process Step</label>
+      <select
+        id="search-process-step"
+        [value]="processStepId() ?? ''"
+        [disabled]="disabled() || processId() === null"
+        (change)="onProcessStepSelect($event)"
+      >
+        <option value="">All Steps</option>
+        @for (step of steps(); track step.id) {
+          <option [value]="step.id">Step {{ step.stepNumber }} · {{ step.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="search-status">Status</label>
+      <select
+        id="search-status"
+        [value]="status() ?? ''"
+        [disabled]="disabled()"
+        (change)="onStatusSelect($event)"
+      >
+        <option value="">All Statuses</option>
+        <option value="OPEN">Open</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="CLOSED">Closed</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="search-priority">Risk Priority</label>
+      <select
+        id="search-priority"
+        [value]="priority() ?? ''"
+        [disabled]="disabled()"
+        (change)="onPrioritySelect($event)"
+      >
+        <option value="">All Priorities</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+      </select>
+    </div>
+  </div>
+</div>

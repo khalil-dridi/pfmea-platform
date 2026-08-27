@@ -1,0 +1,9 @@
+<div class="search-alert search-alert--error" role="alert">
+  <div class="search-alert__body">
+    <p>{{ message() }}</p>
+    <p>Please try again.</p>
+  </div>
+  <button type="button" class="btn btn--ghost btn--compact" [disabled]="disabled()" (click)="retry.emit()">
+    Retry
+  </button>
+</div>

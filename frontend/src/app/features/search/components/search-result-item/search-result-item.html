@@ -1,0 +1,140 @@
+<article
+  class="result-item"
+  [class.result-item--grid]="layout() === 'grid'"
+  [style.--i]="index()"
+>
+  <span class="result-item__icon" [attr.data-type]="result().entityType" aria-hidden="true">
+    @switch (result().entityType) {
+      @case ('PROCESS') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 6.5h14M5 12h14M5 17.5h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('PROCESS_STEP') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="7" cy="7" r="2.2" stroke="currentColor" stroke-width="1.7" />
+          <circle cx="17" cy="12" r="2.2" stroke="currentColor" stroke-width="1.7" />
+          <circle cx="7" cy="17" r="2.2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M9.2 7.8 14.8 11.2M9.2 16.2 14.8 12.8" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      }
+      @case ('WORK_ELEMENT') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="4.5" y="5" width="15" height="14" rx="2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8 9.5h8M8 13h5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('FUNCTION') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 7.5h6.5a3.5 3.5 0 0 1 0 7H10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path d="M12.5 7.5v11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('FAILURE_MODE') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 5.2 20 18.5H4L12 5.2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="M12 10v4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <circle cx="12" cy="16.6" r="0.7" fill="currentColor" />
+        </svg>
+      }
+      @case ('FAILURE_EFFECT') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 4.8 18.5 7.4v5.1c0 3.5-2.5 6.4-6.5 7.7-4-1.3-6.5-4.2-6.5-7.7V7.4L12 4.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        </svg>
+      }
+      @case ('FAILURE_CAUSE') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="7.5" cy="12" r="2.4" stroke="currentColor" stroke-width="1.7" />
+          <circle cx="16.5" cy="8" r="2.4" stroke="currentColor" stroke-width="1.7" />
+          <circle cx="16.5" cy="16" r="2.4" stroke="currentColor" stroke-width="1.7" />
+          <path d="M9.8 11.2 14.2 8.8M9.8 12.8 14.2 15.2" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      }
+      @case ('RISK_ANALYSIS') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 4.8 18.5 7.4v5.1c0 3.5-2.5 6.4-6.5 7.7-4-1.3-6.5-4.2-6.5-7.7V7.4L12 4.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="m9.2 12.2 2 2 3.8-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      }
+      @case ('OPTIMIZATION') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 16.5 10.2 11l3.1 3.2L18 8.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M14.2 8.5H18v3.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      }
+      @default {
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="5.5" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8 10h8M8 13.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+    }
+  </span>
+
+  <div class="result-item__body">
+    <div class="result-item__topline">
+      <span class="result-item__badge" [attr.data-type]="result().entityType">{{ label() }}</span>
+      <h3>
+        @for (part of titleParts(); track $index) {
+          @if (part.match) {
+            <mark>{{ part.text }}</mark>
+          } @else {
+            {{ part.text }}
+          }
+        }
+      </h3>
+      @if (result().reference) {
+        <span class="result-item__ref">{{ result().reference }}</span>
+      }
+    </div>
+
+    @if (contextLine(); as context) {
+      <p class="result-item__context">
+        @if (context.processName) {
+          <span>{{ context.processName }}</span>
+        }
+        @if (context.processName && context.stepName) {
+          <span class="result-item__arrow" aria-hidden="true">→</span>
+        }
+        @if (context.stepName) {
+          <span>{{ context.stepName }}</span>
+        }
+      </p>
+    }
+
+    @if (result().description) {
+      <p class="result-item__description">
+        @for (part of descriptionParts(); track $index) {
+          @if (part.match) {
+            <mark>{{ part.text }}</mark>
+          } @else {
+            {{ part.text }}
+          }
+        }
+      </p>
+    }
+  </div>
+
+  <div class="result-item__meta">
+    @if (priorityLabel(); as priority) {
+      <div>
+        <span>Priority</span>
+        <strong [attr.data-priority]="result().actionPriority">{{ priority }}</strong>
+      </div>
+    }
+    @if (statusLabel(); as status) {
+      <div>
+        <span>Status</span>
+        <em>{{ status }}</em>
+      </div>
+    }
+    @if (viewRoute(); as route) {
+      <a class="btn btn--ghost btn--compact result-item__view" [routerLink]="route">
+        View
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12h13M13.5 6.5 19 12l-5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+    }
+  </div>
+</article>

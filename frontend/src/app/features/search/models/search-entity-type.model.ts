@@ -1,0 +1,14 @@
+export const SEARCH_ENTITY_TYPES = [
+  'PROCESS',
+  'PROCESS_STEP',
+  'WORK_ELEMENT',
+  'FUNCTION',
+  'FAILURE_MODE',
+  'FAILURE_EFFECT',
+  'FAILURE_CAUSE',
+  'RISK_ANALYSIS',
+  'OPTIMIZATION',
+  'OPTIMIZATION_ACTION'
+] as const;
+
+export type SearchEntityType = (typeof SEARCH_ENTITY_TYPES)[number];

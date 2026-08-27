@@ -1,0 +1,22 @@
+<div class="search-scope">
+  <div class="search-scope__copy">
+    <span>Search scope</span>
+    @if (processName(); as process) {
+      <strong>Process: {{ process }}</strong>
+      @if (processStepName(); as step) {
+        <strong>Process Step: {{ step }}</strong>
+      }
+    } @else {
+      <strong>All P-FMEA data</strong>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="btn btn--ghost btn--compact"
+    [disabled]="disabled() || !canClear()"
+    (click)="clear.emit()"
+  >
+    Clear Filters
+  </button>
+</div>

@@ -1,0 +1,37 @@
+<form class="search-bar" role="search" (submit)="$event.preventDefault(); submit()">
+  <div class="search-bar__field">
+    <label class="visually-hidden" for="global-search-input">Search the P-FMEA platform</label>
+    <span class="search-bar__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <input
+      id="global-search-input"
+      type="search"
+      name="q"
+      autocomplete="off"
+      placeholder="Search processes, failure modes, risks, optimizations..."
+      [value]="query()"
+      [disabled]="loading()"
+      (input)="onInput($event)"
+    />
+    @if (canClear()) {
+      <button type="button" class="search-bar__clear" aria-label="Clear search query" (click)="clear()">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m8 8 8 8M16 8l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  <button type="submit" class="btn btn--primary search-bar__submit" [disabled]="!canSearch()">
+    @if (loading()) {
+      <span class="spinner" aria-hidden="true"></span>
+      Searching
+    } @else {
+      Search
+    }
+  </button>
+</form>

@@ -1,0 +1,54 @@
+<div class="search-pagination">
+  <p>
+    Showing {{ from() }} to {{ to() }} of {{ totalElements() }}
+    {{ totalElements() === 1 ? 'result' : 'results' }}
+  </p>
+
+  <div class="search-pagination__controls">
+    <nav class="search-pagination__pages" aria-label="Search results pages">
+      <button
+        type="button"
+        class="search-pagination__nav"
+        aria-label="Previous page"
+        [disabled]="disabled() || !canPrev()"
+        (click)="pageChange.emit(page() - 1)"
+      >
+        «
+      </button>
+
+      @for (token of tokens(); track $index) {
+        @if (token.kind === 'ellipsis') {
+          <span class="search-pagination__ellipsis">...</span>
+        } @else if (token.page !== undefined) {
+          <button
+            type="button"
+            [class.search-pagination__page--active]="token.page === page()"
+            [attr.aria-current]="token.page === page() ? 'page' : null"
+            [attr.aria-label]="'Page ' + (token.page + 1)"
+            [disabled]="disabled()"
+            (click)="pageChange.emit(token.page)"
+          >
+            {{ token.page + 1 }}
+          </button>
+        }
+      }
+
+      <button
+        type="button"
+        class="search-pagination__nav"
+        aria-label="Next page"
+        [disabled]="disabled() || !canNext()"
+        (click)="pageChange.emit(page() + 1)"
+      >
+        »
+      </button>
+    </nav>
+
+    <label class="visually-hidden" for="search-page-size">Results per page</label>
+    <select id="search-page-size" [value]="size()" [disabled]="disabled()" (change)="onSizeChange($event)">
+      @for (option of pageSizes; track option) {
+        <option [value]="option">{{ option }} per page</option>
+      }
+    </select>
+  </div>
+</div>

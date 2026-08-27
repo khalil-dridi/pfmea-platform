@@ -1,0 +1,68 @@
+<section class="search-results" [attr.aria-busy]="loading()">
+  <header class="search-results__head">
+    <h2>
+      {{ totalElements() }} {{ resultLabel() }} for
+      <q>{{ query() }}</q>
+    </h2>
+
+    <div class="search-results__tools">
+      <label class="visually-hidden" for="search-sort">Sort results</label>
+      <select id="search-sort" disabled>
+        <option>Sort by relevance</option>
+      </select>
+
+      <div class="search-results__views" role="group" aria-label="Result layout">
+        <button
+          type="button"
+          [class.search-results__view--active]="viewMode() === 'list'"
+          aria-label="List view"
+          [attr.aria-pressed]="viewMode() === 'list'"
+          (click)="viewModeChange.emit('list')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 7h13M7 12h13M7 17h13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            <circle cx="4" cy="7" r="0.9" fill="currentColor" />
+            <circle cx="4" cy="12" r="0.9" fill="currentColor" />
+            <circle cx="4" cy="17" r="0.9" fill="currentColor" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          [class.search-results__view--active]="viewMode() === 'grid'"
+          aria-label="Grid view"
+          [attr.aria-pressed]="viewMode() === 'grid'"
+          (click)="viewModeChange.emit('grid')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="4" y="4.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+            <rect x="13.5" y="4.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+            <rect x="4" y="14" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+            <rect x="13.5" y="14" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="search-results__body" [class.search-results__body--refreshing]="loading()">
+    @if (viewMode() === 'grid') {
+      <app-search-result-grid [results]="results()" [query]="query()" />
+    } @else {
+      <div class="search-results__list">
+        @for (result of results(); track result.entityType + ':' + result.id; let index = $index) {
+          <app-search-result-item [result]="result" [query]="query()" layout="list" [index]="index" />
+        }
+      </div>
+    }
+  </div>
+
+  <app-search-pagination
+    [page]="page()"
+    [size]="size()"
+    [totalElements]="totalElements()"
+    [totalPages]="totalPages()"
+    [disabled]="loading()"
+    (pageChange)="pageChange.emit($event)"
+    (sizeChange)="sizeChange.emit($event)"
+  />
+</section>

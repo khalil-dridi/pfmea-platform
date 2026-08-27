@@ -1,0 +1,117 @@
+@use '../../styles/search-ui';
+
+:host {
+  display: block;
+}
+
+.search-results {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.05rem 1.15rem 1.1rem;
+}
+
+.search-results__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+
+  h2 {
+    margin: 0;
+    color: #1e1b4b;
+    font-size: 0.98rem;
+    font-weight: 720;
+  }
+
+  q {
+    color: #3b1699;
+    quotes: '"' '"';
+  }
+}
+
+.search-results__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.search-results__tools select {
+  height: 2rem;
+  padding: 0 1.7rem 0 0.6rem;
+  color: #433e5c;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none'%3E%3Cpath d='M4.2 6.2 8 10l3.8-3.8' stroke='%236b6685' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 0.4rem center;
+  border: 1px solid #e6e2ef;
+  border-radius: 0.42rem;
+  appearance: none;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.search-results__views {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #e6e2ef;
+  border-radius: 0.45rem;
+}
+
+.search-results__views button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: #6b6685;
+  background: #fff;
+  border: 0;
+  cursor: pointer;
+
+  svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover {
+    background: #f7f5fb;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #3b1699;
+    outline-offset: -2px;
+  }
+}
+
+.search-results__view--active {
+  color: #3b1699;
+  background: #f3effc;
+}
+
+.search-results__body--refreshing {
+  opacity: 0.58;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+
+.search-results__list app-search-result-item {
+  display: block;
+  border-bottom: 1px solid #f1eef7;
+}
+
+.search-results__list app-search-result-item:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .search-results__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-results__tools {
+    justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-results__body--refreshing {
+    transition: none;
+  }
+}

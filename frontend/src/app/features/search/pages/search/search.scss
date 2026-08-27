@@ -1,0 +1,61 @@
+@use '../../styles/search-ui';
+
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.search-page {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 78rem;
+  margin: 0 auto;
+}
+
+.search-page__composer {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem 1.25rem 1.15rem;
+  animation: search-enter 240ms ease-out both;
+}
+
+.search-page__intro {
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.05rem;
+    font-weight: 720;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin-top: 0.28rem;
+    max-width: 46rem;
+    color: #6b6685;
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+}
+
+.search-page__panel {
+  min-height: 18rem;
+  animation: search-enter 280ms 40ms ease-out both;
+}
+
+.search-page__state {
+  padding: 1.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-page__composer,
+  .search-page__panel {
+    animation: none;
+  }
+}

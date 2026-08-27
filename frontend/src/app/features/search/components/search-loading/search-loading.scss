@@ -1,0 +1,19 @@
+@use '../../styles/search-ui';
+
+:host {
+  display: block;
+}
+
+.search-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 2.4rem 1.25rem;
+  color: #6b6685;
+  font-size: 0.9rem;
+
+  p {
+    margin: 0;
+  }
+}

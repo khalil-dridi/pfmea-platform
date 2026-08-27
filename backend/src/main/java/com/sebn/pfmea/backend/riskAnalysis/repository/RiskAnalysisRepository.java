@@ -4,6 +4,9 @@ import com.sebn.pfmea.backend.riskAnalysis.entity.RiskAnalysis;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,5 +59,39 @@ public interface RiskAnalysisRepository
     """)
     List<Object[]> countRiskDistributionByProcess(
             @Param("processId") UUID processId
+    );
+
+    @Query("""
+    SELECT r
+    FROM RiskAnalysis r
+    WHERE (
+        LOWER(r.currentPreventionControl)
+            LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(r.currentDetectionControl)
+            LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(r.specialProcess)
+            LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(r.specialCharacteristic)
+            LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(CAST(r.actionPriority AS string))
+            LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(CAST(r.detectionScope AS string))
+            LIKE LOWER(CONCAT('%', :query, '%'))
+    )
+    AND (
+        :processId IS NULL
+        OR r.failureCause.failureMode.processStep.process.id = :processId
+    )
+    AND (
+        :processStepId IS NULL
+        OR r.failureCause.failureMode.processStep.id = :processStepId
+    )
+    ORDER BY r.actionPriority ASC
+""")
+    Page<RiskAnalysis> search(
+            @Param("query") String query,
+            @Param("processId") UUID processId,
+            @Param("processStepId") UUID processStepId,
+            Pageable pageable
     );
 }

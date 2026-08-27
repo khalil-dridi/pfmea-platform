@@ -4,6 +4,9 @@ import com.sebn.pfmea.backend.function.entity.Function;
 import com.sebn.pfmea.backend.function.enums.FunctionType;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -45,5 +48,31 @@ public interface FunctionRepository
     List<Function> findAllForProcessStepScope(
             @Param("processId") UUID processId,
             @Param("processStepId") UUID processStepId
+    );
+
+    @Query("""
+    SELECT DISTINCT f
+    FROM Function f
+    WHERE (
+        LOWER(f.description) LIKE LOWER(CONCAT('%', :query, '%'))
+        OR LOWER(CAST(f.type AS string)) LIKE LOWER(CONCAT('%', :query, '%'))
+    )
+    AND (
+        :processId IS NULL
+        OR f.process.id = :processId
+        OR f.processStep.process.id = :processId
+        OR f.workElement.processStep.process.id = :processId
+    )
+    AND (
+        :processStepId IS NULL
+        OR f.processStep.id = :processStepId
+        OR f.workElement.processStep.id = :processStepId
+    )
+""")
+    Page<Function> search(
+            @Param("query") String query,
+            @Param("processId") UUID processId,
+            @Param("processStepId") UUID processStepId,
+            Pageable pageable
     );
 }

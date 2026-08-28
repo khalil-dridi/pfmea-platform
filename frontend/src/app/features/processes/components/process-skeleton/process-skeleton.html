@@ -1,0 +1,17 @@
+<div
+  class="process-skeleton-grid"
+  [class.process-skeleton-grid--list]="layout() === 'list'"
+  role="status"
+  aria-live="polite"
+  aria-label="Loading processes"
+>
+  @for (item of placeholders; track item) {
+    <article class="process-skeleton-card" [class.process-skeleton-card--list]="layout() === 'list'" aria-hidden="true">
+      <span class="process-skeleton__icon"></span>
+      <span class="process-skeleton__line process-skeleton__line--title"></span>
+      <span class="process-skeleton__menu"></span>
+      <span class="process-skeleton__chip"></span>
+      <span class="process-skeleton__line process-skeleton__line--action"></span>
+    </article>
+  }
+</div>

@@ -1,0 +1,75 @@
+<form class="process-filters" role="search" (submit)="$event.preventDefault()">
+  <div class="field field--search">
+    <label class="visually-hidden" for="process-search">Search processes</label>
+    <span class="process-filters__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <input
+      id="process-search"
+      type="search"
+      [value]="query()"
+      [disabled]="disabled()"
+      (input)="onQueryInput($event)"
+      placeholder="Search processes..."
+      autocomplete="off"
+    />
+  </div>
+
+  <button
+    type="button"
+    class="btn btn--ghost"
+    [disabled]="disabled() || !canClear()"
+    (click)="cleared.emit()"
+  >
+    Clear
+  </button>
+
+  <div class="process-filters__trailing">
+    <div class="process-filters__group">
+      <label for="process-sort">Sort by</label>
+      <select id="process-sort" [value]="sort()" [disabled]="disabled()" (change)="onSortChange($event)">
+        <option value="updated">Recently updated</option>
+        <option value="created">Recently created</option>
+        <option value="name-asc">Name A-Z</option>
+        <option value="name-desc">Name Z-A</option>
+      </select>
+    </div>
+
+    <div class="process-filters__views" role="group" aria-label="Process layout">
+      <span>View</span>
+      <div>
+        <button
+          type="button"
+          [class.process-filters__view--active]="viewMode() === 'grid'"
+          aria-label="Grid view"
+          [attr.aria-pressed]="viewMode() === 'grid'"
+          (click)="viewModeChange.emit('grid')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="4" y="4.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+            <rect x="13.5" y="4.5" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+            <rect x="4" y="14" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+            <rect x="13.5" y="14" width="6.5" height="6.5" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          [class.process-filters__view--active]="viewMode() === 'list'"
+          aria-label="List view"
+          [attr.aria-pressed]="viewMode() === 'list'"
+          (click)="viewModeChange.emit('list')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 7h13M7 12h13M7 17h13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            <circle cx="4" cy="7" r="0.9" fill="currentColor" />
+            <circle cx="4" cy="12" r="0.9" fill="currentColor" />
+            <circle cx="4" cy="17" r="0.9" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</form>

@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.validation-skeleton {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.95rem 1.05rem 1.1rem;
+}
+
+.validation-skeleton__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.4fr) minmax(8.5rem, 0.9fr) minmax(8.5rem, 0.9fr) auto auto auto;
+  align-items: center;
+  gap: 0.85rem 1rem;
+  padding: 0.85rem 1.05rem;
+  background: #fff;
+  border: 1px solid #ece9f5;
+  border-radius: 0.9rem;
+}
+
+.validation-skeleton__icon,
+.validation-skeleton__line,
+.validation-skeleton__chip,
+.validation-skeleton__status,
+.validation-skeleton__button,
+.validation-skeleton__menu {
+  background: linear-gradient(90deg, #f0eef6 25%, #f8f7fc 40%, #f0eef6 55%);
+  background-size: 400% 100%;
+  animation: validation-shimmer 1.2s ease infinite;
+}
+
+.validation-skeleton__icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.7rem;
+}
+
+.validation-skeleton__line {
+  display: block;
+  height: 0.72rem;
+  border-radius: 0.4rem;
+}
+
+.validation-skeleton__line--title {
+  width: 9rem;
+}
+
+.validation-skeleton__chip {
+  width: 3.4rem;
+  height: 1.2rem;
+  border-radius: 999px;
+}
+
+.validation-skeleton__line--meta,
+.validation-skeleton__line--date {
+  width: 6.5rem;
+}
+
+.validation-skeleton__status {
+  width: 4.6rem;
+  height: 1.4rem;
+  border-radius: 999px;
+}
+
+.validation-skeleton__button {
+  width: 4.4rem;
+  height: 2.15rem;
+  border-radius: 0.5rem;
+}
+
+.validation-skeleton__menu {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+}
+
+@keyframes validation-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  .validation-skeleton__item {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+
+  .validation-skeleton__line--meta,
+  .validation-skeleton__line--date,
+  .validation-skeleton__chip {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .validation-skeleton__icon,
+  .validation-skeleton__line,
+  .validation-skeleton__chip,
+  .validation-skeleton__status,
+  .validation-skeleton__button,
+  .validation-skeleton__menu {
+    animation: none;
+  }
+}

@@ -1,0 +1,16 @@
+<div class="validation-empty" role="status">
+  <span class="validation-empty__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 4 19 7v5.2c0 4.1-2.8 7.3-7 8.8-4.2-1.5-7-4.7-7-8.8V7l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+      <path d="m9.2 12.2 2.2 2.2 4.2-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </span>
+  @if (filtered()) {
+    <h2>No validations found</h2>
+    <p>No validations match your current filters.</p>
+    <button type="button" class="btn btn--ghost" (click)="clearFilters.emit()">Clear filters</button>
+  } @else {
+    <h2>No pending validations</h2>
+    <p>There are no validation requests requiring your attention.</p>
+  }
+</div>

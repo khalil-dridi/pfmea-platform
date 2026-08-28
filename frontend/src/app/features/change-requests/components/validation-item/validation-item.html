@@ -1,0 +1,136 @@
+<article
+  class="validation-item"
+  [attr.data-accent]="accent()"
+  [style.--i]="index()"
+>
+  <span class="validation-item__icon" aria-hidden="true">
+    @switch (iconKind()) {
+      @case ('PROCESS') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="3.8" y="3.8" width="6.4" height="6.4" rx="1.3" stroke="currentColor" stroke-width="1.7" />
+          <rect x="13.8" y="3.8" width="6.4" height="6.4" rx="1.3" stroke="currentColor" stroke-width="1.7" />
+          <rect x="8.8" y="13.8" width="6.4" height="6.4" rx="1.3" stroke="currentColor" stroke-width="1.7" />
+          <path d="M7 10.2v1.4h10v-1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      }
+      @case ('PROCESS_STEP') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 7h14M5 12h14M5 17h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('WORK_ELEMENT') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 4 19 8v8l-7 4-7-4V8l7-4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        </svg>
+      }
+      @case ('FUNCTION') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 5v2.2M12 16.8V19M5 12h2.2M16.8 12H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('FAILURE_MODE') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 5 20 19H4L12 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="M12 10v4.2M12 16.6h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('FAILURE_CAUSE') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 18V8.5M6 8.5 12 5l6 3.5V18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M6 12h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @case ('RISK_ANALYSIS') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 4 19 7v5.2c0 4.1-2.8 7.3-7 8.8-4.2-1.5-7-4.7-7-8.8V7l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        </svg>
+      }
+      @case ('ACTION') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+          <path d="m8.2 12.2 2.3 2.3 5.1-5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      }
+      @case ('USER') {
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8.5" r="2.7" stroke="currentColor" stroke-width="1.7" />
+          <path d="M6.2 18c.8-2.6 2.6-4 5.8-4s5 1.4 5.8 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      }
+      @default {
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="5" width="14" height="14" rx="2.2" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      }
+    }
+  </span>
+
+  <div class="validation-item__entity">
+    <strong>{{ request().entityType }}</strong>
+    <span
+      class="validation-item__operation"
+      [class.validation-item__operation--create]="request().operation === 'CREATE'"
+      [class.validation-item__operation--update]="request().operation === 'UPDATE'"
+    >
+      {{ operationText() }}
+    </span>
+  </div>
+
+  <div class="validation-item__meta validation-item__meta--by">
+    <span>Requested by</span>
+    <p>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="8.5" r="2.5" stroke="currentColor" stroke-width="1.7" />
+        <path d="M6.4 18c.8-2.5 2.5-3.8 5.6-3.8s4.8 1.3 5.6 3.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+      {{ request().requestedByName }}
+    </p>
+  </div>
+
+  <div class="validation-item__meta validation-item__meta--date">
+    <span>Submitted at</span>
+    <p>{{ submittedAt() }}</p>
+  </div>
+
+  <span
+    class="badge"
+    [class.badge--pending]="request().status === 'PENDING'"
+    [class.badge--approved]="request().status === 'APPROVED'"
+    [class.badge--rejected]="request().status === 'REJECTED'"
+  >
+    <span class="badge__dot" aria-hidden="true"></span>
+    {{ statusText() }}
+  </span>
+
+  <a class="validation-item__review" [routerLink]="reviewLink()">Review</a>
+
+  <div class="validation-item__menu">
+    <button
+      type="button"
+      class="validation-item__menu-btn"
+      [attr.aria-expanded]="menuOpen()"
+      aria-haspopup="menu"
+      [attr.aria-label]="'More actions for ' + request().entityType"
+      (click)="toggleMenu($event)"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="6" r="1.45" />
+        <circle cx="12" cy="12" r="1.45" />
+        <circle cx="12" cy="18" r="1.45" />
+      </svg>
+    </button>
+
+    @if (menuOpen()) {
+      <div class="validation-item__dropdown" role="menu" (click)="$event.stopPropagation()">
+        <a role="menuitem" [routerLink]="reviewLink()" (click)="closeMenu()">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3.8 12s2.8-6.2 8.2-6.2S20.2 12 20.2 12s-2.8 6.2-8.2 6.2S3.8 12 3.8 12Z" stroke="currentColor" stroke-width="1.7" />
+            <circle cx="12" cy="12" r="2.3" stroke="currentColor" stroke-width="1.7" />
+          </svg>
+          Review
+        </a>
+      </div>
+    }
+  </div>
+</article>

@@ -1,8 +1,16 @@
-<section class="requests-page">
-  <header class="requests-page__header">
-    <div>
-      <h1>Validations</h1>
-      <p>Review and approve or reject pending P-FMEA changes.</p>
+<section class="validations-page">
+  <header class="validations-page__header">
+    <div class="validations-page__identity">
+      <span class="validations-page__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 4 19 7v5.2c0 4.1-2.8 7.3-7 8.8-4.2-1.5-7-4.7-7-8.8V7l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="m9.2 12.2 2.2 2.2 4.2-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>Validations</h1>
+        <p>Review and approve or reject pending P-FMEA changes.</p>
+      </div>
     </div>
   </header>
 
@@ -12,112 +20,98 @@
     </div>
   }
 
-  @if (errorMessage(); as error) {
+  @if (errorMessage()) {
     <div class="requests-alert requests-alert--error" role="alert" aria-live="assertive">
-      <span>{{ error }}</span>
+      <div class="requests-alert__body">
+        <p>Unable to load validations.</p>
+        <p>Please try again.</p>
+      </div>
       <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="loadRequests()">
         Retry
       </button>
     </div>
   }
 
-  <div class="requests-card">
+  <div class="validations-page__filters">
+    <app-validation-filters
+      [query]="searchQuery()"
+      [status]="statusFilter()"
+      [operation]="operationFilter()"
+      [sort]="sort()"
+      [disabled]="isLoading()"
+      (queryChange)="onSearchChange($event)"
+      (statusChange)="onStatusChange($event)"
+      (operationChange)="onOperationChange($event)"
+      (sortChange)="onSortChange($event)"
+      (cleared)="clearFilters()"
+    />
+  </div>
+
+  <div class="validations-page__list">
     @if (isLoading()) {
-      <div class="requests-table-wrap" aria-hidden="true">
-        <table class="requests-table">
-          <thead>
-            <tr>
-              <th scope="col">Entity</th>
-              <th scope="col">Operation</th>
-              <th scope="col">Requested By</th>
-              <th scope="col">Submitted At</th>
-              <th scope="col">Status</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of skeletonRows; track row) {
-              <tr>
-                <td colspan="6"><span class="skeleton"></span></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      <div class="requests-state requests-state--loading" role="status" aria-live="polite">
-        <span class="spinner spinner--muted" aria-hidden="true"></span>
-        Loading pending validations…
-      </div>
+      <app-validation-skeleton />
     } @else if (requests().length === 0 && errorMessage()) {
-      <div class="requests-state" role="status">Unable to display pending validations at this time.</div>
-    } @else if (requests().length === 0) {
-      <div class="requests-empty" role="status">
-        <h2>No pending validations</h2>
-        <p>There are currently no change requests waiting for your review.</p>
+      <div class="validations-page__state" role="status">
+        <p>Unable to load validations.</p>
+        <p>Please try again.</p>
       </div>
+    } @else if (filteredRequests().length === 0) {
+      <app-validation-empty-state [filtered]="hasActiveFilters()" (clearFilters)="clearFilters()" />
     } @else {
-      <div class="requests-table-wrap">
-        <table class="requests-table">
-          <caption class="visually-hidden">Pending change requests</caption>
-          <thead>
-            <tr>
-              <th scope="col">Entity</th>
-              <th scope="col">Operation</th>
-              <th scope="col">Requested By</th>
-              <th scope="col">Submitted At</th>
-              <th scope="col">Status</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (request of requests(); track request.id) {
-              <tr>
-                <td><strong>{{ request.entityType }}</strong></td>
-                <td>{{ operationText(request) }}</td>
-                <td>{{ request.requestedByName }}</td>
-                <td class="requests-table__date">{{ submittedAt(request) }}</td>
-                <td>
-                  <span class="badge badge--pending">
-                    <span class="badge__dot" aria-hidden="true"></span>
-                    {{ statusText() }}
-                  </span>
-                </td>
-                <td>
-                  <a class="btn btn--ghost btn--compact" [routerLink]="['/change-requests', request.id]">
-                    Review
-                  </a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div class="validations-page__items">
+        @for (request of pagedRequests(); track request.id; let index = $index) {
+          <app-validation-item [request]="request" [index]="index" />
+        }
       </div>
 
-      <ul class="requests-cards">
-        @for (request of requests(); track request.id) {
-          <li class="request-card">
-            <div class="request-card__top">
-              <div>
-                <h2>{{ request.entityType }} · {{ operationText(request) }}</h2>
-                <p>Requested by {{ request.requestedByName }}</p>
-              </div>
-              <span class="badge badge--pending">
-                <span class="badge__dot" aria-hidden="true"></span>
-                {{ statusText() }}
-              </span>
-            </div>
-            <dl>
-              <div>
-                <dt>Submitted At</dt>
-                <dd>{{ submittedAt(request) }}</dd>
-              </div>
-            </dl>
-            <a class="btn btn--primary btn--compact" [routerLink]="['/change-requests', request.id]">
-              Review
-            </a>
-          </li>
-        }
-      </ul>
+      <footer class="validations-pagination">
+        <p>
+          Showing {{ rangeStart() }} to {{ rangeEnd() }} of {{ totalFiltered() }}
+          {{ totalFiltered() === 1 ? 'validation' : 'validations' }}
+        </p>
+
+        <div class="validations-pagination__controls">
+          <nav class="validations-pagination__pages" aria-label="Validation list pages">
+            <button
+              type="button"
+              class="validations-pagination__nav"
+              aria-label="Previous page"
+              [disabled]="!canPrev()"
+              (click)="previousPage()"
+            >
+              ‹
+            </button>
+            @for (pageIndex of visiblePages(); track pageIndex) {
+              <button
+                type="button"
+                class="validations-pagination__page"
+                [class.validations-pagination__page--active]="page() === pageIndex"
+                [attr.aria-current]="page() === pageIndex ? 'page' : null"
+                [attr.aria-label]="'Page ' + (pageIndex + 1)"
+                (click)="goToPage(pageIndex)"
+              >
+                {{ pageIndex + 1 }}
+              </button>
+            }
+            <button
+              type="button"
+              class="validations-pagination__nav"
+              aria-label="Next page"
+              [disabled]="!canNext()"
+              (click)="nextPage()"
+            >
+              ›
+            </button>
+          </nav>
+
+          <label class="visually-hidden" for="validations-page-size">Validations per page</label>
+          <select id="validations-page-size" [value]="pageSize()" (change)="onPageSizeChange($event)">
+            @for (size of pageSizes; track size) {
+              <option [value]="size">{{ size }} per page</option>
+            }
+          </select>
+        </div>
+      </footer>
     }
   </div>
 </section>

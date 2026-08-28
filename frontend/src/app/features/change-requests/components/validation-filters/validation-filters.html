@@ -1,0 +1,83 @@
+<form class="validation-filters" role="search" (submit)="$event.preventDefault()">
+  <div class="field field--search">
+    <label class="visually-hidden" for="validation-search">Search validations</label>
+    <span class="validation-filters__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <input
+      id="validation-search"
+      type="search"
+      [value]="query()"
+      [disabled]="disabled()"
+      (input)="onQueryInput($event)"
+      placeholder="Search validations..."
+      autocomplete="off"
+    />
+  </div>
+
+  <button
+    type="button"
+    class="btn btn--ghost"
+    [disabled]="disabled() || !canClear()"
+    (click)="cleared.emit()"
+  >
+    Clear
+  </button>
+
+  <div class="validation-filters__group">
+    <label for="validation-status">Status</label>
+    <select
+      id="validation-status"
+      [value]="status()"
+      [disabled]="disabled()"
+      (change)="onStatusChange($event)"
+    >
+      <option value="ALL">All Statuses</option>
+      <option value="PENDING">Pending</option>
+      <option value="APPROVED">Approved</option>
+      <option value="REJECTED">Rejected</option>
+    </select>
+  </div>
+
+  <div class="validation-filters__group">
+    <label for="validation-operation">Operation</label>
+    <select
+      id="validation-operation"
+      [value]="operation()"
+      [disabled]="disabled()"
+      (change)="onOperationChange($event)"
+    >
+      <option value="ALL">All Operations</option>
+      <option value="CREATE">Create</option>
+      <option value="UPDATE">Update</option>
+    </select>
+  </div>
+
+  <div class="validation-filters__group">
+    <label for="validation-sort">Sort by</label>
+    <select
+      id="validation-sort"
+      [value]="sort()"
+      [disabled]="disabled()"
+      (change)="onSortChange($event)"
+    >
+      <option value="newest">Most recent</option>
+      <option value="oldest">Oldest</option>
+    </select>
+  </div>
+
+  <button
+    type="button"
+    class="validation-filters__gear"
+    aria-label="Focus status filter"
+    [disabled]="disabled()"
+    (click)="focusStatus()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+    </svg>
+  </button>
+</form>

@@ -12,6 +12,7 @@
   position: relative;
   width: 10.5rem;
   height: 10.5rem;
+  animation: dash-pop 520ms ease-out both;
 
   svg {
     display: block;
@@ -21,7 +22,7 @@
 }
 
 .posture-panel__track {
-  stroke: #f1eef7;
+  stroke: #ece8f4;
 }
 
 .posture-panel__arc {
@@ -79,22 +80,25 @@
     grid-template-columns: 0.35rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.55rem;
-    padding: 0.38rem 0.1rem;
-    border-bottom: 1px solid #f3f1f8;
-    color: #6b6685;
+    padding: 0.42rem 0.5rem;
+    border-radius: 0.5rem;
+    color: #5b5674;
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     cursor: pointer;
+    animation: dash-rise 360ms ease-out both;
     transition: background 160ms ease-out, color 160ms ease-out;
 
-    &:first-child {
-      padding-top: 0.1rem;
+    @for $i from 1 through 4 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{80 + ($i - 1) * 45}ms;
+      }
     }
 
-    &:last-child {
-      border-bottom: 0;
+    &:first-child {
+      margin-top: 0.05rem;
     }
   }
 
@@ -102,6 +106,7 @@
   li:focus-visible,
   .posture-panel__legend-item--active {
     color: #1e1b4b;
+    background: #f7f5fc;
     outline: none;
   }
 
@@ -123,12 +128,15 @@
 }
 
 .posture-panel__insight {
-  margin: 0.55rem 0 0;
-  padding-top: 0.45rem;
-  border-top: 1px solid #f3f1f8;
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.65rem;
   color: #5b5674;
+  background: #f7f5fc;
+  border: 1px solid #eeeaf8;
+  border-radius: 0.6rem;
   font-size: 0.74rem;
-  line-height: 1.35;
+  line-height: 1.4;
+  animation: dash-rise 380ms 220ms ease-out both;
 }
 
 .posture-panel__donut-sk {
@@ -155,5 +163,11 @@
 @media (prefers-reduced-motion: reduce) {
   .posture-panel__arc {
     transition: opacity 180ms ease-out;
+  }
+
+  .posture-panel__chart,
+  .posture-panel__legend li,
+  .posture-panel__insight {
+    animation: none;
   }
 }

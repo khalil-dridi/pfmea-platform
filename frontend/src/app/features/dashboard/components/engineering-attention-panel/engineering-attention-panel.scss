@@ -3,22 +3,19 @@
 .attention-panel__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
-  margin: 0.1rem 0 0;
+  gap: 0.55rem;
+  margin: 0.2rem 0 0;
   padding: 0;
   list-style: none;
 
   > li {
     min-width: 0;
-    border-right: 1px solid #f1eef7;
-    border-bottom: 1px solid #f1eef7;
+    animation: dash-rise 380ms ease-out both;
 
-    &:nth-child(2n) {
-      border-right: 0;
-    }
-
-    &:nth-last-child(-n + 2) {
-      border-bottom: 0;
+    @for $i from 1 through 4 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{($i - 1) * 50}ms;
+      }
     }
   }
 }
@@ -28,13 +25,20 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto auto;
   align-items: center;
-  column-gap: 0.65rem;
-  row-gap: 0.12rem;
+  column-gap: 0.7rem;
+  row-gap: 0.14rem;
   min-width: 0;
-  padding: 0.7rem 0.85rem 0.7rem 0.15rem;
+  height: 100%;
+  padding: 0.75rem 0.8rem;
   color: inherit;
+  background: #f7f5fc;
+  border: 1px solid #eeeaf8;
+  border-radius: 0.75rem;
   text-decoration: none;
-  transition: background 160ms ease-out;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    transform 160ms ease-out;
 
   .attention-panel__icon {
     grid-column: 1;
@@ -45,8 +49,8 @@
     grid-column: 2;
     grid-row: 1;
     color: #1e1b4b;
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-size: 1.32rem;
+    font-weight: 740;
     letter-spacing: -0.045em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -56,16 +60,16 @@
     grid-column: 2;
     grid-row: 2;
     min-width: 0;
-    color: #6b6685;
+    color: #5b5674;
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 650;
     line-height: 1.25;
   }
 
   em {
     grid-column: 3;
     grid-row: 1 / span 2;
-    color: #d0cbdd;
+    color: #c4bdd8;
     font-style: normal;
     font-weight: 700;
     opacity: 0;
@@ -76,8 +80,10 @@
 
 a.attention-panel__item:hover,
 a.attention-panel__item:focus-visible {
-  background: #faf9fc;
+  background: #f3effc;
+  border-color: #ddd6ee;
   outline: none;
+  transform: translateY(-1px);
 
   em {
     color: #3b1699;
@@ -89,15 +95,15 @@ a.attention-panel__item:focus-visible {
 .attention-panel__icon {
   display: grid;
   place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  color: #6b51aa;
-  background: #f6f4fb;
-  border-radius: 0.42rem;
+  width: 2rem;
+  height: 2rem;
+  color: #3b1699;
+  background: #ede9fe;
+  border-radius: 0.55rem;
 
   svg {
-    width: 0.88rem;
-    height: 0.88rem;
+    width: 0.92rem;
+    height: 0.92rem;
   }
 }
 
@@ -106,6 +112,9 @@ a.attention-panel__item:focus-visible {
 }
 
 .attention-panel__item--priority {
+  background: #fbf6f8;
+  border-color: #f3e4ea;
+
   strong {
     color: #9f3654;
   }
@@ -127,25 +136,17 @@ a.attention-panel__item:focus-visible {
 @media (max-width: 720px) {
   .attention-panel__grid {
     grid-template-columns: minmax(0, 1fr);
-
-    > li {
-      border-right: 0;
-
-      &:nth-last-child(-n + 2) {
-        border-bottom: 1px solid #f1eef7;
-      }
-
-      &:last-child {
-        border-bottom: 0;
-      }
-    }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .attention-panel__grid > li {
+    animation: none;
+  }
+
   .attention-panel__item,
   a.attention-panel__item em {
-    transition: background 160ms ease-out, color 160ms ease-out, opacity 160ms ease-out;
+    transition: background-color 160ms ease-out, color 160ms ease-out, opacity 160ms ease-out;
     transform: none;
   }
 }

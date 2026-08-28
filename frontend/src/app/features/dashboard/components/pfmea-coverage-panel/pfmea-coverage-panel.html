@@ -21,7 +21,7 @@
     } @else {
       <ul class="coverage-panel__strip">
         @for (item of items(); track item.key) {
-          <li class="coverage-panel__item">
+          <li class="coverage-panel__item" [attr.data-key]="item.key">
             <span class="coverage-panel__label">
               <span class="coverage-panel__icon" aria-hidden="true">
                 @switch (item.key) {

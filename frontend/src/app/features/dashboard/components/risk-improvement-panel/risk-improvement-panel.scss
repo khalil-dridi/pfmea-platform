@@ -55,8 +55,15 @@
     grid-template-columns: 5.4rem minmax(0, 1fr);
     gap: 0.55rem;
     align-items: center;
-    padding: 0.42rem 0;
-    border-bottom: 1px solid #f3f1f8;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #f1eef7;
+    animation: dash-rise 360ms ease-out both;
+
+    @for $i from 1 through 4 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{($i - 1) * 55}ms;
+      }
+    }
 
     &:last-child {
       padding-bottom: 0.1rem;
@@ -101,9 +108,9 @@
 }
 
 .improvement-panel__rail {
-  height: 0.32rem;
+  height: 0.42rem;
   overflow: hidden;
-  background: #f3f1f8;
+  background: #eeeaf8;
   border-radius: 999px;
 }
 
@@ -147,5 +154,9 @@
 @media (prefers-reduced-motion: reduce) {
   .improvement-panel__track {
     transition: none;
+  }
+
+  .improvement-panel__rows li {
+    animation: none;
   }
 }

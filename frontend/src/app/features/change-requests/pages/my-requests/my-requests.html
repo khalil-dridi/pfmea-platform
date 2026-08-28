@@ -1,90 +1,117 @@
 <section class="requests-page">
   <header class="requests-page__header">
-    <div>
-      <h1>My Requests</h1>
-      <p>Track your P-FMEA changes and their approval status.</p>
+    <div class="requests-page__identity">
+      <span class="requests-page__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>My Requests</h1>
+        <p>Track your P-FMEA changes and their approval status.</p>
+      </div>
     </div>
   </header>
 
   @if (errorMessage(); as error) {
     <div class="requests-alert requests-alert--error" role="alert" aria-live="assertive">
-      <span>{{ error }}</span>
+      <div class="requests-alert__body">
+        <p>{{ error }}</p>
+        <p>Please try again.</p>
+      </div>
       <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="loadRequests()">
         Retry
       </button>
     </div>
   }
 
-  <div class="requests-card">
+  <div class="requests-page__filters">
     <form class="requests-toolbar" role="search" (submit)="$event.preventDefault()">
-      <div class="field field--search">
+      <div class="field field--search" [class.field--active]="searchQuery().trim().length > 0">
         <label class="visually-hidden" for="request-search">Search requests</label>
+        <span class="requests-toolbar__search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+            <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </span>
         <input
           id="request-search"
           type="search"
           [value]="searchQuery()"
           (input)="onSearchInput($event)"
-          placeholder="Search by action, process or status..."
+          placeholder="Search requests..."
           autocomplete="off"
         />
       </div>
 
-      <div class="field">
-        <label for="action-filter">Action</label>
-        <select id="action-filter" [value]="actionFilter()" (change)="onActionFilterChange($event)">
-          <option value="ALL">All</option>
+      <div class="field" [class.field--active]="operationFilter() !== 'ALL'">
+        <label for="operation-filter">Operation</label>
+        <select id="operation-filter" [value]="operationFilter()" (change)="onOperationFilterChange($event)">
+          <option value="ALL">All operations</option>
           <option value="CREATE">Create</option>
           <option value="UPDATE">Update</option>
         </select>
       </div>
 
-      <div class="field">
+      <div class="field" [class.field--active]="statusFilter() !== 'ALL'">
         <label for="status-filter">Status</label>
         <select id="status-filter" [value]="statusFilter()" (change)="onStatusFilterChange($event)">
-          <option value="ALL">All</option>
+          <option value="ALL">All statuses</option>
           <option value="PENDING">Pending</option>
           <option value="APPROVED">Approved</option>
           <option value="REJECTED">Rejected</option>
         </select>
       </div>
 
-      <div class="field">
+      <div class="field" [class.field--active]="fromDate().length > 0">
         <label for="from-date">From</label>
         <input
           id="from-date"
           type="date"
           [value]="fromDate()"
+          [attr.max]="toDate() || null"
           (change)="onFromDateChange($event)"
-          placeholder="mm/dd/yyyy"
         />
       </div>
 
-      <div class="field">
+      <div class="field" [class.field--active]="toDate().length > 0">
         <label for="to-date">To</label>
         <input
           id="to-date"
           type="date"
           [value]="toDate()"
+          [attr.min]="fromDate() || null"
           (change)="onToDateChange($event)"
-          placeholder="mm/dd/yyyy"
         />
       </div>
 
       <button type="button" class="btn btn--ghost" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
-        Clear
+        Clear filters
       </button>
     </form>
 
-    @if (isLoading()) {
-      <div class="requests-table-wrap" aria-hidden="true">
+    @if (hasActiveFilters()) {
+      <p class="requests-toolbar__meta" aria-live="polite">
+        {{ activeFilterCount() }}
+        {{ activeFilterCount() === 1 ? 'filter' : 'filters' }}
+        active
+      </p>
+    }
+  </div>
+
+  <div class="requests-card" [class.requests-card--busy]="isRefreshing()" [attr.aria-busy]="isLoading()">
+    @if (showSkeleton()) {
+      <div class="requests-table-wrap requests-table-wrap--skeleton" aria-hidden="true">
         <table class="requests-table">
           <thead>
             <tr>
               <th scope="col">Entity</th>
               <th scope="col">Operation</th>
               <th scope="col">Status</th>
-              <th scope="col">Submitted At</th>
-              <th scope="col">Reviewed At</th>
+              <th scope="col">Created</th>
+              <th scope="col">Reviewed</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
@@ -97,23 +124,45 @@
           </tbody>
         </table>
       </div>
+      <div class="requests-cards requests-cards--skeleton" aria-hidden="true">
+        @for (row of skeletonRows; track row) {
+          <div class="request-card request-card--skeleton">
+            <span class="skeleton"></span>
+            <span class="skeleton skeleton--short"></span>
+          </div>
+        }
+      </div>
       <div class="requests-state requests-state--loading" role="status" aria-live="polite">
         <span class="spinner spinner--muted" aria-hidden="true"></span>
         Loading requests…
       </div>
-    } @else if (requests().length === 0 && errorMessage()) {
-      <div class="requests-state" role="status">Unable to display your requests at this time.</div>
-    } @else if (requests().length === 0) {
+    } @else if (showErrorState()) {
       <div class="requests-empty" role="status">
-        <h2>No requests</h2>
-        <p>You have not submitted any change requests yet.</p>
+        <h2>Unable to load your requests.</h2>
+        <p>Please try again. Your filters have been kept.</p>
+        <button type="button" class="btn btn--ghost" [disabled]="isLoading()" (click)="loadRequests()">
+          Retry
+        </button>
       </div>
-    } @else if (filteredRequests().length === 0) {
+    } @else if (showEmpty()) {
       <div class="requests-empty" role="status">
-        <h2>No matching requests</h2>
-        <p>No requests match the selected filters.</p>
+        @if (hasActiveFilters()) {
+          <h2>No requests match your filters</h2>
+          <p>Try adjusting search, operation, status, or date range.</p>
+          <button type="button" class="btn btn--ghost" (click)="clearFilters()">Clear filters</button>
+        } @else {
+          <h2>No requests yet</h2>
+          <p>You have not submitted any change requests yet.</p>
+        }
       </div>
-    } @else {
+    } @else if (showResults()) {
+      @if (isRefreshing()) {
+        <div class="requests-refresh" role="status" aria-live="polite">
+          <span class="spinner spinner--muted" aria-hidden="true"></span>
+          Updating results…
+        </div>
+      }
+
       <div class="requests-table-wrap">
         <table class="requests-table">
           <caption class="visually-hidden">Your change requests</caption>
@@ -122,23 +171,43 @@
               <th scope="col">Entity</th>
               <th scope="col">Operation</th>
               <th scope="col">Status</th>
-              <th scope="col">Submitted At</th>
-              <th scope="col">Reviewed At</th>
+              <th scope="col">Created</th>
+              <th scope="col">Reviewed</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @for (request of filteredRequests(); track request.id) {
-              <tr>
+            @for (request of requests(); track request.id; let index = $index) {
+              <tr [style.--i]="index">
                 <td>
                   <div class="requests-entity">
                     <strong>{{ entityName(request) || entityTypeText(request) }}</strong>
-                    @if (entityName(request)) {
-                      <span>{{ entityTypeText(request) }}</span>
-                    }
+                    <span>{{ entityTypeText(request) }}</span>
                   </div>
                 </td>
-                <td>{{ operationText(request) }}</td>
+                <td>
+                  <span
+                    class="op-chip"
+                    [class.op-chip--create]="request.operation === 'CREATE'"
+                    [class.op-chip--update]="request.operation === 'UPDATE'"
+                  >
+                    @if (request.operation === 'CREATE') {
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M5 16.8V19h2.2L17.6 8.6a1.55 1.55 0 0 0 0-2.2L15.6 4.4a1.55 1.55 0 0 0-2.2 0L5 12.8Z"
+                          stroke="currentColor"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    }
+                    {{ operationText(request) }}
+                  </span>
+                </td>
                 <td>
                   <span
                     class="badge"
@@ -164,12 +233,12 @@
       </div>
 
       <ul class="requests-cards">
-        @for (request of filteredRequests(); track request.id) {
-          <li class="request-card">
+        @for (request of requests(); track request.id; let index = $index) {
+          <li class="request-card" [style.--i]="index">
             <div class="request-card__top">
               <div>
                 <h2>{{ entityName(request) || entityTypeText(request) }}</h2>
-                <p>{{ entityTypeText(request) }} · {{ operationText(request) }}</p>
+                <p>{{ entityTypeText(request) }}</p>
               </div>
               <span
                 class="badge"
@@ -181,13 +250,22 @@
                 {{ statusText(request.status) }}
               </span>
             </div>
+            <div class="request-card__chips">
+              <span
+                class="op-chip"
+                [class.op-chip--create]="request.operation === 'CREATE'"
+                [class.op-chip--update]="request.operation === 'UPDATE'"
+              >
+                {{ operationText(request) }}
+              </span>
+            </div>
             <dl>
               <div>
-                <dt>Submitted At</dt>
+                <dt>Created</dt>
                 <dd>{{ submittedAt(request) }}</dd>
               </div>
               <div>
-                <dt>Reviewed At</dt>
+                <dt>Reviewed</dt>
                 <dd>{{ reviewedAt(request) }}</dd>
               </div>
             </dl>
@@ -197,6 +275,61 @@
           </li>
         }
       </ul>
+
+      @if (totalElements() > 0) {
+        <footer class="requests-pagination">
+          <p>
+            Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ totalElements() }}
+            {{ totalElements() === 1 ? 'request' : 'requests' }}
+          </p>
+
+          <div class="requests-pagination__controls">
+            <nav class="requests-pagination__pages" aria-label="Request list pages">
+              <button
+                type="button"
+                class="requests-pagination__nav"
+                [disabled]="paginationDisabled() || !canPrev()"
+                (click)="previousPage()"
+              >
+                Previous
+              </button>
+              @for (pageIndex of visiblePages(); track pageIndex) {
+                <button
+                  type="button"
+                  class="requests-pagination__page"
+                  [class.requests-pagination__page--active]="page() === pageIndex"
+                  [attr.aria-current]="page() === pageIndex ? 'page' : null"
+                  [attr.aria-label]="'Page ' + (pageIndex + 1)"
+                  [disabled]="paginationDisabled() || page() === pageIndex"
+                  (click)="goToPage(pageIndex)"
+                >
+                  {{ pageIndex + 1 }}
+                </button>
+              }
+              <button
+                type="button"
+                class="requests-pagination__nav"
+                [disabled]="paginationDisabled() || !canNext()"
+                (click)="nextPage()"
+              >
+                Next
+              </button>
+            </nav>
+
+            <label class="visually-hidden" for="my-requests-page-size">Requests per page</label>
+            <select
+              id="my-requests-page-size"
+              [value]="pageSize()"
+              [disabled]="paginationDisabled()"
+              (change)="onPageSizeChange($event)"
+            >
+              @for (size of pageSizes; track size) {
+                <option [value]="size">{{ size }} per page</option>
+              }
+            </select>
+          </div>
+        </footer>
+      }
     }
   </div>
 </section>

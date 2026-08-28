@@ -3,32 +3,44 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   inject,
-  OnInit,
   signal
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  of,
+  skip,
+  switchMap,
+  tap
+} from 'rxjs';
 import {
   ChangeRequest,
   ChangeRequestOperation,
-  ChangeRequestStatus
+  ChangeRequestStatus,
+  DEFAULT_MY_REQUEST_PAGE_SIZE,
+  MY_REQUEST_PAGE_SIZES,
+  MyRequestOperationFilter,
+  MyRequestsQuery,
+  MyRequestStatusFilter
 } from '../../models/change-request.model';
 import { ChangeRequestService } from '../../services/change-request.service';
 import {
   entityDisplayName,
   entityTypeLabel,
-  formatRequestDateTime,
-  isCreatedAtInRange,
+  formatRequestListDate,
   operationLabel,
-  resolveChangeRequestApiError,
-  statusLabel
+  readRequestDateParam,
+  statusLabel,
+  visibleRequestPageIndexes
 } from '../../utils/change-request.utils';
 
-type StatusFilter = 'ALL' | ChangeRequestStatus;
-type ActionFilter = 'ALL' | ChangeRequestOperation;
+const SEARCH_DEBOUNCE_MS = 400;
+const LOAD_ERROR_MESSAGE = 'Unable to load your requests.';
 
 @Component({
   selector: 'app-my-requests',
@@ -37,85 +49,131 @@ type ActionFilter = 'ALL' | ChangeRequestOperation;
   styleUrl: './my-requests.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MyRequests implements OnInit {
+export class MyRequests {
   private readonly changeRequestService = inject(ChangeRequestService);
-  private readonly destroyRef = inject(DestroyRef);
+
+  readonly pageSizes = MY_REQUEST_PAGE_SIZES;
+  readonly skeletonRows = [0, 1, 2, 3, 4];
 
   readonly requests = signal<ChangeRequest[]>([]);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly searchQuery = signal('');
-  readonly actionFilter = signal<ActionFilter>('ALL');
-  readonly statusFilter = signal<StatusFilter>('ALL');
+  readonly debouncedSearch = signal('');
+  readonly operationFilter = signal<MyRequestOperationFilter>('ALL');
+  readonly statusFilter = signal<MyRequestStatusFilter>('ALL');
   readonly fromDate = signal('');
   readonly toDate = signal('');
-  readonly skeletonRows = [0, 1, 2, 3];
-  private requestInFlight = false;
-
-  readonly filteredRequests = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const action = this.actionFilter();
-    const status = this.statusFilter();
-    const fromDate = this.fromDate();
-    const toDate = this.toDate();
-
-    return this.requests().filter(request => {
-      if (action !== 'ALL' && request.operation !== action) {
-        return false;
-      }
-
-      if (status !== 'ALL' && request.status !== status) {
-        return false;
-      }
-
-      if (!isCreatedAtInRange(request.createdAt, fromDate, toDate)) {
-        return false;
-      }
-
-      return this.matchesSearch(request, query);
-    });
-  });
+  readonly page = signal(0);
+  readonly pageSize = signal(DEFAULT_MY_REQUEST_PAGE_SIZE);
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(0);
+  readonly numberOfElements = signal(0);
+  readonly isFirstPage = signal(true);
+  readonly isLastPage = signal(true);
+  readonly reloadToken = signal(0);
+  private loadGeneration = 0;
 
   readonly hasActiveFilters = computed(
     () =>
-      this.searchQuery().trim().length > 0 ||
-      this.actionFilter() !== 'ALL' ||
+      this.debouncedSearch().trim().length > 0 ||
+      this.operationFilter() !== 'ALL' ||
       this.statusFilter() !== 'ALL' ||
       this.fromDate().length > 0 ||
       this.toDate().length > 0
   );
 
-  ngOnInit(): void {
-    this.loadRequests();
+  readonly activeFilterCount = computed(() => {
+    let count = 0;
+
+    if (this.debouncedSearch().trim().length > 0) {
+      count += 1;
+    }
+    if (this.operationFilter() !== 'ALL') {
+      count += 1;
+    }
+    if (this.statusFilter() !== 'ALL') {
+      count += 1;
+    }
+    if (this.fromDate().length > 0) {
+      count += 1;
+    }
+    if (this.toDate().length > 0) {
+      count += 1;
+    }
+
+    return count;
+  });
+
+  readonly listQuery = computed<MyRequestsQuery>(() => {
+    const search = this.debouncedSearch().trim();
+    const operation = this.operationFilter();
+    const status = this.statusFilter();
+
+    return {
+      page: this.page(),
+      size: this.pageSize(),
+      search: search.length > 0 ? search : undefined,
+      operation: operation === 'ALL' ? undefined : operation,
+      status: status === 'ALL' ? undefined : status,
+      from: this.fromDate() || undefined,
+      to: this.toDate() || undefined
+    };
+  });
+
+  readonly loadKey = computed(() => ({
+    query: this.listQuery(),
+    reload: this.reloadToken()
+  }));
+
+  readonly canPrev = computed(() => !this.isFirstPage() && this.page() > 0);
+  readonly canNext = computed(() => !this.isLastPage() && this.totalElements() > 0);
+  readonly rangeStart = computed(() =>
+    this.totalElements() === 0 ? 0 : this.page() * this.pageSize() + 1
+  );
+  readonly rangeEnd = computed(() =>
+    this.totalElements() === 0 ? 0 : this.page() * this.pageSize() + this.numberOfElements()
+  );
+  readonly visiblePages = computed(() =>
+    visibleRequestPageIndexes(this.page(), this.totalPages())
+  );
+  readonly showSkeleton = computed(() => this.isLoading() && this.requests().length === 0);
+  readonly showEmpty = computed(
+    () => !this.isLoading() && this.errorMessage() === null && this.requests().length === 0
+  );
+  readonly showErrorState = computed(
+    () => !this.isLoading() && this.errorMessage() !== null && this.requests().length === 0
+  );
+  readonly showResults = computed(() => this.requests().length > 0);
+  readonly isRefreshing = computed(() => this.isLoading() && this.requests().length > 0);
+  readonly paginationDisabled = computed(() => this.isLoading());
+
+  constructor() {
+    this.debouncedSearch.set(this.searchQuery().trim());
+
+    toObservable(this.searchQuery)
+      .pipe(takeUntilDestroyed(), skip(1), debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged())
+      .subscribe(value => {
+        const next = value.trim();
+
+        if (this.debouncedSearch() !== next) {
+          this.page.set(0);
+        }
+
+        this.debouncedSearch.set(next);
+      });
+
+    toObservable(this.loadKey)
+      .pipe(
+        takeUntilDestroyed(),
+        distinctUntilChanged((left, right) => JSON.stringify(left) === JSON.stringify(right)),
+        switchMap(key => this.fetchRequests(key.query))
+      )
+      .subscribe();
   }
 
   loadRequests(): void {
-    if (this.requestInFlight) {
-      return;
-    }
-
-    this.requestInFlight = true;
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-
-    this.changeRequestService
-      .getMyRequests()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this.requestInFlight = false;
-          this.isLoading.set(false);
-        })
-      )
-      .subscribe({
-        next: requests => this.requests.set(requests),
-        error: (error: HttpErrorResponse) => {
-          this.requests.set([]);
-          this.errorMessage.set(
-            resolveChangeRequestApiError(error, 'An error occurred. Please try again.')
-          );
-        }
-      });
+    this.reloadToken.update(token => token + 1);
   }
 
   onSearchInput(event: Event): void {
@@ -126,14 +184,15 @@ export class MyRequests implements OnInit {
     }
   }
 
-  onActionFilterChange(event: Event): void {
+  onOperationFilterChange(event: Event): void {
     const target = event.target;
 
     if (!(target instanceof HTMLSelectElement)) {
       return;
     }
 
-    this.actionFilter.set(target.value === 'CREATE' || target.value === 'UPDATE' ? target.value : 'ALL');
+    this.operationFilter.set(isOperationFilter(target.value) ? target.value : 'ALL');
+    this.page.set(0);
   }
 
   onStatusFilterChange(event: Event): void {
@@ -143,38 +202,77 @@ export class MyRequests implements OnInit {
       return;
     }
 
-    const value = target.value;
-
-    if (value === 'PENDING' || value === 'APPROVED' || value === 'REJECTED') {
-      this.statusFilter.set(value);
-      return;
-    }
-
-    this.statusFilter.set('ALL');
+    this.statusFilter.set(isStatusFilter(target.value) ? target.value : 'ALL');
+    this.page.set(0);
   }
 
   onFromDateChange(event: Event): void {
     const target = event.target;
 
-    if (target instanceof HTMLInputElement) {
-      this.fromDate.set(target.value);
+    if (!(target instanceof HTMLInputElement)) {
+      return;
     }
+
+    this.fromDate.set(readRequestDateParam(target.value));
+    this.page.set(0);
   }
 
   onToDateChange(event: Event): void {
     const target = event.target;
 
-    if (target instanceof HTMLInputElement) {
-      this.toDate.set(target.value);
+    if (!(target instanceof HTMLInputElement)) {
+      return;
     }
+
+    this.toDate.set(readRequestDateParam(target.value));
+    this.page.set(0);
   }
 
   clearFilters(): void {
     this.searchQuery.set('');
-    this.actionFilter.set('ALL');
+    this.debouncedSearch.set('');
+    this.operationFilter.set('ALL');
     this.statusFilter.set('ALL');
     this.fromDate.set('');
     this.toDate.set('');
+    this.page.set(0);
+  }
+
+  previousPage(): void {
+    if (!this.paginationDisabled() && this.canPrev()) {
+      this.page.update(page => page - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (!this.paginationDisabled() && this.canNext()) {
+      this.page.update(page => page + 1);
+    }
+  }
+
+  goToPage(page: number): void {
+    if (this.paginationDisabled() || page < 0 || page >= this.totalPages() || page === this.page()) {
+      return;
+    }
+
+    this.page.set(page);
+  }
+
+  onPageSizeChange(event: Event): void {
+    const target = event.target;
+
+    if (!(target instanceof HTMLSelectElement)) {
+      return;
+    }
+
+    const nextSize = Number(target.value);
+
+    if (!MY_REQUEST_PAGE_SIZES.includes(nextSize as (typeof MY_REQUEST_PAGE_SIZES)[number])) {
+      return;
+    }
+
+    this.pageSize.set(nextSize);
+    this.page.set(0);
   }
 
   statusText(status: ChangeRequestStatus): string {
@@ -194,32 +292,64 @@ export class MyRequests implements OnInit {
   }
 
   submittedAt(request: ChangeRequest): string {
-    return formatRequestDateTime(request.createdAt);
+    return formatRequestListDate(request.createdAt);
   }
 
   reviewedAt(request: ChangeRequest): string {
-    return formatRequestDateTime(request.reviewedAt);
+    return formatRequestListDate(request.reviewedAt);
   }
 
-  private matchesSearch(request: ChangeRequest, query: string): boolean {
-    if (query.length === 0) {
-      return true;
-    }
+  private fetchRequests(query: MyRequestsQuery) {
+    const generation = ++this.loadGeneration;
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
 
-    const name = entityDisplayName(request) ?? '';
-    const haystack = [
-      operationLabel(request.operation),
-      request.operation,
-      entityTypeLabel(request.entityType),
-      request.entityType,
-      statusLabel(request.status),
-      request.status,
-      request.requestedByName,
-      name
-    ]
-      .join(' ')
-      .toLowerCase();
+    return this.changeRequestService.getMyRequests(query).pipe(
+      catchError((_error: HttpErrorResponse) => {
+        if (generation !== this.loadGeneration) {
+          return of(null);
+        }
 
-    return haystack.includes(query);
+        if (this.requests().length === 0) {
+          this.totalElements.set(0);
+          this.totalPages.set(0);
+          this.numberOfElements.set(0);
+          this.isFirstPage.set(true);
+          this.isLastPage.set(true);
+        }
+
+        this.errorMessage.set(LOAD_ERROR_MESSAGE);
+        return of(null);
+      }),
+      finalize(() => {
+        if (generation === this.loadGeneration) {
+          this.isLoading.set(false);
+        }
+      }),
+      tap(page => {
+        if (!page || generation !== this.loadGeneration) {
+          return;
+        }
+
+        this.requests.set(page.content);
+        this.totalElements.set(page.totalElements);
+        this.totalPages.set(page.totalPages);
+        this.numberOfElements.set(page.numberOfElements);
+        this.isFirstPage.set(page.first === true);
+        this.isLastPage.set(page.last === true);
+
+        if (page.totalPages > 0 && this.page() >= page.totalPages) {
+          this.page.set(page.totalPages - 1);
+        }
+      })
+    );
   }
+}
+
+function isOperationFilter(value: string): value is ChangeRequestOperation {
+  return value === 'CREATE' || value === 'UPDATE';
+}
+
+function isStatusFilter(value: string): value is ChangeRequestStatus {
+  return value === 'PENDING' || value === 'APPROVED' || value === 'REJECTED';
 }

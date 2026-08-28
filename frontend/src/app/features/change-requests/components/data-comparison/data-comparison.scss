@@ -40,6 +40,9 @@
     display: grid;
     gap: 0.85rem;
     margin: 0;
+    max-height: 28rem;
+    overflow: auto;
+    padding-right: 0.15rem;
   }
 
   dt {

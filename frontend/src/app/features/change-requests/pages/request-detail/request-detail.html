@@ -112,6 +112,18 @@
 
       <dl class="request-summary">
         <div>
+          <dt>Entity</dt>
+          <dd>
+            <div class="request-summary__entity">
+              <strong>{{ entityName(currentRequest) || entityTypeText(currentRequest) }}</strong>
+              @if (entityName(currentRequest)) {
+                <span>{{ entityTypeText(currentRequest) }}</span>
+              }
+            </div>
+          </dd>
+        </div>
+
+        <div>
           <dt>Operation</dt>
           <dd>
             <span

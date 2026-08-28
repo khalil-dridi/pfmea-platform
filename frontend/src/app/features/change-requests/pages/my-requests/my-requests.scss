@@ -3,4 +3,29 @@
 
 :host {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.requests-card {
+  position: relative;
+  overflow: visible;
+  animation: requests-enter 360ms 80ms ease-out both;
+  transition: opacity 180ms ease-out;
+}
+
+.requests-card--busy {
+  pointer-events: none;
+}
+
+.requests-empty .btn {
+  margin-top: 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .requests-card {
+    animation: none;
+    transition: none;
+  }
 }

@@ -237,6 +237,24 @@
   }
 }
 
+.request-summary__entity {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+
+  strong {
+    overflow: hidden;
+    font-weight: 700;
+    text-overflow: ellipsis;
+  }
+
+  span {
+    color: #6b6685;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
 .request-summary__person,
 .request-summary__date {
   display: flex;

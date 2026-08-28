@@ -6,9 +6,11 @@ import com.sebn.pfmea.backend.change.applier.ChangeApplier;
 import com.sebn.pfmea.backend.change.dto.request.ChangeRequestCreateRequest;
 import com.sebn.pfmea.backend.change.dto.response.ChangeRequestResponse;
 import com.sebn.pfmea.backend.change.entity.ChangeRequest;
+import com.sebn.pfmea.backend.change.enums.ChangeRequestOperation;
 import com.sebn.pfmea.backend.change.enums.ChangeRequestStatus;
 import com.sebn.pfmea.backend.change.mapper.ChangeRequestMapper;
 import com.sebn.pfmea.backend.change.repository.ChangeRequestRepository;
+import com.sebn.pfmea.backend.change.specification.ChangeRequestMyRequestsSpecification;
 import com.sebn.pfmea.backend.exception.ResourceNotFoundException;
 import com.sebn.pfmea.backend.notification.enums.NotificationType;
 import com.sebn.pfmea.backend.notification.service.NotificationService;
@@ -19,6 +21,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,17 +115,30 @@ public class ChangeRequestService {
      * Returns only his own requests.
      */
     @Transactional(readOnly = true)
-    public List<ChangeRequestResponse> getMyRequests(User currentUser) {
-
+    public Page<ChangeRequestResponse> getMyRequests(
+            User currentUser,
+            String search,
+            ChangeRequestOperation operation,
+            ChangeRequestStatus status,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable
+    ) {
         validateAdminRequester(currentUser);
 
         return changeRequestRepository
-                .findByRequestedByIdOrderByCreatedAtDesc(
-                        currentUser.getId()
+                .findAll(
+                        ChangeRequestMyRequestsSpecification.withFilters(
+                                search,
+                                currentUser.getId(),
+                                operation,
+                                status,
+                                from,
+                                to
+                        ),
+                        pageable
                 )
-                .stream()
-                .map(changeRequestMapper::toResponse)
-                .toList();
+                .map(changeRequestMapper::toResponse);
     }
 
     /**

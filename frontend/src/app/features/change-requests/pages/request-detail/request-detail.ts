@@ -18,6 +18,8 @@ import { DataComparison } from '../../components/data-comparison/data-comparison
 import { ChangeRequest } from '../../models/change-request.model';
 import { ChangeRequestService } from '../../services/change-request.service';
 import {
+  entityDisplayName,
+  entityTypeLabel,
   formatRequestDateTime,
   operationLabel,
   resolveChangeRequestApiError,
@@ -90,6 +92,14 @@ export class RequestDetail implements OnInit {
 
   operationText(request: ChangeRequest): string {
     return operationLabel(request.operation);
+  }
+
+  entityTypeText(request: ChangeRequest): string {
+    return entityTypeLabel(request.entityType);
+  }
+
+  entityName(request: ChangeRequest): string | null {
+    return entityDisplayName(request);
   }
 
   formatDate(value: string | null): string {

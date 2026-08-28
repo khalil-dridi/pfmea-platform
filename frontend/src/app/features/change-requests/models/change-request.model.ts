@@ -18,3 +18,19 @@ export interface ChangeRequest {
   createdAt: string;
   reviewedAt: string | null;
 }
+
+export type MyRequestStatusFilter = 'ALL' | ChangeRequestStatus;
+export type MyRequestOperationFilter = 'ALL' | ChangeRequestOperation;
+
+export const MY_REQUEST_PAGE_SIZES = [10, 20, 50] as const;
+export const DEFAULT_MY_REQUEST_PAGE_SIZE = 10;
+
+export interface MyRequestsQuery {
+  page: number;
+  size: number;
+  search?: string;
+  operation?: ChangeRequestOperation;
+  status?: ChangeRequestStatus;
+  from?: string;
+  to?: string;
+}

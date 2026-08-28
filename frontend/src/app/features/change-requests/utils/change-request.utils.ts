@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { PageResponse } from '../../../core/models/page-response.model';
 import { parseJsonObject } from '../../../shared/utils/json-data.utils';
 import { ChangeRequest, ChangeRequestOperation, ChangeRequestStatus } from '../models/change-request.model';
 
@@ -141,6 +142,81 @@ export function formatRequestDateTime(value: string | null): string {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date);
+}
+
+export function formatRequestListDate(value: string | null): string {
+  if (!value) {
+    return '—';
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const day = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(date);
+  const time = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+
+  return `${day} at ${time}`;
+}
+
+export function readRequestDateParam(value: string | null | undefined): string {
+  return toCalendarDay(value ?? '') ?? '';
+}
+
+export function toApiDateTimeStart(value: string | null | undefined): string | undefined {
+  const day = readRequestDateParam(value);
+  return day.length > 0 ? `${day}T00:00:00` : undefined;
+}
+
+export function toApiDateTimeEnd(value: string | null | undefined): string | undefined {
+  const day = readRequestDateParam(value);
+  return day.length > 0 ? `${day}T23:59:59` : undefined;
+}
+
+export function readChangeRequestPage(value: unknown): PageResponse<ChangeRequest> {
+  const record = isRecord(value) ? value : {};
+  const rawContent = record['content'];
+  const content = Array.isArray(rawContent) ? (rawContent as ChangeRequest[]) : [];
+  const number = finiteNumber(record['number'], 0);
+  const size = finiteNumber(record['size'], 10);
+  const totalPages = finiteNumber(record['totalPages'], 0);
+
+  return {
+    content,
+    number,
+    size,
+    numberOfElements: finiteNumber(record['numberOfElements'], content.length),
+    totalElements: finiteNumber(record['totalElements'], 0),
+    totalPages,
+    first: typeof record['first'] === 'boolean' ? record['first'] : number <= 0,
+    last: typeof record['last'] === 'boolean' ? record['last'] : totalPages === 0 || number >= totalPages - 1
+  };
+}
+
+export function visibleRequestPageIndexes(current: number, total: number): number[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => index);
+  }
+
+  const start = Math.max(0, Math.min(current - 3, total - 7));
+  return Array.from({ length: 7 }, (_, index) => start + index);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
 export function resolveChangeRequestApiError(error: HttpErrorResponse, fallback?: string): string {

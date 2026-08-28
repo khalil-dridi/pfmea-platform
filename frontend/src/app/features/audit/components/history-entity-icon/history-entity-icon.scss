@@ -1,0 +1,46 @@
+:host {
+  display: grid;
+  flex: 0 0 auto;
+}
+
+.history-entity-icon {
+  display: grid;
+  place-items: center;
+  width: var(--history-icon-size, 2rem);
+  height: var(--history-icon-size, 2rem);
+  color: #3b1699;
+  background: #f3effc;
+  border-radius: 0.55rem;
+  transition: background-color 160ms ease-out;
+
+  svg {
+    width: 0.92rem;
+    height: 0.92rem;
+  }
+}
+
+.history-entity-icon[data-accent='1'] {
+  color: #1d4ed8;
+  background: #e8f0fe;
+}
+
+.history-entity-icon[data-accent='2'] {
+  color: #0f766e;
+  background: #e7f6f3;
+}
+
+.history-entity-icon[data-accent='3'] {
+  color: #c2410c;
+  background: #fff1e8;
+}
+
+.history-entity-icon[data-accent='4'] {
+  color: #a21caf;
+  background: #fbe8fb;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-entity-icon {
+    transition: none;
+  }
+}

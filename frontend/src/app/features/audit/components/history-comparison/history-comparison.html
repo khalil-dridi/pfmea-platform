@@ -1,0 +1,75 @@
+<section class="history-compare" [attr.aria-label]="hasPreviousData() || hasNewData() ? 'Recorded changes' : 'No recorded changes'">
+  @if (rows(); as comparisonRows) {
+    @if (hasPreviousData() && hasNewData()) {
+      <div class="history-compare__table-wrap">
+        <table class="history-compare__table">
+          <caption class="visually-hidden">Changes before and after</caption>
+          <thead>
+            <tr>
+              <th scope="col">Field</th>
+              <th scope="col">Before</th>
+              <th scope="col">After</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of comparisonRows; track row.field) {
+              <tr [class.history-compare__changed]="row.changed">
+                <th scope="row">{{ row.label }}</th>
+                <td [class.history-compare__empty-value]="row.previous === '—'">{{ row.previous }}</td>
+                <td [class.history-compare__empty-value]="row.next === '—'">{{ row.next }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="history-compare__panels">
+        <article class="history-compare__panel history-compare__panel--previous">
+          <header>
+            <h3>Previous Data</h3>
+          </header>
+
+          @if (!hasPreviousData()) {
+            <div class="history-compare__empty">
+              <p>No previous data</p>
+            </div>
+          } @else {
+            <dl>
+              @for (row of comparisonRows; track row.field) {
+                <div [class.history-compare__changed]="row.changed">
+                  <dt>{{ row.label }}</dt>
+                  <dd [class.history-compare__empty-value]="row.previous === '—'">{{ row.previous }}</dd>
+                </div>
+              }
+            </dl>
+          }
+        </article>
+
+        <article class="history-compare__panel history-compare__panel--next">
+          <header>
+            <h3>New Data</h3>
+          </header>
+
+          @if (!hasNewData()) {
+            <div class="history-compare__empty">
+              <p>No new data</p>
+            </div>
+          } @else {
+            <dl>
+              @for (row of comparisonRows; track row.field) {
+                <div [class.history-compare__changed]="row.changed">
+                  <dt>{{ row.label }}</dt>
+                  <dd [class.history-compare__empty-value]="row.next === '—'">{{ row.next }}</dd>
+                </div>
+              }
+            </dl>
+          }
+        </article>
+      </div>
+    }
+  } @else {
+    <div class="history-compare__empty history-compare__empty--page">
+      <p>No displayable business data is available for this event.</p>
+    </div>
+  }
+</section>

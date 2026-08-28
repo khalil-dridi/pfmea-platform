@@ -1,0 +1,39 @@
+<article
+  class="history-event"
+  [class.history-event--selected]="selected()"
+  [style.--i]="index()"
+  tabindex="0"
+  [attr.aria-current]="selected() ? 'true' : null"
+  (click)="onActivate()"
+  (keydown)="onKeydown($event)"
+>
+  <app-history-entity-icon [kind]="item().iconKind" [accent]="item().accent" />
+
+  <div class="history-event__main">
+    <div class="history-event__copy">
+      <div class="history-event__title-row">
+        <strong>{{ item().headline }}</strong>
+        <span class="history-event__action" [attr.data-action]="item().action">{{ item().actionLabel }}</span>
+      </div>
+      <p class="history-event__context">{{ item().context }}</p>
+      <p class="history-event__user">Performed by: {{ item().performedByName }}</p>
+    </div>
+
+    <div class="history-event__meta">
+      <time [attr.datetime]="item().createdAt">
+        {{ item().dateLabel }}
+        <span>{{ item().timeLabel }}</span>
+      </time>
+      @if (item().resultLabel; as result) {
+        <span class="history-event__result" [attr.data-result]="item().resultStatus">{{ result }}</span>
+      }
+      <button
+        type="button"
+        class="btn btn--ghost btn--compact history-event__details"
+        (click)="onActivate(); $event.stopPropagation()"
+      >
+        View Details
+      </button>
+    </div>
+  </div>
+</article>

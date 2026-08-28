@@ -1,0 +1,19 @@
+<div class="history-empty" role="status">
+  <span class="history-empty__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+      <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+    </svg>
+  </span>
+  <h2>No audit records found</h2>
+  <p>
+    {{
+      filtered()
+        ? 'There are no audit records matching your filters. Adjust or clear the filters to see more results.'
+        : 'No recorded actions were found.'
+    }}
+  </p>
+  @if (filtered()) {
+    <button type="button" class="btn btn--ghost" (click)="clearFilters.emit()">Clear filters</button>
+  }
+</div>

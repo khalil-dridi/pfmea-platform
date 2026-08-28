@@ -8,38 +8,53 @@ import {
   signal
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
-import { catchError, distinctUntilChanged, finalize, forkJoin, map, of, switchMap } from 'rxjs';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  finalize,
+  of,
+  skip,
+  switchMap,
+  tap
+} from 'rxjs';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AuthenticatedUser } from '../../../auth/models/login-response.model';
 import { User as PlatformUser } from '../../../users/models/user.model';
 import { UserService } from '../../../users/services/user.service';
-import { AuditLog } from '../../models/audit-log.model';
+import { HistoryDetailsDrawer } from '../../components/history-details-drawer/history-details-drawer';
+import { HistoryEmptyState } from '../../components/history-empty-state/history-empty-state';
+import { HistoryEvent } from '../../components/history-event/history-event';
+import { HistoryFilters } from '../../components/history-filters/history-filters';
+import { HistorySkeleton } from '../../components/history-skeleton/history-skeleton';
 import {
-  AuditActionFilter,
-  AuditModuleFilter,
-  AuditResultFilter,
-  AuditResultStatus
-} from '../../models/audit-presentation.model';
+  AuditHistoryFilters,
+  AuditHistoryQuery,
+  AuditStatistics,
+  DEFAULT_HISTORY_PAGE_SIZE,
+  HISTORY_PAGE_SIZES,
+  HistoryActionFilter,
+  HistoryEntityFilter,
+  HistoryEventView
+} from '../../models/audit-history.model';
+import { AuditLog } from '../../models/audit-log.model';
 import { AuditService } from '../../services/audit.service';
 import {
-  ADMIN_ACTION_FILTERS,
-  matchesActionFilter,
-  matchesDateRange,
-  matchesModuleFilter,
-  matchesPerformedBy,
-  matchesResultFilter,
-  matchesSearch,
-  MODULE_FILTERS,
-  resultBadgeClass,
-  SUPER_ADMIN_ACTION_FILTERS,
-  toAuditPresentation
-} from '../../utils/audit-presentation';
+  isHistoryActionFilter,
+  isHistoryEntityFilter,
+  readAuditStatistics,
+  readHistoryDateParam,
+  readHistoryPage,
+  toHistoryEventView,
+  visiblePageIndexes
+} from '../../utils/audit-history.utils';
 import { isUsableUserId, resolveAuditApiError } from '../../utils/audit.utils';
 
 @Component({
   selector: 'app-audit-list',
-  imports: [RouterLink],
+  imports: [HistoryDetailsDrawer, HistoryEmptyState, HistoryEvent, HistoryFilters, HistorySkeleton],
   templateUrl: './audit-list.html',
   styleUrl: './audit-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -48,24 +63,33 @@ export class AuditList {
   private readonly auditService = inject(AuditService);
   private readonly authService = inject(AuthService);
   private readonly userService = inject(UserService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly pageSizes = HISTORY_PAGE_SIZES;
   readonly logs = signal<AuditLog[]>([]);
   readonly users = signal<PlatformUser[]>([]);
   readonly isLoading = signal(true);
-  readonly hasCompletedLoad = signal(false);
+  readonly isStatsLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  readonly statsError = signal<string | null>(null);
   readonly searchQuery = signal('');
-  readonly actionFilter = signal<AuditActionFilter>('ALL');
-  readonly moduleFilter = signal<AuditModuleFilter>('ALL');
-  readonly resultFilter = signal<AuditResultFilter>('ALL');
-  readonly performedByFilter = signal('ALL');
+  readonly debouncedSearch = signal('');
+  readonly entityFilter = signal<HistoryEntityFilter>('ALL');
+  readonly actionFilter = signal<HistoryActionFilter>('ALL');
+  readonly userFilter = signal('ALL');
   readonly fromDate = signal('');
   readonly toDate = signal('');
+  readonly page = signal(0);
+  readonly pageSize = signal(DEFAULT_HISTORY_PAGE_SIZE);
+  readonly totalElements = signal(0);
+  readonly totalPages = signal(0);
+  readonly statistics = signal<AuditStatistics | null>(null);
+  readonly selectedItem = signal<HistoryEventView | null>(null);
+  readonly reloadToken = signal(0);
 
-  readonly superAdminActionFilters = SUPER_ADMIN_ACTION_FILTERS;
-  readonly adminActionFilters = ADMIN_ACTION_FILTERS;
-  readonly moduleFilters = MODULE_FILTERS;
+  private profileRequestInFlight = false;
 
   readonly isSuperAdmin = computed(() => this.authService.hasRole('SUPER_ADMIN'));
   readonly isAdminOnly = computed(
@@ -73,184 +97,326 @@ export class AuditList {
   );
   readonly currentUserId = computed(() => this.readUserId(this.authService.currentUser()));
 
-  readonly items = computed(() => this.logs().map(log => toAuditPresentation(log)));
-
-  readonly filteredItems = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const action = this.actionFilter();
-    const module = this.moduleFilter();
-    const result = this.resultFilter();
-    const performedBy = this.performedByFilter();
-    const fromDate = this.fromDate();
-    const toDate = this.toDate();
-
-    return this.items().filter(item => {
-      return (
-        matchesSearch(item, query) &&
-        matchesActionFilter(item, action) &&
-        matchesModuleFilter(item, module) &&
-        matchesResultFilter(item, result) &&
-        matchesPerformedBy(item, performedBy) &&
-        matchesDateRange(item, fromDate, toDate)
-      );
-    });
-  });
+  readonly items = computed(() => this.logs().map(log => toHistoryEventView(log)));
 
   readonly hasActiveFilters = computed(
     () =>
-      this.searchQuery().trim().length > 0 ||
-      this.actionFilter() !== 'ALL' ||
-      this.moduleFilter() !== 'ALL' ||
-      this.resultFilter() !== 'ALL' ||
-      this.performedByFilter() !== 'ALL' ||
+      this.debouncedSearch().trim().length > 0 ||
       this.fromDate().length > 0 ||
-      this.toDate().length > 0
+      this.toDate().length > 0 ||
+      this.entityFilter() !== 'ALL' ||
+      this.actionFilter() !== 'ALL' ||
+      (!this.isAdminOnly() && this.userFilter() !== 'ALL')
   );
 
-  private profileRequestInFlight = false;
-  private loadedHistoryUserId: string | null = null;
-  private platformHistoryLoaded = false;
+  readonly effectiveUserId = computed(() => {
+    if (this.isAdminOnly()) {
+      return this.currentUserId();
+    }
+
+    const selected = this.userFilter();
+    return selected === 'ALL' ? null : selected;
+  });
+
+  readonly filterQuery = computed<AuditHistoryFilters>(() => {
+    const entityType = this.entityFilter();
+    const action = this.actionFilter();
+    const search = this.debouncedSearch().trim();
+
+    return {
+      search: search.length > 0 ? search : undefined,
+      entityType: entityType === 'ALL' ? undefined : entityType,
+      action: action === 'ALL' ? undefined : action,
+      userId: this.effectiveUserId() ?? undefined,
+      from: this.fromDate() || undefined,
+      to: this.toDate() || undefined
+    };
+  });
+
+  readonly historyQuery = computed<AuditHistoryQuery>(() => ({
+    ...this.filterQuery(),
+    page: this.page(),
+    size: this.pageSize()
+  }));
+
+  readonly loadKey = computed(() => ({
+    query: this.historyQuery(),
+    reload: this.reloadToken()
+  }));
+
+  readonly statsKey = computed(() => ({
+    filters: this.filterQuery(),
+    reload: this.reloadToken()
+  }));
+
+  readonly canPrev = computed(() => this.page() > 0);
+  readonly canNext = computed(
+    () => this.page() + 1 < this.totalPages() && this.totalElements() > 0
+  );
+  readonly rangeStart = computed(() =>
+    this.totalElements() === 0 ? 0 : this.page() * this.pageSize() + 1
+  );
+  readonly rangeEnd = computed(() =>
+    Math.min((this.page() + 1) * this.pageSize(), this.totalElements())
+  );
+  readonly visiblePages = computed(() =>
+    visiblePageIndexes(this.page(), Math.max(this.totalPages(), 1))
+  );
+  readonly selectedId = computed(() => this.selectedItem()?.id ?? null);
+
+  readonly pageStats = computed(() => {
+    const stats = this.statistics();
+    const total = stats?.totalEvents ?? 0;
+    const approved = stats?.approved ?? 0;
+    const rejected = stats?.rejected ?? 0;
+    const pending = stats?.pending ?? 0;
+    const filtered = this.hasActiveFilters();
+
+    return [
+      {
+        key: 'total',
+        label: 'Total Events',
+        value: total,
+        subtitle: filtered ? 'Matching current filters' : 'Across the audit trail',
+        tone: 'purple',
+        share: 100,
+        showMeter: false
+      },
+      {
+        key: 'approved',
+        label: 'Approved',
+        value: approved,
+        subtitle: total > 0 ? `${percent(approved, total)}% of events` : 'Filtered dataset',
+        tone: 'green',
+        share: percent(approved, total),
+        showMeter: total > 0
+      },
+      {
+        key: 'rejected',
+        label: 'Rejected',
+        value: rejected,
+        subtitle: total > 0 ? `${percent(rejected, total)}% of events` : 'Filtered dataset',
+        tone: 'red',
+        share: percent(rejected, total),
+        showMeter: total > 0
+      },
+      {
+        key: 'pending',
+        label: 'Pending',
+        value: pending,
+        subtitle: 'Open change requests',
+        tone: 'amber',
+        share: percent(pending, total),
+        showMeter: total > 0
+      }
+    ];
+  });
 
   constructor() {
+    this.applyQueryParams(this.route.snapshot.queryParamMap);
+    this.debouncedSearch.set(this.searchQuery().trim());
+
+    toObservable(this.searchQuery)
+      .pipe(takeUntilDestroyed(), skip(1), debounceTime(400), distinctUntilChanged())
+      .subscribe(value => {
+        const next = value.trim();
+
+        if (this.debouncedSearch() !== next) {
+          this.page.set(0);
+        }
+
+        this.debouncedSearch.set(next);
+      });
+
+    toObservable(this.loadKey)
+      .pipe(
+        takeUntilDestroyed(),
+        filter(key => !this.isAdminOnly() || isUsableUserId(key.query.userId)),
+        distinctUntilChanged((left, right) => JSON.stringify(left) === JSON.stringify(right)),
+        tap(key => this.syncUrl(key.query)),
+        switchMap(key => this.fetchHistory(key.query))
+      )
+      .subscribe();
+
+    toObservable(this.statsKey)
+      .pipe(
+        takeUntilDestroyed(),
+        filter(key => !this.isAdminOnly() || isUsableUserId(key.filters.userId)),
+        distinctUntilChanged((left, right) => JSON.stringify(left) === JSON.stringify(right)),
+        switchMap(key => this.fetchStatistics(key.filters))
+      )
+      .subscribe();
+
     toObservable(this.authService.currentUser)
       .pipe(
         takeUntilDestroyed(),
-        map(user => this.readUserId(user)),
+        filter(() => this.isAdminOnly()),
         distinctUntilChanged()
       )
-      .subscribe(userId => this.onCurrentUserIdChanged(userId));
+      .subscribe(() => this.ensureCurrentUserId());
+
+    if (this.isSuperAdmin()) {
+      this.loadUsers();
+    }
   }
 
   loadHistory(): void {
-    if (this.isAdminOnly()) {
-      this.loadUserHistory();
-      return;
-    }
-
-    this.loadPlatformHistory();
-  }
-
-  onSearchInput(event: Event): void {
-    const target = event.target;
-
-    if (target instanceof HTMLInputElement) {
-      this.searchQuery.set(target.value);
-    }
-  }
-
-  onActionFilterChange(event: Event): void {
-    const target = event.target;
-
-    if (!(target instanceof HTMLSelectElement)) {
-      return;
-    }
-
-    const options = this.isAdminOnly() ? this.adminActionFilters : this.superAdminActionFilters;
-    const selected = options.find(option => option.value === target.value);
-
-    if (selected) {
-      this.actionFilter.set(selected.value);
-    }
-  }
-
-  onModuleFilterChange(event: Event): void {
-    const target = event.target;
-
-    if (!(target instanceof HTMLSelectElement)) {
-      return;
-    }
-
-    const selected = this.moduleFilters.find(option => option.value === target.value);
-
-    if (selected) {
-      this.moduleFilter.set(selected.value);
-    }
-  }
-
-  onResultFilterChange(event: Event): void {
-    const target = event.target;
-
-    if (!(target instanceof HTMLSelectElement)) {
-      return;
-    }
-
-    if (target.value === 'ALL' || target.value === 'SUCCESSFUL' || target.value === 'REJECTED' || target.value === 'PENDING') {
-      this.resultFilter.set(target.value);
-    }
-  }
-
-  onPerformedByChange(event: Event): void {
-    if (!this.isSuperAdmin()) {
-      return;
-    }
-
-    const target = event.target;
-
-    if (!(target instanceof HTMLSelectElement)) {
-      return;
-    }
-
-    if (target.value === 'ALL' || isUsableUserId(target.value)) {
-      this.performedByFilter.set(target.value);
-    }
-  }
-
-  onFromDateChange(event: Event): void {
-    const target = event.target;
-
-    if (target instanceof HTMLInputElement) {
-      this.fromDate.set(target.value);
-    }
-  }
-
-  onToDateChange(event: Event): void {
-    const target = event.target;
-
-    if (target instanceof HTMLInputElement) {
-      this.toDate.set(target.value);
-    }
-  }
-
-  clearFilters(): void {
-    this.searchQuery.set('');
-    this.actionFilter.set('ALL');
-    this.moduleFilter.set('ALL');
-    this.resultFilter.set('ALL');
-    this.performedByFilter.set('ALL');
-    this.fromDate.set('');
-    this.toDate.set('');
-  }
-
-  resultClass(status: AuditResultStatus): string {
-    return resultBadgeClass(status);
-  }
-
-  userOptionLabel(user: PlatformUser): string {
-    const fullName = `${user.firstName} ${user.lastName}`.trim();
-    return fullName || user.email;
-  }
-
-  private onCurrentUserIdChanged(userId: string | null): void {
-    if (!userId) {
-      this.logs.set([]);
-      this.hasCompletedLoad.set(false);
-      this.loadedHistoryUserId = null;
-      this.platformHistoryLoaded = false;
+    if (this.isAdminOnly() && !isUsableUserId(this.currentUserId())) {
       this.ensureCurrentUserId();
       return;
     }
 
-    if (this.isAdminOnly()) {
-      if (this.loadedHistoryUserId !== userId) {
-        this.loadUserHistory();
-      }
+    this.reloadToken.update(token => token + 1);
+  }
 
+  onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  onEntityChange(value: HistoryEntityFilter): void {
+    this.entityFilter.set(value);
+    this.page.set(0);
+  }
+
+  onActionChange(value: HistoryActionFilter): void {
+    this.actionFilter.set(value);
+    this.page.set(0);
+  }
+
+  onUserChange(value: string): void {
+    if (!this.isSuperAdmin()) {
       return;
     }
 
-    if (!this.platformHistoryLoaded) {
-      this.loadPlatformHistory();
+    this.userFilter.set(value);
+    this.page.set(0);
+  }
+
+  onDateRangeChange(range: { from: string; to: string }): void {
+    this.fromDate.set(readHistoryDateParam(range.from));
+    this.toDate.set(readHistoryDateParam(range.to));
+    this.page.set(0);
+  }
+
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.debouncedSearch.set('');
+    this.entityFilter.set('ALL');
+    this.actionFilter.set('ALL');
+    this.userFilter.set('ALL');
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.page.set(0);
+  }
+
+  previousPage(): void {
+    if (this.canPrev()) {
+      this.page.update(page => page - 1);
     }
+  }
+
+  nextPage(): void {
+    if (this.canNext()) {
+      this.page.update(page => page + 1);
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages()) {
+      this.page.set(page);
+    }
+  }
+
+  onPageSizeChange(event: Event): void {
+    const target = event.target;
+
+    if (target instanceof HTMLSelectElement) {
+      this.pageSize.set(Number(target.value));
+      this.page.set(0);
+    }
+  }
+
+  openDetails(item: HistoryEventView): void {
+    this.selectedItem.set(item);
+  }
+
+  closeDetails(): void {
+    this.selectedItem.set(null);
+  }
+
+  private fetchHistory(query: AuditHistoryQuery) {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    return this.auditService.getHistory(query).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((error: HttpErrorResponse) => {
+        this.logs.set([]);
+        this.totalElements.set(0);
+        this.totalPages.set(0);
+        this.errorMessage.set(
+          resolveAuditApiError(error, 'Unable to load history. Please try again.', 'User history not found.')
+        );
+        return of(null);
+      }),
+      finalize(() => this.isLoading.set(false)),
+      tap(page => {
+        if (!page) {
+          return;
+        }
+
+        const parsed = readHistoryPage(page);
+        this.logs.set(parsed.content);
+        this.totalElements.set(parsed.totalElements);
+        this.totalPages.set(parsed.totalPages);
+
+        const selected = this.selectedItem();
+        if (selected) {
+          const updated = parsed.content
+            .map(log => toHistoryEventView(log))
+            .find(item => item.id === selected.id);
+
+          if (updated) {
+            this.selectedItem.set(updated);
+          }
+        }
+
+        if (parsed.totalPages > 0 && this.page() >= parsed.totalPages) {
+          this.page.set(parsed.totalPages - 1);
+        }
+      })
+    );
+  }
+
+  private fetchStatistics(filters: AuditHistoryFilters) {
+    this.isStatsLoading.set(true);
+    this.statsError.set(null);
+
+    return this.auditService.getStatistics(filters).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError(() => {
+        this.statsError.set('Unable to load statistics.');
+        return of(null);
+      }),
+      finalize(() => this.isStatsLoading.set(false)),
+      tap(payload => {
+        if (!payload) {
+          return;
+        }
+
+        this.statistics.set(readAuditStatistics(payload));
+      })
+    );
+  }
+
+  private loadUsers(): void {
+    this.userService
+      .getUsers()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(() => of<PlatformUser[]>([]))
+      )
+      .subscribe(users => this.users.set(users));
   }
 
   private ensureCurrentUserId(): void {
@@ -260,12 +426,12 @@ export class AuditList {
 
     if (!this.authService.isAuthenticated()) {
       this.isLoading.set(false);
+      this.isStatsLoading.set(false);
       return;
     }
 
     this.profileRequestInFlight = true;
     this.isLoading.set(true);
-    this.hasCompletedLoad.set(false);
     this.errorMessage.set(null);
 
     this.authService
@@ -278,7 +444,7 @@ export class AuditList {
         error: (error: HttpErrorResponse) => {
           this.profileRequestInFlight = false;
           this.isLoading.set(false);
-          this.hasCompletedLoad.set(false);
+          this.isStatsLoading.set(false);
           this.errorMessage.set(
             resolveAuditApiError(error, 'Unable to load history. Please try again.', 'User history not found.')
           );
@@ -286,115 +452,72 @@ export class AuditList {
       });
   }
 
-  private loadUserHistory(): void {
-    const userId = this.readUserId(this.authService.currentUser());
-
-    if (!isUsableUserId(userId)) {
-      this.isLoading.set(true);
-      this.hasCompletedLoad.set(false);
-      this.ensureCurrentUserId();
-      return;
+  private applyQueryParams(params: ParamMap): void {
+    const page = Number(params.get('page'));
+    if (Number.isInteger(page) && page >= 0) {
+      this.page.set(page);
     }
 
-    this.isLoading.set(true);
-    this.hasCompletedLoad.set(false);
-    this.errorMessage.set(null);
-    this.loadedHistoryUserId = userId;
-
-    this.auditService
-      .getUserHistory(userId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isLoading.set(false))
-      )
-      .subscribe({
-        next: logs => {
-          this.logs.set(this.sortLogs(logs));
-          this.hasCompletedLoad.set(true);
-        },
-        error: (error: HttpErrorResponse) => {
-          this.logs.set([]);
-          this.hasCompletedLoad.set(false);
-          this.errorMessage.set(
-            resolveAuditApiError(error, 'Unable to load history. Please try again.', 'User history not found.')
-          );
-        }
-      });
-  }
-
-  private loadPlatformHistory(): void {
-    this.isLoading.set(true);
-    this.hasCompletedLoad.set(false);
-    this.errorMessage.set(null);
-
-    this.userService
-      .getUsers()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        catchError(() => of<PlatformUser[]>([])),
-        switchMap(users => {
-          this.users.set(users);
-
-          const userIds = this.uniqueUserIds([
-            ...users.map(user => user.id),
-            this.currentUserId()
-          ]);
-
-          if (userIds.length === 0) {
-            return of<AuditLog[][]>([]);
-          }
-
-          return forkJoin(
-            userIds.map(userId =>
-              this.auditService.getUserHistory(userId).pipe(catchError(() => of<AuditLog[]>([])))
-            )
-          );
-        }),
-        finalize(() => this.isLoading.set(false))
-      )
-      .subscribe({
-        next: groups => {
-          this.logs.set(this.mergeLogs(groups));
-          this.hasCompletedLoad.set(true);
-          this.platformHistoryLoaded = true;
-        },
-        error: (error: HttpErrorResponse) => {
-          this.logs.set([]);
-          this.hasCompletedLoad.set(false);
-          this.platformHistoryLoaded = false;
-          this.errorMessage.set(
-            resolveAuditApiError(error, 'Unable to load history. Please try again.', 'User history not found.')
-          );
-        }
-      });
-  }
-
-  private mergeLogs(groups: AuditLog[][]): AuditLog[] {
-    const byId = new Map<string, AuditLog>();
-
-    for (const group of groups) {
-      for (const log of group) {
-        byId.set(log.id, log);
-      }
+    const size = Number(params.get('size'));
+    if ((HISTORY_PAGE_SIZES as readonly number[]).includes(size)) {
+      this.pageSize.set(size);
     }
 
-    return this.sortLogs([...byId.values()]);
-  }
-
-  private sortLogs(logs: AuditLog[]): AuditLog[] {
-    return [...logs].sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  }
-
-  private uniqueUserIds(values: Array<string | null>): string[] {
-    const ids = new Set<string>();
-
-    for (const value of values) {
-      if (isUsableUserId(value)) {
-        ids.add(value.trim());
-      }
+    const entityType = params.get('entityType');
+    if (entityType && isHistoryEntityFilter(entityType)) {
+      this.entityFilter.set(entityType);
     }
 
-    return [...ids];
+    const action = params.get('action');
+    if (action && isHistoryActionFilter(action)) {
+      this.actionFilter.set(action);
+    }
+
+    const userId = params.get('userId');
+    if (userId && isUsableUserId(userId) && !this.isAdminOnly()) {
+      this.userFilter.set(userId);
+    }
+
+    this.searchQuery.set(params.get('search') ?? params.get('q') ?? '');
+    this.fromDate.set(readHistoryDateParam(params.get('from')));
+    this.toDate.set(readHistoryDateParam(params.get('to')));
+  }
+
+  private syncUrl(query: AuditHistoryQuery): void {
+    const queryParams: Record<string, string | number> = {
+      page: query.page,
+      size: query.size
+    };
+
+    if (query.search) {
+      queryParams['search'] = query.search;
+    }
+
+    if (query.entityType) {
+      queryParams['entityType'] = query.entityType;
+    }
+
+    if (query.action) {
+      queryParams['action'] = query.action;
+    }
+
+    if (query.userId && !this.isAdminOnly()) {
+      queryParams['userId'] = query.userId;
+    }
+
+    if (query.from) {
+      queryParams['from'] = readHistoryDateParam(query.from);
+    }
+
+    if (query.to) {
+      queryParams['to'] = readHistoryDateParam(query.to);
+    }
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      replaceUrl: true
+    });
   }
 
   private readUserId(user: AuthenticatedUser | null): string | null {
@@ -404,4 +527,12 @@ export class AuditList {
 
     return user.userId.trim();
   }
+}
+
+function percent(part: number, total: number): number {
+  if (total <= 0) {
+    return 0;
+  }
+
+  return Math.round((part / total) * 100);
 }

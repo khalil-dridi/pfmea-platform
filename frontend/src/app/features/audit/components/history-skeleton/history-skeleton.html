@@ -1,0 +1,17 @@
+<div class="history-skeleton" role="status" aria-live="polite" aria-label="Loading history">
+  @for (item of [1, 2, 3, 4, 5, 6, 7]; track item) {
+    <article class="history-skeleton__item" aria-hidden="true">
+      <span class="history-skeleton__icon"></span>
+      <div class="history-skeleton__copy">
+        <span class="history-skeleton__line history-skeleton__line--title"></span>
+        <span class="history-skeleton__line history-skeleton__line--meta"></span>
+        <span class="history-skeleton__line history-skeleton__line--user"></span>
+      </div>
+      <div class="history-skeleton__aside">
+        <span class="history-skeleton__line history-skeleton__line--date"></span>
+        <span class="history-skeleton__status"></span>
+        <span class="history-skeleton__button"></span>
+      </div>
+    </article>
+  }
+</div>

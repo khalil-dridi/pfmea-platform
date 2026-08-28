@@ -1,0 +1,113 @@
+<form class="history-filters" role="search" (submit)="$event.preventDefault()">
+  <div class="field field--search">
+    <label class="visually-hidden" for="history-search">Search history</label>
+    <span class="history-filters__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.7" />
+        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <input
+      id="history-search"
+      type="search"
+      [value]="query()"
+      [disabled]="disabled()"
+      (input)="onQueryInput($event)"
+      placeholder="Search history..."
+      autocomplete="off"
+    />
+  </div>
+
+  <div class="history-filters__group">
+    <label class="visually-hidden" for="history-entity">Entity</label>
+    <select
+      id="history-entity"
+      [value]="entityType()"
+      [disabled]="disabled()"
+      (change)="onEntityChange($event)"
+    >
+      @for (option of entityOptions; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="history-filters__group">
+    <label class="visually-hidden" for="history-action">Action</label>
+    <select
+      id="history-action"
+      [value]="action()"
+      [disabled]="disabled()"
+      (change)="onActionChange($event)"
+    >
+      @for (option of actionOptions; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+
+  @if (showUserFilter()) {
+    <div class="history-filters__group">
+      <label class="visually-hidden" for="history-user">User</label>
+      <select
+        id="history-user"
+        [value]="userId()"
+        [disabled]="disabled()"
+        (change)="onUserChange($event)"
+      >
+        <option value="ALL">All users</option>
+        @for (user of users(); track user.id) {
+          <option [value]="user.id">{{ userOptionLabel(user) }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  <div class="history-filters__date">
+    <span class="visually-hidden">Date range</span>
+    <button
+      #dateButton
+      type="button"
+      class="history-filters__date-button"
+      [class.history-filters__date-button--active]="fromDate() || toDate()"
+      [disabled]="disabled()"
+      [attr.aria-expanded]="dateOpen()"
+      aria-haspopup="dialog"
+      (click)="toggleDate(); $event.stopPropagation()"
+    >
+      {{ dateButtonLabel() }}
+    </button>
+
+    @if (dateOpen()) {
+      <div
+        class="history-filters__date-panel"
+        [class.history-filters__date-panel--top]="datePlacement() === 'top'"
+        role="dialog"
+        aria-label="Date range"
+        (click)="stopClick($event)"
+      >
+        <label>
+          From
+          <input type="date" [value]="pendingFrom()" (change)="onPendingFromChange($event)" />
+        </label>
+        <label>
+          To
+          <input type="date" [value]="pendingTo()" (change)="onPendingToChange($event)" />
+        </label>
+        <div class="history-filters__date-actions">
+          <button type="button" class="btn btn--ghost btn--compact" (click)="clearDates()">Clear</button>
+          <button type="button" class="btn btn--primary btn--compact" (click)="applyDates()">Apply</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="btn btn--ghost btn--compact history-filters__clear"
+    [disabled]="disabled() || !canClear()"
+    (click)="cleared.emit()"
+  >
+    Clear filters
+  </button>
+</form>

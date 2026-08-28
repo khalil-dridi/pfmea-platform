@@ -28,19 +28,24 @@
       <dl class="audit-summary">
         <div>
           <dt>What happened</dt>
-          <dd>{{ currentItem.whatHappened }}</dd>
+          <dd>{{ currentItem.headline }}</dd>
         </div>
         <div>
-          <dt>Module</dt>
-          <dd>{{ currentItem.typeLabel }}</dd>
+          <dt>Entity</dt>
+          <dd>{{ currentItem.entityLabel }}</dd>
         </div>
+        @if (currentItem.itemName) {
+          <div>
+            <dt>{{ currentItem.entityLabel }}</dt>
+            <dd>{{ currentItem.itemName }}</dd>
+          </div>
+        }
         <div>
-          <dt>Item</dt>
+          <dt>Action</dt>
           <dd>
-            {{ currentItem.itemLabel }}
-            @if (currentItem.itemDetail) {
-              <span class="audit-summary__meta">{{ currentItem.itemDetail }}</span>
-            }
+            <span class="history-detail-badge" [attr.data-action]="currentItem.action">
+              {{ currentItem.actionLabel }}
+            </span>
           </dd>
         </div>
         <div>
@@ -51,12 +56,6 @@
           <dt>Date</dt>
           <dd>{{ currentItem.datetimeLabel }}</dd>
         </div>
-        <div>
-          <dt>Result</dt>
-          <dd>
-            <span [class]="resultClass()">{{ currentItem.resultLabel }}</span>
-          </dd>
-        </div>
       </dl>
     </section>
 
@@ -65,43 +64,11 @@
         <h2 id="activity-changes-title">Recorded changes</h2>
         <p>Compare previous values with the recorded new values.</p>
       </header>
-      <app-json-data-comparison
+      <app-history-comparison
         [oldData]="log()?.oldData ?? null"
         [newData]="log()?.newData ?? null"
-        previousTitle="Previous Data"
-        newTitle="New Data"
-        previousColumn="Previous"
-        newColumn="New"
+        [entityType]="currentItem.entityType"
       />
-    </section>
-
-    <section class="audit-card audit-detail-card audit-technical">
-      <button
-        type="button"
-        class="audit-technical__toggle"
-        [attr.aria-expanded]="technicalOpen()"
-        aria-controls="audit-technical-details"
-        (click)="toggleTechnical()"
-      >
-        Technical details
-        <span aria-hidden="true">{{ technicalOpen() ? '−' : '+' }}</span>
-      </button>
-      @if (technicalOpen()) {
-        <dl id="audit-technical-details" class="audit-technical__grid">
-          <div>
-            <dt>Audit ID</dt>
-            <dd>{{ currentItem.id }}</dd>
-          </div>
-          <div>
-            <dt>Entity Type</dt>
-            <dd>{{ currentItem.entityType }}</dd>
-          </div>
-          <div>
-            <dt>Entity ID</dt>
-            <dd>{{ currentItem.entityId || '—' }}</dd>
-          </div>
-        </dl>
-      }
     </section>
   } @else {
     <div class="audit-card audit-empty" role="status">

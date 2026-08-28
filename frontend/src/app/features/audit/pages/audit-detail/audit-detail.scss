@@ -150,15 +150,50 @@
   }
 }
 
+.history-detail-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 730;
+}
+
+.history-detail-badge[data-action='CREATE'] {
+  color: #3b1699;
+  background: #f3f0ff;
+}
+
+.history-detail-badge[data-action='UPDATE'] {
+  color: #1d4ed8;
+  background: #e8f0fe;
+}
+
+.history-detail-badge[data-action='DELETE'],
+.history-detail-badge[data-action='REJECT'] {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.history-detail-badge[data-action='ENABLE'],
+.history-detail-badge[data-action='APPROVE'] {
+  color: #166534;
+  background: #ecfdf3;
+}
+
+.history-detail-badge[data-action='DISABLE'] {
+  color: #c2410c;
+  background: #fff7ed;
+}
+
 @media (max-width: 720px) {
   .audit-summary,
-  .audit-technical__grid,
   .audit-detail-page__back {
     width: 100%;
   }
 
-  .audit-summary,
-  .audit-technical__grid {
+  .audit-summary {
     grid-template-columns: 1fr;
   }
 

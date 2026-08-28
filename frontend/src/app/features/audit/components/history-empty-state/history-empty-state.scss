@@ -1,0 +1,51 @@
+@use '../../styles/audit-ui';
+
+:host {
+  display: block;
+}
+
+.history-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 2.6rem 1.25rem;
+  text-align: center;
+
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h2 {
+    color: #1e1b4b;
+    font-size: 1.08rem;
+    font-weight: 720;
+  }
+
+  p {
+    max-width: 28rem;
+    color: #6b6685;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .btn {
+    margin-top: 0.55rem;
+  }
+}
+
+.history-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin-bottom: 0.35rem;
+  color: #3b1699;
+  background: #f3effc;
+  border-radius: 0.75rem;
+
+  svg {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}

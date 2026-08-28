@@ -1,0 +1,218 @@
+@use '../../styles/audit-ui';
+
+:host {
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+:host.history-filters--open {
+  z-index: 4;
+}
+
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.65rem;
+  padding: 0.8rem 1rem;
+}
+
+.history-filters .field {
+  margin: 0;
+  flex: 1 1 14rem;
+}
+
+.field--search {
+  position: relative;
+}
+
+.history-filters__icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  color: #8a86a0;
+  transform: translateY(-50%);
+  pointer-events: none;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.history-filters .field--search input {
+  height: 2.25rem;
+  padding-left: 2.3rem;
+  font-size: 0.84rem;
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: #cfc8dd;
+  }
+}
+
+.history-filters__group,
+.history-filters__date {
+  display: grid;
+  min-width: 8.6rem;
+}
+
+.history-filters__group select,
+.history-filters__date-button {
+  width: 100%;
+  height: 2.25rem;
+  padding: 0 1.7rem 0 0.7rem;
+  color: #141420;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none'%3E%3Cpath d='M4.2 6.2 8 10l3.8-3.8' stroke='%236b6685' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 0.45rem center;
+  border: 1px solid #e0e1e5;
+  border-radius: 0.5rem;
+  appearance: none;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+
+  &:hover:not(:disabled) {
+    border-color: #cfc8dd;
+  }
+
+  &:focus-visible {
+    border-color: #6b51aa;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 22, 153, 0.12);
+  }
+}
+
+.history-filters__date {
+  position: relative;
+  z-index: 2;
+}
+
+.history-filters__date-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 8;
+  display: grid;
+  gap: 0.7rem;
+  width: 16.5rem;
+  padding: 0.9rem;
+  background: #fff;
+  border: 1px solid #ece9f5;
+  border-radius: 0.85rem;
+  box-shadow: 0 16px 32px rgba(40, 28, 90, 0.16);
+  animation: history-panel 160ms ease-out both;
+
+  label {
+    display: grid;
+    gap: 0.28rem;
+    color: #5b5674;
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  input {
+    height: 2.25rem;
+    padding: 0 0.7rem;
+    color: #141420;
+    background: #fff;
+    border: 1px solid #e0e1e5;
+    border-radius: 0.5rem;
+    font: inherit;
+  }
+}
+
+.history-filters__date-panel--top {
+  top: auto;
+  bottom: calc(100% + 0.4rem);
+}
+
+.history-filters__date-button--active {
+  border-color: #c4b5e8;
+  background: #f7f4ff;
+}
+
+.history-filters__date-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.history-filters__clear {
+  min-height: 2.25rem;
+  margin-left: auto;
+}
+
+.history-filters .btn.history-filters__clear {
+  min-height: 2.25rem;
+}
+
+.btn--primary {
+  color: #fff;
+  background: #3b1699;
+  border: 0;
+
+  &:hover:not(:disabled) {
+    background: #4118a2;
+  }
+}
+
+@keyframes history-panel {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .history-filters__group,
+  .history-filters__date,
+  .history-filters__clear,
+  .history-filters .field {
+    flex: 1 1 calc(50% - 0.4rem);
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .history-filters__group,
+  .history-filters__date,
+  .history-filters__clear,
+  .history-filters .field {
+    flex-basis: 100%;
+  }
+
+  .history-filters__date-panel {
+    left: 0;
+    right: auto;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field--search input,
+  .history-filters__group select,
+  .history-filters__date-button,
+  .history-filters__date-panel {
+    animation: none;
+    transition: none;
+    transform: none;
+  }
+}

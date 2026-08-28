@@ -1,259 +1,195 @@
-<section class="audit-page">
-  <header class="audit-page__header">
-    <div>
-      <h1>History</h1>
-      <p>Track changes and actions across the P-FMEA platform.</p>
-      @if (isSuperAdmin()) {
-        <p class="audit-page__lede">Review platform activity, approvals and important changes.</p>
-      }
+<section class="history-page">
+  <header class="history-page__header">
+    <div class="history-page__identity">
+      <span class="history-page__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h1>History</h1>
+        <p>Complete audit trail of actions performed across the P-FMEA platform.</p>
+      </div>
     </div>
   </header>
 
-  @if (isAdminOnly()) {
-    <div class="audit-page__context">
-      <h2>My History</h2>
-      <p>Track the change requests and actions you have performed.</p>
-    </div>
-  }
-
   @if (errorMessage(); as error) {
     <div class="audit-alert audit-alert--error" role="alert" aria-live="assertive">
-      <span>{{ error }}</span>
+      <div class="audit-alert__body">
+        <p><strong>Unable to load history</strong></p>
+        <p>{{ error }}</p>
+      </div>
       <button type="button" class="btn btn--ghost btn--compact" [disabled]="isLoading()" (click)="loadHistory()">
-        Retry
+        Try again
       </button>
     </div>
   }
 
-  <div class="audit-card">
-    <form class="audit-toolbar" role="search" (submit)="$event.preventDefault()">
-      <div class="field field--search">
-        <label class="visually-hidden" for="audit-search">Search history</label>
-        <input
-          id="audit-search"
-          type="search"
-          [value]="searchQuery()"
-          (input)="onSearchInput($event)"
-          [placeholder]="
-            isAdminOnly()
-              ? 'Search by action, process or status...'
-              : 'Search by action, module, user or item...'
-          "
-          autocomplete="off"
-        />
-      </div>
+  <div class="history-page__filters">
+    <app-history-filters
+      [query]="searchQuery()"
+      [entityType]="entityFilter()"
+      [action]="actionFilter()"
+      [userId]="userFilter()"
+      [fromDate]="fromDate()"
+      [toDate]="toDate()"
+      [users]="users()"
+      [showUserFilter]="isSuperAdmin()"
+      [canClear]="hasActiveFilters()"
+      (queryChange)="onSearchChange($event)"
+      (entityTypeChange)="onEntityChange($event)"
+      (actionChange)="onActionChange($event)"
+      (userIdChange)="onUserChange($event)"
+      (dateRangeChange)="onDateRangeChange($event)"
+      (cleared)="clearFilters()"
+    />
+  </div>
 
-      <div class="field field--compact">
-        <label for="action-filter">Action</label>
-        <select id="action-filter" [value]="actionFilter()" (change)="onActionFilterChange($event)">
-          @for (option of isAdminOnly() ? adminActionFilters : superAdminActionFilters; track option.value) {
-            <option [value]="option.value">{{ option.label }}</option>
-          }
-        </select>
-      </div>
-
-      @if (isSuperAdmin()) {
-        <div class="field field--compact">
-          <label for="module-filter">Module</label>
-          <select id="module-filter" [value]="moduleFilter()" (change)="onModuleFilterChange($event)">
-            @for (option of moduleFilters; track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="field field--compact">
-          <label for="result-filter">Result</label>
-          <select id="result-filter" [value]="resultFilter()" (change)="onResultFilterChange($event)">
-            <option value="ALL">All</option>
-            <option value="SUCCESSFUL">Successful</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="PENDING">Pending</option>
-          </select>
-        </div>
-
-        <div class="field field--performer">
-          <label for="user-filter">Performed by</label>
-          <select id="user-filter" [value]="performedByFilter()" (change)="onPerformedByChange($event)">
-            <option value="ALL">All</option>
-            @for (user of users(); track user.id) {
-              <option [value]="user.id">{{ userOptionLabel(user) }}</option>
-            }
-          </select>
-        </div>
-      } @else {
-        <div class="field field--compact">
-          <label for="result-filter">Status</label>
-          <select id="result-filter" [value]="resultFilter()" (change)="onResultFilterChange($event)">
-            <option value="ALL">All</option>
-            <option value="PENDING">Pending</option>
-            <option value="SUCCESSFUL">Approved</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
-        </div>
+  @if (isStatsLoading() && !statistics()) {
+    <div class="history-stats history-stats--skeleton" aria-hidden="true">
+      @for (item of [1, 2, 3, 4]; track item) {
+        <div class="history-stat history-stat--placeholder" [style.--i]="item"></div>
       }
-
-      <div class="field field--date">
-        <label for="from-date">From</label>
-        <input id="from-date" type="date" [value]="fromDate()" (change)="onFromDateChange($event)" />
-      </div>
-
-      <div class="field field--date">
-        <label for="to-date">To</label>
-        <input id="to-date" type="date" [value]="toDate()" (change)="onToDateChange($event)" />
-      </div>
-
-      <button type="button" class="btn btn--ghost audit-toolbar__clear" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
-        Clear
-      </button>
-    </form>
-
-    @if (isLoading()) {
-      <div class="audit-state audit-state--loading" role="status" aria-live="polite">
-        <span class="spinner spinner--muted" aria-hidden="true"></span>
-        Loading history…
-      </div>
-    } @else if (logs().length === 0 && errorMessage()) {
-      <div class="audit-state" role="status">Unable to display history at this time.</div>
-    } @else if (!hasCompletedLoad()) {
-      <div class="audit-state audit-state--loading" role="status" aria-live="polite">
-        <span class="spinner spinner--muted" aria-hidden="true"></span>
-        Loading history…
-      </div>
-    } @else if (logs().length === 0) {
-      <div class="audit-empty" role="status">
-        <h2>No history available</h2>
-        <p>No recorded actions were found.</p>
-      </div>
-    } @else if (filteredItems().length === 0) {
-      <div class="audit-empty" role="status">
-        <h2>No matching history</h2>
-        <p>No recorded actions match the selected filters.</p>
-      </div>
-    } @else {
-      <div class="audit-table-wrap">
-        <table class="audit-table">
-          <caption class="visually-hidden">Platform history</caption>
-          <thead>
-            @if (isAdminOnly()) {
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">What you did</th>
-                <th scope="col">Item</th>
-                <th scope="col">Type</th>
-                <th scope="col">Status</th>
-                <th scope="col">Reviewed by</th>
-                <th scope="col">Reviewed at</th>
-                <th scope="col">Details</th>
-              </tr>
-            } @else {
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">What happened</th>
-                <th scope="col">Type</th>
-                <th scope="col">Item</th>
-                <th scope="col">Performed by</th>
-                <th scope="col">Result</th>
-                <th scope="col">Details</th>
-              </tr>
+    </div>
+  } @else {
+    <div
+      class="history-stats"
+      [class.history-stats--busy]="isStatsLoading()"
+      aria-label="History summary"
+      [attr.aria-busy]="isStatsLoading()"
+    >
+      @if (statsError(); as statsIssue) {
+        <p class="history-stats__error" role="status">{{ statsIssue }}</p>
+      }
+      @for (stat of pageStats(); track stat.key; let index = $index) {
+        <article class="history-stat" [attr.data-tone]="stat.tone" [style.--i]="index">
+          <span class="history-stat__icon" aria-hidden="true">
+            @switch (stat.key) {
+              @case ('total') {
+                <svg viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M8.5 9h7M8.5 12.5h7M8.5 16h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
+              }
+              @case ('approved') {
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7" />
+                  <path d="m8.4 12.2 2.4 2.4 4.8-5.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
+              @case ('pending') {
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M12 8v4.4l2.6 1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              }
+              @default {
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7" />
+                  <path d="m9 9 6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
+              }
             }
-          </thead>
-          <tbody>
-            @for (item of filteredItems(); track item.id) {
-              <tr>
-                <td>
-                  <div class="audit-date">
-                    <time [attr.datetime]="item.createdAt">{{ item.dateLabel }}</time>
-                    <span>{{ item.timeLabel }}</span>
-                  </div>
-                </td>
-                @if (isAdminOnly()) {
-                  <td>
-                    <div class="audit-event">
-                      <span class="audit-event__icon" aria-hidden="true"></span>
-                      <div>
-                        <strong>{{ item.whatYouDid }}</strong>
-                        @if (item.eventContext) {
-                          <span>{{ item.eventContext }}</span>
-                        }
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ item.itemLabel }}</td>
-                  <td>{{ item.operationLabel }}</td>
-                  <td>
-                    <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
-                  </td>
-                  <td>{{ item.reviewedByName || '—' }}</td>
-                  <td>{{ item.reviewedAtLabel || '—' }}</td>
-                } @else {
-                  <td>
-                    <div class="audit-event">
-                      <span class="audit-event__icon" aria-hidden="true"></span>
-                      <div>
-                        <strong>{{ item.whatHappened }}</strong>
-                        @if (item.eventContext) {
-                          <span>{{ item.eventContext }}</span>
-                        }
-                      </div>
-                    </div>
-                  </td>
-                  <td>{{ item.typeLabel }}</td>
-                  <td>
-                    <div class="audit-item">
-                      <strong>{{ item.itemLabel }}</strong>
-                      @if (item.itemDetail) {
-                        <span>{{ item.itemDetail }}</span>
-                      }
-                    </div>
-                  </td>
-                  <td>{{ item.performedByName }}</td>
-                  <td>
-                    <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
-                  </td>
-                }
-                <td>
-                  <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', item.id]">
-                    View Details
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </td>
-              </tr>
+          </span>
+          <div class="history-stat__copy">
+            <p>{{ stat.label }}</p>
+            <strong>{{ stat.value }}</strong>
+            @if (stat.subtitle) {
+              <span>{{ stat.subtitle }}</span>
             }
-          </tbody>
-        </table>
-      </div>
+          </div>
+          @if (stat.showMeter) {
+            <span class="history-stat__meter" aria-hidden="true">
+              <span [style.width.%]="stat.share"></span>
+            </span>
+          }
+        </article>
+      }
+    </div>
+  }
 
-      <ul class="audit-cards">
-        @for (item of filteredItems(); track item.id) {
-          <li class="audit-item-card">
-            <div class="audit-item-card__top">
-              <div class="audit-event">
-                <span class="audit-event__icon" aria-hidden="true"></span>
-                <div>
-                  <h2>{{ isAdminOnly() ? item.whatYouDid : item.whatHappened }}</h2>
-                  <p>{{ item.itemLabel }}</p>
-                </div>
-              </div>
-              <span [class]="resultClass(item.status)">{{ item.resultLabel }}</span>
-            </div>
-            <dl>
-              <div>
-                <dt>Date</dt>
-                <dd>{{ item.datetimeLabel }}</dd>
-              </div>
-              <div>
-                <dt>Performed by</dt>
-                <dd>{{ item.performedByName }}</dd>
-              </div>
-            </dl>
-            <a class="btn btn--ghost btn--compact" [routerLink]="['/audit', item.id]">
-              View Details
-              <span aria-hidden="true">→</span>
-            </a>
-          </li>
-        }
-      </ul>
-    }
+  <div class="history-page__workspace">
+    <div class="history-page__list" [class.history-page__list--busy]="isLoading() && logs().length > 0" [attr.aria-busy]="isLoading()">
+      @if (isLoading() && logs().length === 0) {
+        <app-history-skeleton />
+      } @else if (logs().length === 0 && errorMessage()) {
+        <div class="history-page__state" role="status">
+          <p>Unable to load history</p>
+          <p>Something went wrong while loading the audit trail.</p>
+          <button type="button" class="btn btn--ghost" (click)="loadHistory()">Try again</button>
+        </div>
+      } @else if (items().length === 0) {
+        <app-history-empty-state [filtered]="hasActiveFilters()" (clearFilters)="clearFilters()" />
+      } @else {
+        <div class="history-page__items">
+          @for (item of items(); track item.id; let index = $index) {
+            <app-history-event
+              [item]="item"
+              [index]="index"
+              [selected]="selectedId() === item.id"
+              (viewDetails)="openDetails(item)"
+            />
+          }
+        </div>
+
+        <footer class="history-pagination">
+          <p>
+            Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ totalElements() }}
+            {{ totalElements() === 1 ? 'event' : 'events' }}
+          </p>
+
+          <div class="history-pagination__controls">
+            <nav class="history-pagination__pages" aria-label="History pages">
+              <button
+                type="button"
+                class="history-pagination__nav"
+                aria-label="Previous page"
+                [disabled]="!canPrev()"
+                (click)="previousPage()"
+              >
+                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M10 3.5 5.5 8 10 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              @for (pageIndex of visiblePages(); track pageIndex) {
+                <button
+                  type="button"
+                  class="history-pagination__page"
+                  [class.history-pagination__page--active]="page() === pageIndex"
+                  [attr.aria-current]="page() === pageIndex ? 'page' : null"
+                  [attr.aria-label]="'Page ' + (pageIndex + 1)"
+                  (click)="goToPage(pageIndex)"
+                >
+                  {{ pageIndex + 1 }}
+                </button>
+              }
+              <button
+                type="button"
+                class="history-pagination__nav"
+                aria-label="Next page"
+                [disabled]="!canNext()"
+                (click)="nextPage()"
+              >
+                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </nav>
+
+            <label class="visually-hidden" for="history-page-size">Events per page</label>
+            <select id="history-page-size" [value]="pageSize()" (change)="onPageSizeChange($event)">
+              @for (size of pageSizes; track size) {
+                <option [value]="size">{{ size }} per page</option>
+              }
+            </select>
+          </div>
+        </footer>
+      }
+    </div>
   </div>
 </section>
+
+@if (selectedItem(); as selected) {
+  <app-history-details-drawer [item]="selected" (closed)="closeDetails()" />
+}

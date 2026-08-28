@@ -1,0 +1,81 @@
+<div
+  class="history-dialog"
+  role="presentation"
+  (click)="onOverlayClick()"
+>
+  <aside
+    class="history-dialog__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="history-panel-title"
+    (click)="onPanelClick($event)"
+  >
+    <header class="history-panel__header">
+      <div class="history-panel__heading">
+        <app-history-entity-icon [kind]="item().iconKind" [accent]="item().accent" />
+        <div>
+          <p class="history-panel__eyebrow">Event Details</p>
+          <h2 id="history-panel-title">{{ item().headline }}</h2>
+          @if (item().resultLabel; as result) {
+            <span class="history-panel__result" [attr.data-result]="item().resultStatus">{{ result }}</span>
+          } @else {
+            <span class="history-panel__result" [attr.data-action]="item().action">{{ item().actionLabel }}</span>
+          }
+        </div>
+      </div>
+      <button
+        #closeButton
+        type="button"
+        class="history-panel__close"
+        aria-label="Close event details"
+        (click)="close()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m8 8 8 8M16 8l-8 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="history-panel__body">
+      <p class="history-panel__when">{{ item().datetimeLabel }}</p>
+
+      <section class="history-panel__block">
+        <h3>Summary</h3>
+        <p>{{ item().context }}</p>
+      </section>
+
+      <section class="history-panel__block">
+        <h3>General Information</h3>
+        <dl>
+          <div>
+            <dt>Module / Item</dt>
+            <dd>{{ item().moduleItem }}</dd>
+          </div>
+          <div>
+            <dt>Operation</dt>
+            <dd>{{ item().operationLabel }}</dd>
+          </div>
+          <div>
+            <dt>Performed by</dt>
+            <dd>{{ item().performedByName }}</dd>
+          </div>
+          @if (item().resultLabel; as result) {
+            <div>
+              <dt>Result</dt>
+              <dd>{{ result }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <section class="history-panel__block" aria-labelledby="history-changes-title">
+        <h3 id="history-changes-title">Changes (Before → After)</h3>
+        <app-history-comparison
+          [oldData]="item().log.oldData"
+          [newData]="item().log.newData"
+          [entityType]="item().entityType"
+        />
+      </section>
+    </div>
+  </aside>
+</div>

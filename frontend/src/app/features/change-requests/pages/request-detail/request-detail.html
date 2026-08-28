@@ -1,38 +1,111 @@
 <section class="request-detail-page">
   <header class="request-detail-page__header">
-    <p class="request-detail-page__crumb">
-      <a [routerLink]="backLink()">{{ isSuperAdmin() ? 'Validations' : 'My Requests' }}</a>
-    </p>
-    <h1>Change Request</h1>
-    <p>Review the submitted P-FMEA change and its approval status.</p>
-    <a [routerLink]="backLink()" class="btn btn--ghost request-detail-page__back">
-      <span aria-hidden="true">←</span>
+    <div class="request-detail-page__identity">
+      <span class="request-detail-page__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 4 19 7v5.2c0 4.1-2.8 7.3-7 8.8-4.2-1.5-7-4.7-7-8.8V7l7-3Z"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M9 12.2h6M12 9.2v6"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+      <div>
+        <p class="request-detail-page__eyebrow">{{ eyebrow() }}</p>
+        <h1>Change Request</h1>
+        <p>Review the submitted P-FMEA change and its approval status.</p>
+      </div>
+    </div>
+
+    <a [routerLink]="backLink()" class="request-detail-page__back">
+      <span class="request-detail-page__back-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M19 12H6.5M11 6.5 6 12l5 5.5"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
       {{ backLabel() }}
     </a>
   </header>
 
-  @if (errorMessage(); as error) {
-    <div class="requests-alert requests-alert--error" role="alert" aria-live="assertive">
-      {{ error }}
-    </div>
-  }
-
   @if (isLoading()) {
-    <div class="requests-card requests-state requests-state--loading" role="status" aria-live="polite">
-      <span class="spinner spinner--muted" aria-hidden="true"></span>
-      Loading change request…
+    <div class="request-detail-skeleton" role="status" aria-live="polite" aria-label="Loading change request">
+      <div class="request-detail-skeleton__card" aria-hidden="true">
+        <span class="request-detail-skeleton__title"></span>
+        <div class="request-detail-skeleton__grid">
+          <span class="request-detail-skeleton__field"></span>
+          <span class="request-detail-skeleton__field"></span>
+          <span class="request-detail-skeleton__field"></span>
+          <span class="request-detail-skeleton__field"></span>
+          <span class="request-detail-skeleton__field"></span>
+          <span class="request-detail-skeleton__field"></span>
+        </div>
+        <span class="request-detail-skeleton__comment"></span>
+      </div>
+      <div class="request-detail-skeleton__compare" aria-hidden="true">
+        <span class="request-detail-skeleton__title"></span>
+        <div class="request-detail-skeleton__panels">
+          <span class="request-detail-skeleton__panel"></span>
+          <span class="request-detail-skeleton__panel"></span>
+        </div>
+      </div>
+    </div>
+  } @else if (!request()) {
+    <div class="request-detail-error" role="alert">
+      <span class="request-detail-error__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 8v5M12 16.2h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h2>Unable to load this change request.</h2>
+        <p>{{ errorMessage() || 'Please try again.' }}</p>
+      </div>
+      @if (canRetry()) {
+        <button type="button" class="btn btn--ghost" (click)="retry()">Retry</button>
+      }
     </div>
   } @else if (request(); as currentRequest) {
-    @if (currentRequest.status === 'PENDING' && !isSuperAdmin()) {
-      <div class="requests-alert requests-alert--pending" role="status">
+    @if (errorMessage(); as error) {
+      <div class="requests-alert requests-alert--error" role="alert" aria-live="assertive">
         <div class="requests-alert__body">
+          <p>{{ error }}</p>
+        </div>
+        @if (canRetry()) {
+          <button type="button" class="btn btn--ghost btn--compact" (click)="retry()">Retry</button>
+        }
+      </div>
+    }
+
+    @if (currentRequest.status === 'PENDING' && !isSuperAdmin()) {
+      <div class="request-detail-banner" role="status">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+            <path d="M12 8v5M12 16.2h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </span>
+        <div>
           <p><strong>Waiting for SUPER_ADMIN approval</strong></p>
           <p>This change request is pending review. You can monitor its status here.</p>
         </div>
       </div>
     }
 
-    <section class="requests-card request-section" aria-labelledby="request-summary-title">
+    <section class="request-section request-section--summary" aria-labelledby="request-summary-title">
       <header class="request-section__header">
         <h2 id="request-summary-title">Request Summary</h2>
       </header>
@@ -50,14 +123,7 @@
             </span>
           </dd>
         </div>
-        <div>
-          <dt>Submitted By</dt>
-          <dd>{{ currentRequest.requestedByName }}</dd>
-        </div>
-        <div>
-          <dt>Submitted At</dt>
-          <dd>{{ formatDate(currentRequest.createdAt) }}</dd>
-        </div>
+
         <div>
           <dt>Status</dt>
           <dd>
@@ -72,25 +138,83 @@
             </span>
           </dd>
         </div>
+
+        <div>
+          <dt>Submitted By</dt>
+          <dd class="request-summary__person">
+            <span class="request-summary__avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8.5" r="2.7" stroke="currentColor" stroke-width="1.7" />
+                <path d="M6.2 18c.8-2.6 2.6-4 5.8-4s5 1.4 5.8 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </span>
+            {{ personName(currentRequest.requestedByName) }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Submitted At</dt>
+          <dd class="request-summary__date">
+            <span class="request-summary__date-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="4.5" y="5.5" width="15" height="14" rx="2" stroke="currentColor" stroke-width="1.7" />
+                <path d="M8 4v3.2M16 4v3.2M4.5 10h15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </span>
+            {{ formatDate(currentRequest.createdAt) }}
+          </dd>
+        </div>
+
         <div>
           <dt>Reviewed By</dt>
-          <dd>{{ currentRequest.reviewedByName || '—' }}</dd>
+          <dd class="request-summary__person">
+            <span class="request-summary__avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8.5" r="2.7" stroke="currentColor" stroke-width="1.7" />
+                <path d="M6.2 18c.8-2.6 2.6-4 5.8-4s5 1.4 5.8 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </span>
+            {{ personName(currentRequest.reviewedByName) }}
+          </dd>
         </div>
+
         <div>
           <dt>Reviewed At</dt>
-          <dd>{{ formatDate(currentRequest.reviewedAt) }}</dd>
+          <dd class="request-summary__date">
+            <span class="request-summary__date-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="4.5" y="5.5" width="15" height="14" rx="2" stroke="currentColor" stroke-width="1.7" />
+                <path d="M8 4v3.2M16 4v3.2M4.5 10h15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </span>
+            {{ formatDate(currentRequest.reviewedAt) }}
+          </dd>
         </div>
+
         <div
           class="request-summary__full"
+          [class.request-summary__comment--empty]="currentRequest.status === 'PENDING' && !hasReviewComment(currentRequest)"
           [class.request-summary__comment--rejected]="currentRequest.status === 'REJECTED'"
         >
-          <dt>Review Comment</dt>
+          <dt class="request-summary__comment-label">
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6.5 6.5h11A1.5 1.5 0 0 1 19 8v7.2a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3v-3H6.5A1.5 1.5 0 0 1 5 15.2V8A1.5 1.5 0 0 1 6.5 6.5Z"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            Review Comment
+          </dt>
           <dd>{{ reviewCommentText(currentRequest) }}</dd>
         </div>
       </dl>
     </section>
 
-    <section class="requests-card request-section" aria-labelledby="proposed-changes-title">
+    <section class="request-section request-section--changes" aria-labelledby="proposed-changes-title">
       <header class="request-section__header">
         <h2 id="proposed-changes-title">Proposed Changes</h2>
         <p>
@@ -115,35 +239,47 @@
         <p>{{ decisionLine(currentRequest) }}</p>
         @if (currentRequest.status === 'REJECTED') {
           <p class="request-decision__comment">{{ reviewCommentText(currentRequest) }}</p>
-        } @else if (currentRequest.reviewComment) {
+        } @else if (hasReviewComment(currentRequest)) {
           <p class="request-decision__comment">{{ currentRequest.reviewComment }}</p>
         }
       </section>
     }
 
     @if (currentRequest.status === 'PENDING' && isSuperAdmin()) {
-      <div class="requests-actions requests-actions--form request-detail-actions">
+      <div class="request-detail-actions">
         <button
           type="button"
-          class="btn btn--danger"
+          class="btn request-detail-actions__reject"
           [disabled]="isSubmitting()"
-          [attr.aria-busy]="isSubmitting()"
+          [attr.aria-busy]="isRejectSubmitting()"
           (click)="openRejectDialog()"
         >
-          @if (isSubmitting() && pendingAction() === 'reject') {
-            <span class="spinner" aria-hidden="true"></span>
+          @if (isRejectSubmitting()) {
+            <span class="spinner spinner--reject" aria-hidden="true"></span>
+          } @else {
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="m8 8 8 8M16 8l-8 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </span>
           }
           Reject
         </button>
         <button
           type="button"
-          class="btn btn--primary"
+          class="btn request-detail-actions__approve"
           [disabled]="isSubmitting()"
-          [attr.aria-busy]="isSubmitting()"
+          [attr.aria-busy]="isApproveSubmitting()"
           (click)="openApproveDialog()"
         >
-          @if (isSubmitting() && pendingAction() === 'approve') {
+          @if (isApproveSubmitting()) {
             <span class="spinner" aria-hidden="true"></span>
+          } @else {
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="m7.5 12.2 3 3 6-6.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
           }
           Approve
         </button>

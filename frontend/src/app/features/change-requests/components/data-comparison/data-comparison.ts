@@ -1,24 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { JsonDataComparison } from '../../../../shared/components/json-data-comparison/json-data-comparison';
 import { ChangeRequest } from '../../models/change-request.model';
+import { buildReviewComparisonRows, hasReviewPreviousData } from '../../utils/review-comparison';
 
 @Component({
   selector: 'app-data-comparison',
-  imports: [JsonDataComparison],
-  template: `
-    <app-json-data-comparison
-      [oldData]="request().oldData"
-      [newData]="request().newData"
-      [previousTitle]="isCreate() ? 'Previous Data' : 'Previous'"
-      [newTitle]="isCreate() ? 'New Data' : 'Proposed'"
-      previousColumn="Previous"
-      newColumn="Proposed"
-    />
-  `,
+  templateUrl: './data-comparison.html',
+  styleUrl: './data-comparison.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DataComparison {
   readonly request = input.required<ChangeRequest>();
 
-  readonly isCreate = computed(() => this.request().operation === 'CREATE');
+  readonly hasPreviousData = computed(() => hasReviewPreviousData(this.request().oldData));
+  readonly rows = computed(() =>
+    buildReviewComparisonRows(this.request().oldData, this.request().newData, this.request().entityType)
+  );
 }

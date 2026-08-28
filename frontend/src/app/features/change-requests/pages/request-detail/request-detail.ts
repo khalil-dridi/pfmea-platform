@@ -23,6 +23,7 @@ import {
   resolveChangeRequestApiError,
   statusLabel
 } from '../../utils/change-request.utils';
+import { displayBusinessText } from '../../utils/review-comparison';
 
 type ReviewAction = 'approve' | 'reject';
 
@@ -47,11 +48,20 @@ export class RequestDetail implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly pendingAction = signal<ReviewAction | null>(null);
   readonly reviewComment = signal('');
+  private readonly requestId = signal<string | null>(null);
 
   readonly isSuperAdmin = computed(() => this.authService.hasRole('SUPER_ADMIN'));
   readonly canReview = computed(
     () => this.isSuperAdmin() && this.request()?.status === 'PENDING' && !this.isSubmitting()
   );
+  readonly canRetry = computed(() => this.requestId() !== null);
+  readonly isApproveSubmitting = computed(
+    () => this.isSubmitting() && this.pendingAction() === 'approve'
+  );
+  readonly isRejectSubmitting = computed(
+    () => this.isSubmitting() && this.pendingAction() === 'reject'
+  );
+  readonly eyebrow = computed(() => (this.isSuperAdmin() ? 'Validations' : 'My Requests'));
 
   readonly backLink = computed(() =>
     this.isSuperAdmin() ? '/change-requests/validations' : '/change-requests/my-requests'
@@ -70,6 +80,7 @@ export class RequestDetail implements OnInit {
       return;
     }
 
+    this.requestId.set(id);
     this.loadRequest(id);
   }
 
@@ -85,8 +96,16 @@ export class RequestDetail implements OnInit {
     return formatRequestDateTime(value);
   }
 
+  personName(value: string | null | undefined): string {
+    return displayBusinessText(value);
+  }
+
+  hasReviewComment(request: ChangeRequest): boolean {
+    return !!request.reviewComment?.trim();
+  }
+
   reviewCommentText(request: ChangeRequest): string {
-    if (request.status === 'PENDING') {
+    if (request.status === 'PENDING' && !this.hasReviewComment(request)) {
       return 'No review has been submitted yet.';
     }
 
@@ -95,7 +114,7 @@ export class RequestDetail implements OnInit {
   }
 
   decisionLine(request: ChangeRequest): string {
-    const reviewer = request.reviewedByName?.trim() || '—';
+    const reviewer = this.personName(request.reviewedByName);
     const reviewedAt = formatRequestDateTime(request.reviewedAt).replace(', ', ' at ');
 
     if (request.status === 'APPROVED') {
@@ -179,10 +198,18 @@ export class RequestDetail implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.pendingAction.set(null);
           this.errorMessage.set(
-            resolveChangeRequestApiError(error, 'An error occurred. Please try again.')
+            resolveChangeRequestApiError(error, 'Unable to complete this review. Please try again.')
           );
         }
       });
+  }
+
+  retry(): void {
+    const id = this.requestId();
+
+    if (id) {
+      this.loadRequest(id);
+    }
   }
 
   private loadRequest(id: string): void {
@@ -200,7 +227,7 @@ export class RequestDetail implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.request.set(null);
           this.errorMessage.set(
-            resolveChangeRequestApiError(error, 'An error occurred. Please try again.')
+            resolveChangeRequestApiError(error, 'Unable to load this change request. Please try again.')
           );
         }
       });

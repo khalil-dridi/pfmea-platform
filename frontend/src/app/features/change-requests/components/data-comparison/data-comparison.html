@@ -1,0 +1,69 @@
+<section class="review-compare" [attr.aria-label]="hasPreviousData() ? 'Data comparison' : 'Proposed data'">
+  @if (rows(); as comparisonRows) {
+    <div class="review-compare__panels">
+      <article class="review-compare__panel review-compare__panel--previous">
+        <header>
+          <span class="review-compare__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="6" y="4.5" width="12" height="15" rx="1.8" stroke="currentColor" stroke-width="1.7" />
+              <path d="M9 9h6M9 12.5h6M9 16h3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3>Previous Data</h3>
+        </header>
+
+        @if (!hasPreviousData()) {
+          <div class="review-compare__empty">
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="6" y="4.5" width="12" height="15" rx="1.8" stroke="currentColor" stroke-width="1.7" />
+                <path d="M9 9h6M9 12.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </span>
+            <p>No previous data</p>
+          </div>
+        } @else {
+          <dl>
+            @for (row of comparisonRows; track row.field) {
+              <div [class.review-compare__changed]="row.changed">
+                <dt>{{ row.label }}</dt>
+                <dd [class.review-compare__empty-value]="row.previous === '—'">{{ row.previous }}</dd>
+              </div>
+            }
+          </dl>
+        }
+      </article>
+
+      <span class="review-compare__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12h13M13.5 6.5 19 12l-5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+
+      <article class="review-compare__panel review-compare__panel--next">
+        <header>
+          <span class="review-compare__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="6" y="4.5" width="12" height="15" rx="1.8" stroke="currentColor" stroke-width="1.7" />
+              <path d="m9 12.2 2.1 2.1 4.2-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <h3>New Data</h3>
+        </header>
+
+        <dl>
+          @for (row of comparisonRows; track row.field) {
+            <div [class.review-compare__changed]="row.changed">
+              <dt>{{ row.label }}</dt>
+              <dd [class.review-compare__empty-value]="row.next === '—'">{{ row.next }}</dd>
+            </div>
+          }
+        </dl>
+      </article>
+    </div>
+  } @else {
+    <div class="review-compare__empty review-compare__empty--page">
+      <p>No displayable business data is available for this request.</p>
+    </div>
+  }
+</section>

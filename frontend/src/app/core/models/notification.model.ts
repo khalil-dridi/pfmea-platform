@@ -31,3 +31,14 @@ export interface NotificationPayload {
   readAt: string | null;
   createdAt: string;
 }
+
+export interface NotificationPage<T = NotificationPayload> {
+  content: T[];
+  number: number;
+  size: number;
+  numberOfElements?: number;
+  totalElements: number;
+  totalPages: number;
+  first?: boolean;
+  last?: boolean;
+}

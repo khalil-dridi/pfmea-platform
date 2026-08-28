@@ -8,10 +8,6 @@
   <header class="notification-dropdown__header">
     <h2>Notifications</h2>
     <div class="notification-dropdown__header-actions">
-      @if (isLoading() && notifications().length > 0) {
-        <span class="notification-dropdown__spinner" aria-hidden="true"></span>
-        <span class="visually-hidden" role="status">Refreshing notifications</span>
-      }
       <button
         type="button"
         class="notification-dropdown__mark-all"
@@ -38,54 +34,90 @@
     </div>
   }
 
-  @if (isLoading() && notifications().length === 0) {
-    <ul class="notification-dropdown__list" aria-hidden="true">
-      @for (row of skeletonRows; track row) {
-        <li class="notification-item notification-item--skeleton">
-          <span class="skeleton skeleton--title"></span>
-          <span class="skeleton skeleton--body"></span>
-          <span class="skeleton skeleton--time"></span>
-        </li>
-      }
-    </ul>
-    <p class="visually-hidden" role="status">Loading notifications</p>
-  } @else if (notifications().length === 0 && !errorMessage()) {
-    <div class="notification-dropdown__empty" role="status">
-      <h3>No notifications</h3>
-      <p>You're all caught up.</p>
-    </div>
-  } @else if (notifications().length > 0) {
-    <ul class="notification-dropdown__list">
-      @for (notification of notifications(); track notification.id) {
-        <li>
+  <div class="notification-dropdown__body">
+    @if (isLoading() && notifications().length === 0) {
+      <ul class="notification-dropdown__list" aria-hidden="true">
+        @for (row of skeletonRows; track row) {
+          <li class="notification-item notification-item--skeleton">
+            <span class="skeleton skeleton--title"></span>
+            <span class="skeleton skeleton--body"></span>
+            <span class="skeleton skeleton--time"></span>
+          </li>
+        }
+      </ul>
+      <p class="visually-hidden" role="status">Loading notifications</p>
+    } @else if (notifications().length === 0 && !errorMessage()) {
+      <div class="notification-dropdown__empty" role="status">
+        <span class="notification-dropdown__empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6 16.5V11a6 6 0 1 1 12 0v5.5L20 18H4l2-1.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            <path d="M10 18a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </span>
+        <h3>No notifications</h3>
+        <p>You're all caught up.</p>
+      </div>
+    } @else if (notifications().length > 0) {
+      <ul class="notification-dropdown__list">
+        @for (notification of notifications(); track notification.id) {
+          <li>
+            <button
+              type="button"
+              class="notification-item"
+              [class.notification-item--unread]="!notification.read"
+              [class.notification-item--enter]="isNew(notification.id)"
+              [style.--enter-i]="enterIndex(notification.id)"
+              [disabled]="markingId() === notification.id"
+              [attr.aria-busy]="markingId() === notification.id"
+              (click)="onNotificationActivate(notification, $event)"
+            >
+              <span
+                class="notification-item__dot"
+                [class.notification-item__dot--unread]="!notification.read"
+                aria-hidden="true"
+              ></span>
+              <span class="notification-item__body">
+                <span class="notification-item__title">{{ notification.title }}</span>
+                <span class="notification-item__message">{{ notification.message }}</span>
+                <time class="notification-item__time" [attr.datetime]="notification.createdAt">
+                  {{ formatTime(notification.createdAt) }}
+                </time>
+              </span>
+              @if (!notification.read) {
+                <span class="visually-hidden">Unread</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+
+      @if (hasMore() || isLoadingMore() || loadMoreError()) {
+        <div class="notification-dropdown__more">
+          @if (loadMoreError(); as moreError) {
+            <p class="notification-dropdown__more-error" role="alert">{{ moreError }}</p>
+          }
           <button
             type="button"
-            class="notification-item"
-            [class.notification-item--unread]="!notification.read"
-            [disabled]="markingId() === notification.id"
-            [attr.aria-busy]="markingId() === notification.id"
-            (click)="onNotificationActivate(notification, $event)"
+            class="notification-dropdown__load-more"
+            [disabled]="isLoadingMore()"
+            [attr.aria-busy]="isLoadingMore()"
+            (click)="loadMore($event)"
           >
-            <span
-              class="notification-item__dot"
-              [class.notification-item__dot--unread]="!notification.read"
-              aria-hidden="true"
-            ></span>
-            <span class="notification-item__body">
-              <span class="notification-item__title">{{ notification.title }}</span>
-              <span class="notification-item__message">{{ notification.message }}</span>
-              <time class="notification-item__time" [attr.datetime]="notification.createdAt">
-                {{ formatTime(notification.createdAt) }}
-              </time>
-            </span>
-            @if (!notification.read) {
-              <span class="visually-hidden">Unread</span>
+            @if (isLoadingMore()) {
+              <span class="notification-dropdown__spinner" aria-hidden="true"></span>
+              Loading...
+            } @else if (loadMoreError()) {
+              Retry
+            } @else {
+              Load more
             }
           </button>
-        </li>
+        </div>
+      } @else if (notifications().length >= 10) {
+        <p class="notification-dropdown__end" role="status">No more notifications</p>
       }
-    </ul>
-  }
+    }
+  </div>
 
   <footer class="notification-dropdown__footer">
     <button type="button" class="notification-dropdown__close" (click)="close()">

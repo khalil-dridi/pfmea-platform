@@ -30,9 +30,12 @@ export class NotificationDropdown {
 
   readonly notifications = this.notificationService.notifications;
   readonly isLoading = this.notificationService.isLoading;
+  readonly isLoadingMore = this.notificationService.isLoadingMore;
   readonly errorMessage = this.notificationService.errorMessage;
+  readonly loadMoreError = this.notificationService.loadMoreError;
+  readonly hasMore = this.notificationService.hasMore;
   readonly hasUnread = this.notificationService.hasUnread;
-  readonly skeletonRows = [0, 1, 2];
+  readonly skeletonRows = [0, 1, 2, 3];
 
   readonly isMarkingAll = signal(false);
   readonly markingId = signal<string | null>(null);
@@ -42,9 +45,23 @@ export class NotificationDropdown {
     return formatRelativeTime(value);
   }
 
+  isNew(id: string): boolean {
+    return this.notificationService.isRecentlyAdded(id);
+  }
+
+  enterIndex(id: string): number {
+    return this.notificationService.recentIndex(id);
+  }
+
   retry(): void {
     this.actionError.set(null);
     this.notificationService.loadNotifications();
+  }
+
+  loadMore(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.notificationService.loadMore();
   }
 
   close(): void {

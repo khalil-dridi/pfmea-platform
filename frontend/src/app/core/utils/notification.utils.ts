@@ -1,5 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Notification, NotificationPayload } from '../models/notification.model';
+import { Notification, NotificationPage, NotificationPayload } from '../models/notification.model';
+
+export const NOTIFICATION_PAGE_SIZE = 10;
 
 export function resolveNotificationRoute(notification: Notification): string | null {
   const entityType = notification.relatedEntityType;
@@ -60,4 +62,39 @@ export function toNotification(payload: NotificationPayload): Notification {
     readAt: payload.readAt,
     createdAt: payload.createdAt
   };
+}
+
+export function readNotificationPage(value: unknown): NotificationPage<NotificationPayload> {
+  const record = isRecord(value) ? value : {};
+  const rawContent = record['content'];
+  const content = Array.isArray(rawContent)
+    ? rawContent.filter(isNotificationPayload)
+    : [];
+  const totalElements = finiteNumber(record['totalElements'], content.length);
+  const totalPages = finiteNumber(record['totalPages'], 0);
+  const number = finiteNumber(record['number'], 0);
+  const last = record['last'] === true || (totalPages > 0 && number >= totalPages - 1) || content.length === 0;
+
+  return {
+    content,
+    number,
+    size: finiteNumber(record['size'], NOTIFICATION_PAGE_SIZE),
+    numberOfElements: finiteNumber(record['numberOfElements'], content.length),
+    totalElements,
+    totalPages,
+    first: record['first'] === true || number === 0,
+    last
+  };
+}
+
+function isNotificationPayload(value: unknown): value is NotificationPayload {
+  return isRecord(value) && typeof value['id'] === 'string';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }

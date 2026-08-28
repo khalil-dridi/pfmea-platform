@@ -108,7 +108,7 @@ export class Navbar {
     this.isNotificationsOpen.set(willOpen);
 
     if (willOpen) {
-      this.notificationService.loadNotifications();
+      this.notificationService.ensureLoaded();
     }
   }
 

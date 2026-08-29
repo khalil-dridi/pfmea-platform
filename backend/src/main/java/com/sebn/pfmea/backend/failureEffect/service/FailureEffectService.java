@@ -44,12 +44,7 @@ public class FailureEffectService {
         return failureEffectRepository
                 .findByFailureModeId(failureModeId)
                 .map(failureEffectMapper::toResponse)
-                .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Failure effect not found for failure mode: "
-                                        + failureModeId
-                        )
-                );
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)

@@ -27,11 +27,16 @@ public class FailureEffectController {
     getFailureEffectByFailureMode(
             @PathVariable UUID failureModeId
     ) {
-        return ResponseEntity.ok(
+        FailureEffectResponse response =
                 failureEffectService.getFailureEffectByFailureMode(
                         failureModeId
-                )
-        );
+                );
+
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

@@ -26,11 +26,16 @@ public class OptimizationController {
     public ResponseEntity<OptimizationResponse> getOptimizationByRiskAnalysis(
             @PathVariable UUID riskAnalysisId
     ) {
-        return ResponseEntity.ok(
+        OptimizationResponse response =
                 optimizationService.getOptimizationByRiskAnalysis(
                         riskAnalysisId
-                )
-        );
+                );
+
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

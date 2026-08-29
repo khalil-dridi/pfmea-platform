@@ -44,12 +44,7 @@ public class RiskAnalysisService {
         return riskAnalysisRepository
                 .findByFailureCauseId(failureCauseId)
                 .map(riskAnalysisMapper::toResponse)
-                .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Risk analysis not found for failure cause: "
-                                        + failureCauseId
-                        )
-                );
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)

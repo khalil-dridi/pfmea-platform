@@ -27,11 +27,16 @@ public class RiskAnalysisController {
     getRiskAnalysisByFailureCause(
             @PathVariable UUID failureCauseId
     ) {
-        return ResponseEntity.ok(
+        RiskAnalysisResponse response =
                 riskAnalysisService.getRiskAnalysisByFailureCause(
                         failureCauseId
-                )
-        );
+                );
+
+        if (response == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

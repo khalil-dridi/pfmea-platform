@@ -44,12 +44,7 @@ public class OptimizationService {
         return optimizationRepository
                 .findByRiskAnalysisId(riskAnalysisId)
                 .map(optimizationMapper::toResponse)
-                .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Optimization not found for risk analysis: "
-                                        + riskAnalysisId
-                        )
-                );
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)

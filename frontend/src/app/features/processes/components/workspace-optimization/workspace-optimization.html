@@ -458,6 +458,7 @@
         </div>
       } @else if (kind === 'risk') {
         <form [formGroup]="riskForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="opt-form-grid">
               <div class="field opt-form-grid__full">
@@ -554,6 +555,7 @@
               </div>
             </div>
           </fieldset>
+          </div>
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">Create</button>
             <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="requestCloseEditor()">
@@ -563,6 +565,7 @@
         </form>
       } @else if (kind === 'optimization') {
         <form [formGroup]="optimizationForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="opt-form-grid">
               <div class="field">
@@ -629,6 +632,7 @@
               </div>
             </div>
           </fieldset>
+          </div>
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
               {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
@@ -640,6 +644,7 @@
         </form>
       } @else {
         <form [formGroup]="actionForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="opt-form-grid">
               <div class="field">
@@ -703,6 +708,7 @@
               </div>
             </div>
           </fieldset>
+          </div>
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
               {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}

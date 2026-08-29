@@ -335,6 +335,7 @@
       }
 
       <form [formGroup]="stepForm" (submit)="$event.preventDefault(); requestSaveStep()" novalidate>
+        <div class="workspace-dialog__body">
         <fieldset [disabled]="isSaving() || mode === 'view'">
           <div class="workspace-dialog__grid">
             <div class="field">
@@ -396,6 +397,7 @@
             }
           </div>
         </fieldset>
+        </div>
 
         <div class="processes-actions processes-actions--form">
           @if (mode !== 'view') {

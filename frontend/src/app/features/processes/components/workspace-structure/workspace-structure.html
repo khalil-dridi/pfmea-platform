@@ -192,6 +192,7 @@
       }
 
       <form [formGroup]="editorForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+        <div class="workspace-dialog__body">
         <fieldset [disabled]="isSaving() || mode === 'view'">
           <div class="structure-form-grid">
             <div class="field">
@@ -253,6 +254,7 @@
             }
           </div>
         </fieldset>
+        </div>
 
         <div class="processes-actions processes-actions--form">
           @if (mode !== 'view') {

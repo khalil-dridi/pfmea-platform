@@ -170,14 +170,24 @@ $ws-ease: 180ms ease-out;
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  background: rgba(20, 12, 48, 0.42);
+  overflow: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  background: rgb(247 246 251 / 0.28);
   animation: workspace-overlay-enter 180ms ease-out both;
 }
 
 @mixin dialog-panel {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   width: min(100%, 38rem);
+  max-width: 100%;
   max-height: calc(100vh - 2.5rem);
-  overflow: auto;
+  max-height: calc(100dvh - 2.5rem);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   padding: 1.4rem 1.4rem 1.25rem;
   background: #fff;
   border-top: 4px solid $ws-accent;
@@ -191,16 +201,57 @@ $ws-ease: 180ms ease-out;
   }
 
   h2 {
+    flex-shrink: 0;
     color: $ws-ink;
     font-size: 1.15rem;
     font-weight: 700;
   }
 
   > p {
+    flex-shrink: 0;
     margin-top: 0.4rem;
     margin-bottom: 1.1rem;
     color: $ws-muted;
     font-size: 0.9rem;
+  }
+
+  > .processes-alert {
+    flex-shrink: 0;
+  }
+
+  > form,
+  > dl,
+  > .opt-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  > form {
+    overflow: hidden;
+  }
+
+  > form > .workspace-dialog__body,
+  > dl,
+  > .opt-view {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  > form > fieldset {
+    min-width: 0;
+  }
+
+  > form > .processes-actions,
+  > .processes-actions {
+    flex-shrink: 0;
+    background: #fff;
   }
 }
 
@@ -314,12 +365,10 @@ $ws-ease: 180ms ease-out;
 @keyframes workspace-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

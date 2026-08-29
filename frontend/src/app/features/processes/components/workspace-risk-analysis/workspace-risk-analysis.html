@@ -291,6 +291,7 @@
         </div>
       } @else {
         <form [formGroup]="riskForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <section class="risk-form-section">
               <h3>Prevention</h3>
@@ -401,6 +402,7 @@
               </div>
             </section>
           </fieldset>
+          </div>
 
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">

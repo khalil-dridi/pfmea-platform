@@ -234,6 +234,7 @@
         </div>
       } @else {
         <form [formGroup]="editorForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="functions-form-grid">
               <div class="field">
@@ -315,6 +316,7 @@
               }
             </div>
           </fieldset>
+          </div>
 
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">

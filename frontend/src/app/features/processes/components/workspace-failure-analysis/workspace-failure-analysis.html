@@ -299,6 +299,7 @@
         </div>
       } @else if (kind === 'mode') {
         <form [formGroup]="modeForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="field">
               <label for="failureModeDescription">
@@ -324,6 +325,7 @@
               }
             </div>
           </fieldset>
+          </div>
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
               {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
@@ -335,6 +337,7 @@
         </form>
       } @else if (kind === 'effect') {
         <form [formGroup]="effectForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="field">
               <label for="effectOurPlant">Our Plant</label>
@@ -378,6 +381,7 @@
               }
             </div>
           </fieldset>
+          </div>
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
               {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}
@@ -389,6 +393,7 @@
         </form>
       } @else {
         <form [formGroup]="causeForm" (submit)="$event.preventDefault(); requestSave()" novalidate>
+          <div class="workspace-dialog__body">
           <fieldset [disabled]="isSaving()">
             <div class="field">
               <label for="failureCauseDescription">
@@ -407,6 +412,7 @@
               }
             </div>
           </fieldset>
+          </div>
           <div class="processes-actions processes-actions--form">
             <button type="submit" class="btn btn--primary" [disabled]="isSaving()">
               {{ editorMode() === 'edit' ? 'Save Changes' : 'Create' }}

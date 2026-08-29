@@ -1,8 +1,17 @@
 <section class="structure-panel">
   <header class="structure-panel__header">
-    <div>
-      <h3>Process Work Elements</h3>
-      <p>Define and manage the work elements associated with this process step.</p>
+    <div class="structure-panel__identity">
+      <span class="structure-panel__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="4.2" y="4.2" width="6.2" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+          <rect x="13.6" y="4.2" width="6.2" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+          <rect x="8.9" y="13.6" width="6.2" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      </span>
+      <div>
+        <h3>Structure</h3>
+        <p>Work elements for the selected process step.</p>
+      </div>
     </div>
     <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
       + Add Work Element
@@ -74,11 +83,11 @@
       Loading work elements…
     </div>
   } @else if (workElements().length === 0 && errorMessage()) {
-    <div class="processes-state" role="status">Unable to display work elements at this time.</div>
+    <div class="processes-state" role="status">Unable to load work elements.</div>
   } @else if (workElements().length === 0) {
     <div class="processes-empty" role="status">
-      <h2>No work elements found</h2>
-      <p>This process step does not contain any work elements yet.</p>
+      <h2>No work elements defined yet</h2>
+      <p>Add the first work element for this process step.</p>
       <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
         + Add Work Element
       </button>

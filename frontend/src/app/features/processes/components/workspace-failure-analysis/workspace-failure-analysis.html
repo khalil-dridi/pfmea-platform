@@ -1,8 +1,17 @@
 <section class="failure-panel">
   <header class="failure-panel__header">
-    <div>
-      <h3>Failure Analysis</h3>
-      <p>Identify failure modes, their effects and their causes for the selected process step.</p>
+    <div class="failure-panel__identity">
+      <span class="failure-panel__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 5 20 19H4L12 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+          <path d="M12 10v4.1M12 16.5h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h3>Failure Analysis</h3>
+        <p>Failure modes, effects and causes for this process step.</p>
+        <p class="failure-panel__context">Mode → Effect → Cause</p>
+      </div>
     </div>
     <button type="button" class="btn btn--primary btn--compact" (click)="openCreateMode($event)">
       + Add Failure Mode
@@ -62,11 +71,11 @@
       Loading failure analysis…
     </div>
   } @else if (bundles().length === 0 && errorMessage()) {
-    <div class="processes-state" role="status">Unable to display failure analysis at this time.</div>
+    <div class="processes-state" role="status">Unable to load failure analysis.</div>
   } @else if (bundles().length === 0) {
     <div class="processes-empty" role="status">
-      <h2>No failure modes found</h2>
-      <p>No failure modes are currently defined for this process step.</p>
+      <h2>No failure modes defined yet</h2>
+      <p>Add the first failure mode for this process step.</p>
       <button type="button" class="btn btn--primary btn--compact" (click)="openCreateMode($event)">
         + Add Failure Mode
       </button>
@@ -164,7 +173,7 @@
                     </div>
                   </dl>
                 } @else {
-                  <p class="failure-block__empty">No failure effect defined</p>
+                  <p class="failure-block__empty">No failure effect defined yet.</p>
                 }
               </section>
 
@@ -181,7 +190,7 @@
                 </header>
 
                 @if (bundle.causes.length === 0) {
-                  <p class="failure-block__empty">No failure causes found</p>
+                  <p class="failure-block__empty">No failure causes defined yet.</p>
                 } @else {
                   <ul class="failure-causes">
                     @for (cause of bundle.causes; track cause.id) {

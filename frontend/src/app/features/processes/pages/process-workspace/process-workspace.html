@@ -1,8 +1,15 @@
 <section class="workspace-page">
   @if (isLoading()) {
-    <div class="processes-card processes-state processes-state--loading" role="status" aria-live="polite">
-      <span class="spinner spinner--muted" aria-hidden="true"></span>
-      Loading workspace…
+    <div class="workspace-skeleton" role="status" aria-live="polite" aria-label="Loading workspace">
+      <div class="workspace-skeleton__header" aria-hidden="true">
+        <span class="workspace-skeleton__bar workspace-skeleton__bar--title"></span>
+        <span class="workspace-skeleton__bar workspace-skeleton__bar--meta"></span>
+      </div>
+      <div class="workspace-skeleton__layout" aria-hidden="true">
+        <span class="workspace-skeleton__card"></span>
+        <span class="workspace-skeleton__card workspace-skeleton__card--main"></span>
+      </div>
+      <span class="visually-hidden">Loading workspace…</span>
     </div>
   } @else if (errorMessage(); as error) {
     <header class="workspace-page__header">
@@ -19,21 +26,34 @@
     </div>
     <div class="processes-card processes-empty" role="status">
       <h2>Unable to open workspace</h2>
-      <p>{{ error }}</p>
+      <p>The process workspace could not be loaded. Retry the request or return to the process list.</p>
       <button type="button" class="btn btn--ghost" (click)="back()">Back to Processes</button>
     </div>
   } @else if (process(); as currentProcess) {
     <header class="workspace-page__header">
-      <div>
-        <nav class="workspace-page__crumb" aria-label="Breadcrumb">
-          <a routerLink="/processes">Processes</a>
-          <span aria-hidden="true">/</span>
-          <span>{{ currentProcess.name }}</span>
-          <span aria-hidden="true">/</span>
-          <span>Workspace</span>
-        </nav>
-        <h1>{{ currentProcess.name }}</h1>
-        <p>P-FMEA Workspace</p>
+      <div class="workspace-page__identity">
+        <span class="workspace-page__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="4.5" y="4.5" width="6.4" height="6.4" rx="1.3" stroke="currentColor" stroke-width="1.7" />
+            <rect x="13.1" y="4.5" width="6.4" height="6.4" rx="1.3" stroke="currentColor" stroke-width="1.7" />
+            <rect x="4.5" y="13.1" width="6.4" height="6.4" rx="1.3" stroke="currentColor" stroke-width="1.7" />
+            <path d="M16.3 13.2v6.3M13.2 16.3h6.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+        </span>
+        <div>
+          <nav class="workspace-page__crumb" aria-label="Breadcrumb">
+            <a routerLink="/processes">Processes</a>
+            <span aria-hidden="true">/</span>
+            <span>{{ currentProcess.name }}</span>
+            <span aria-hidden="true">/</span>
+            <span>Workspace</span>
+          </nav>
+          <h1>{{ currentProcess.name }}</h1>
+          <p>
+            P-FMEA Workspace
+            <span class="workspace-page__number">{{ currentProcess.processNumber }}</span>
+          </p>
+        </div>
       </div>
       <a routerLink="/processes" class="btn btn--ghost">Back to Processes</a>
     </header>
@@ -42,19 +62,19 @@
       <h2 id="workspace-summary-title" class="visually-hidden">Process summary</h2>
       <dl>
         <div>
-          <dt>Process Name</dt>
+          <dt>Process</dt>
           <dd>{{ currentProcess.name }}</dd>
         </div>
         <div>
-          <dt>Process Number</dt>
+          <dt>Number</dt>
           <dd>{{ currentProcess.processNumber }}</dd>
         </div>
         <div>
-          <dt>Created At</dt>
+          <dt>Created</dt>
           <dd>{{ formatDate(currentProcess.createdAt) }}</dd>
         </div>
         <div>
-          <dt>Updated At</dt>
+          <dt>Updated</dt>
           <dd>{{ formatDate(currentProcess.updatedAt) }}</dd>
         </div>
       </dl>
@@ -64,7 +84,10 @@
       <aside class="processes-card workspace-steps" aria-labelledby="workspace-steps-title">
         <header class="workspace-steps__header">
           <div class="workspace-steps__heading">
-            <h2 id="workspace-steps-title">Process Steps</h2>
+            <div>
+              <h2 id="workspace-steps-title">Process Steps</h2>
+              <p class="workspace-steps__hint">Select a step to continue the P-FMEA workflow.</p>
+            </div>
             <button type="button" class="btn btn--primary btn--compact" (click)="openCreateStep($event)">
               + Add Process Step
             </button>
@@ -106,8 +129,8 @@
           </div>
         } @else if (steps().length === 0) {
           <div class="workspace-steps__state" role="status">
-            <h3>No process steps</h3>
-            <p>This process does not contain any process steps yet.</p>
+            <h3>No process steps yet</h3>
+            <p>Add the first process step to start the P-FMEA workflow.</p>
             <button type="button" class="btn btn--primary btn--compact" (click)="openCreateStep($event)">
               + Add Process Step
             </button>
@@ -164,8 +187,8 @@
       <section class="workspace-main" aria-live="polite">
         @if (selectedStep(); as step) {
           <article class="processes-card workspace-step-header">
-            <p>Step {{ step.stepNumber }}</p>
-            <h2>{{ step.name }}</h2>
+            <p>Selected process step</p>
+            <h2>Step {{ step.stepNumber }} · {{ step.name }}</h2>
             @if (step.description) {
               <p class="workspace-step-header__description">{{ step.description }}</p>
             }
@@ -173,7 +196,7 @@
 
           <div class="processes-card workspace-analysis">
             <div class="workspace-tabs" role="tablist" aria-label="P-FMEA workspace sections">
-              @for (section of sections; track section.id) {
+              @for (section of sections; track section.id; let index = $index) {
                 <button
                   type="button"
                   role="tab"
@@ -184,7 +207,42 @@
                   [id]="'workspace-tab-' + section.id"
                   (click)="selectSection(section.id)"
                 >
-                  {{ section.title }}
+                  <span class="workspace-tabs__index" aria-hidden="true">{{ index + 1 }}</span>
+                  <span class="workspace-tabs__icon" aria-hidden="true">
+                    @switch (section.id) {
+                      @case ('structure') {
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <rect x="4.2" y="4.2" width="6.2" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+                          <rect x="13.6" y="4.2" width="6.2" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+                          <rect x="8.9" y="13.6" width="6.2" height="6.2" rx="1.2" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                      }
+                      @case ('functions') {
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="3.1" stroke="currentColor" stroke-width="1.7" />
+                          <path d="M12 5.2v1.8M12 17v1.8M5.2 12h1.8M17 12h1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                        </svg>
+                      }
+                      @case ('failure') {
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M12 5 20 19H4L12 5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                          <path d="M12 10v4.1M12 16.5h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                        </svg>
+                      }
+                      @case ('risk') {
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M12 4 19 7v5.2c0 4.1-2.8 7.3-7 8.8-4.2-1.5-7-4.7-7-8.8V7l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                        </svg>
+                      }
+                      @default {
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="m8.2 12.2 2.3 2.3 5.1-5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                          <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                      }
+                    }
+                  </span>
+                  <span>{{ section.title }}</span>
                 </button>
               }
             </div>
@@ -200,31 +258,48 @@
               [id]="'workspace-section-' + activeSectionItem().id"
               [attr.aria-labelledby]="'workspace-tab-' + activeSectionItem().id"
             >
-              @if (activeSection() === 'structure') {
-                <app-workspace-structure [processStepId]="step.id" />
-              } @else if (activeSection() === 'functions') {
-                <app-workspace-functions
-                  [processId]="currentProcess.id"
-                  [processStepId]="step.id"
-                  [processName]="currentProcess.name"
-                  [processStepName]="step.name"
-                />
-              } @else if (activeSection() === 'failure') {
-                <app-workspace-failure-analysis [processStepId]="step.id" />
-              } @else if (activeSection() === 'risk') {
-                <app-workspace-risk-analysis [processStepId]="step.id" />
-              } @else if (activeSection() === 'optimization') {
-                <app-workspace-optimization [processStepId]="step.id" />
-              } @else {
-                <h3>{{ activeSectionItem().title }}</h3>
-                <p>{{ activeSectionItem().message }}</p>
+              @switch (activeSection()) {
+                @case ('structure') {
+                  <div class="workspace-analysis__enter">
+                    <app-workspace-structure [processStepId]="step.id" />
+                  </div>
+                }
+                @case ('functions') {
+                  <div class="workspace-analysis__enter">
+                    <app-workspace-functions
+                      [processId]="currentProcess.id"
+                      [processStepId]="step.id"
+                      [processName]="currentProcess.name"
+                      [processStepName]="step.name"
+                    />
+                  </div>
+                }
+                @case ('failure') {
+                  <div class="workspace-analysis__enter">
+                    <app-workspace-failure-analysis [processStepId]="step.id" />
+                  </div>
+                }
+                @case ('risk') {
+                  <div class="workspace-analysis__enter">
+                    <app-workspace-risk-analysis [processStepId]="step.id" />
+                  </div>
+                }
+                @case ('optimization') {
+                  <div class="workspace-analysis__enter">
+                    <app-workspace-optimization [processStepId]="step.id" />
+                  </div>
+                }
+                @default {
+                  <h3>{{ activeSectionItem().title }}</h3>
+                  <p>{{ activeSectionItem().message }}</p>
+                }
               }
             </div>
           </div>
         } @else {
           <div class="processes-card processes-empty" role="status">
-            <h2>No process steps</h2>
-            <p>This process does not contain any process steps yet.</p>
+            <h2>No process steps yet</h2>
+            <p>Add the first process step to start the P-FMEA workflow.</p>
             <button type="button" class="btn btn--primary btn--compact" (click)="openCreateStep($event)">
               + Add Process Step
             </button>

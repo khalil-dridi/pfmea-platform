@@ -1,8 +1,10 @@
 @use '../../styles/processes-ui';
+@use '../../styles/workspace-ui' as ws;
 
 :host {
   display: block;
   width: 100%;
+  @include ws.reduced-motion;
 }
 
 .structure-panel {
@@ -10,30 +12,15 @@
 }
 
 .structure-panel__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  @include ws.panel-header;
+}
 
-  h3,
-  p {
-    margin: 0;
-  }
+.structure-panel__identity {
+  @include ws.identity;
+}
 
-  h3 {
-    color: #1e1b4b;
-    font-size: 1.08rem;
-    font-weight: 700;
-  }
-
-  p {
-    margin-top: 0.28rem;
-    max-width: 36rem;
-    color: #6b6685;
-    font-size: 0.88rem;
-    line-height: 1.45;
-  }
+.structure-panel__mark {
+  @include ws.mark;
 }
 
 .structure-toolbar {
@@ -45,35 +32,15 @@
 }
 
 .structure-table {
-  width: 100%;
-  border-collapse: collapse;
+  @include ws.table;
   min-width: 42rem;
-
-  th,
-  td {
-    padding: 0.8rem 0.75rem;
-    text-align: left;
-    vertical-align: middle;
-    border-bottom: 1px solid #eeeaf6;
-  }
-
-  th {
-    color: #8a86a0;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  td {
-    color: #1e1b4b;
-    font-size: 0.88rem;
-  }
 }
 
 .structure-table__description {
   color: #5b5674;
-  max-width: 22rem;
+  max-width: 28rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .structure-number {
@@ -89,10 +56,8 @@
 }
 
 .structure-skeleton {
-  display: block;
+  @include ws.skeleton;
   height: 0.78rem;
-  border-radius: 0.4rem;
-  background: #f0eef6;
 }
 
 .structure-cards {
@@ -105,6 +70,7 @@
 .structure-card {
   padding: 0.95rem 0;
   border-top: 1px solid #eeeaf6;
+  @include ws.row-enter;
 
   h4,
   p {
@@ -114,6 +80,7 @@
   h4 {
     color: #1e1b4b;
     font-size: 0.98rem;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -123,6 +90,7 @@
   color: #6b6685;
   font-size: 0.86rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .structure-card .processes-actions {
@@ -130,42 +98,11 @@
 }
 
 .structure-dialog {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 1.25rem;
-  background: rgba(20, 12, 48, 0.42);
+  @include ws.dialog-overlay;
 }
 
 .structure-dialog__panel {
-  width: min(100%, 38rem);
-  max-height: calc(100vh - 2.5rem);
-  overflow: auto;
-  padding: 1.4rem 1.4rem 1.25rem;
-  background: #fff;
-  border-top: 4px solid #3b1699;
-  border-radius: 1.15rem;
-  box-shadow: 0 22px 50px rgba(40, 28, 90, 0.18);
-
-  h2,
-  p {
-    margin: 0;
-  }
-
-  h2 {
-    color: #1e1b4b;
-    font-size: 1.15rem;
-    font-weight: 700;
-  }
-
-  > p {
-    margin-top: 0.4rem;
-    margin-bottom: 1.1rem;
-    color: #6b6685;
-    font-size: 0.9rem;
-  }
+  @include ws.dialog-panel;
 }
 
 .structure-form-grid {
@@ -186,6 +123,9 @@
   font: inherit;
   font-size: 0.92rem;
   resize: vertical;
+  transition:
+    border-color 180ms ease-out,
+    box-shadow 180ms ease-out;
 
   &:focus {
     border-color: #6b51aa;

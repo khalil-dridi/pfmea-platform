@@ -1,0 +1,68 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.control-display {
+  counter-reset: control;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.control-display li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: start;
+  padding: 0.22rem 0;
+  color: #1e1b4b;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  + li {
+    border-top: 1px solid #f3f1f8;
+  }
+
+  &::before {
+    counter-increment: control;
+    content: counter(control, upper-alpha);
+    color: #543a95;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.55;
+  }
+}
+
+.control-display--compact {
+  max-height: 5.2rem;
+  overflow: auto;
+
+  li {
+    padding: 0.16rem 0;
+    font-size: 0.8rem;
+    line-height: 1.32;
+  }
+
+  li + li {
+    border-top-color: #f6f4fa;
+  }
+}
+
+.control-display__empty {
+  margin: 0;
+  color: #8a86a0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control-display li {
+    transition: none;
+  }
+}

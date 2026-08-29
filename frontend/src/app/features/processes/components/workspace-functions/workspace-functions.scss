@@ -1,8 +1,10 @@
 @use '../../styles/processes-ui';
+@use '../../styles/workspace-ui' as ws;
 
 :host {
   display: block;
   width: 100%;
+  @include ws.reduced-motion;
 }
 
 .functions-panel {
@@ -10,69 +12,32 @@
 }
 
 .functions-panel__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  @include ws.panel-header;
+}
 
-  h3,
-  p {
-    margin: 0;
-  }
+.functions-panel__identity {
+  @include ws.identity;
+}
 
-  h3 {
-    color: #1e1b4b;
-    font-size: 1.08rem;
-    font-weight: 700;
-  }
+.functions-panel__mark {
+  @include ws.mark;
+}
 
-  p {
-    margin-top: 0.28rem;
-    max-width: 36rem;
-    color: #6b6685;
-    font-size: 0.88rem;
-    line-height: 1.45;
-  }
+.functions-panel__context {
+  @include ws.context;
 }
 
 .functions-types {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.18rem;
+  @include ws.filter-tabs;
   margin-bottom: 0.9rem;
-  padding: 0.2rem;
-  background: #f5f3fb;
-  border-radius: 0.75rem;
 }
 
 .functions-types__tab {
-  min-height: 2rem;
-  padding: 0 0.8rem;
-  color: #5b5674;
-  background: transparent;
-  border: 0;
-  border-radius: 0.55rem;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    color: #3b1699;
-    background: #efeafc;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #3b1699;
-    outline-offset: 2px;
-  }
+  @include ws.filter-tab;
 }
 
 .functions-types__tab--active {
-  color: #3b1699;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(40, 28, 90, 0.1);
+  @include ws.filter-tab-active;
 }
 
 .functions-toolbar {
@@ -84,44 +49,21 @@
 }
 
 .functions-table {
-  width: 100%;
+  @include ws.table;
   table-layout: fixed;
-  border-collapse: collapse;
 
   th,
   td {
-    padding: 0.42rem 0.65rem;
-    text-align: left;
+    padding: 0.55rem 0.7rem;
     vertical-align: middle;
-    border-bottom: 1px solid #f0eef6;
-  }
-
-  th {
-    padding-top: 0.38rem;
-    padding-bottom: 0.38rem;
-    color: #8a86a0;
-    background: #f8f7fb;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  td {
-    color: #1e1b4b;
-    font-size: 0.86rem;
-  }
-
-  tbody tr {
-    transition: background-color 0.12s ease;
-  }
-
-  tbody tr:hover {
-    background: #faf9fd;
   }
 
   th:last-child {
     width: 7.75rem;
+    text-align: right;
+  }
+
+  td:last-child {
     text-align: right;
   }
 }
@@ -131,13 +73,14 @@
   width: 100%;
   color: #1e1b4b;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.4;
 
   span {
-    display: block;
+    display: -webkit-box;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -174,10 +117,8 @@
 }
 
 .functions-skeleton {
-  display: block;
+  @include ws.skeleton;
   height: 0.62rem;
-  border-radius: 0.35rem;
-  background: #f0eef6;
 }
 
 .functions-cards {
@@ -189,62 +130,30 @@
 
 .functions-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.55rem 0;
+  padding: 0.7rem 0;
   border-top: 1px solid #f0eef6;
+  @include ws.row-enter;
 
   h4 {
     min-width: 0;
     margin: 0;
-    overflow: hidden;
     color: #1e1b4b;
     font-size: 0.86rem;
     font-weight: 600;
-    line-height: 1.3;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 }
 
 .functions-dialog {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: 1.25rem;
-  background: rgba(20, 12, 48, 0.42);
+  @include ws.dialog-overlay;
 }
 
 .functions-dialog__panel {
-  width: min(100%, 38rem);
-  max-height: calc(100vh - 2.5rem);
-  overflow: auto;
-  padding: 1.4rem 1.4rem 1.25rem;
-  background: #fff;
-  border-top: 4px solid #3b1699;
-  border-radius: 1.15rem;
-  box-shadow: 0 22px 50px rgba(40, 28, 90, 0.18);
-
-  h2,
-  p {
-    margin: 0;
-  }
-
-  h2 {
-    color: #1e1b4b;
-    font-size: 1.15rem;
-    font-weight: 700;
-  }
-
-  > p {
-    margin-top: 0.4rem;
-    margin-bottom: 1.1rem;
-    color: #6b6685;
-    font-size: 0.9rem;
-  }
+  @include ws.dialog-panel;
 }
 
 .functions-form-grid {

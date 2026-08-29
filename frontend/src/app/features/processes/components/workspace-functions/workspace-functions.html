@@ -1,8 +1,17 @@
 <section class="functions-panel">
   <header class="functions-panel__header">
-    <div>
-      <h3>Functions</h3>
-      <p>Define and manage the functions associated with the selected P-FMEA structure.</p>
+    <div class="functions-panel__identity">
+      <span class="functions-panel__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3.1" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 5.2v1.8M12 17v1.8M5.2 12h1.8M17 12h1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <h3>Functions</h3>
+        <p>Functions associated with this process step.</p>
+        <p class="functions-panel__context">{{ processName() }} · {{ processStepName() }}</p>
+      </div>
     </div>
     <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
       + Add Function
@@ -87,11 +96,11 @@
       Loading functions…
     </div>
   } @else if (functions().length === 0 && errorMessage()) {
-    <div class="processes-state" role="status">Unable to display functions at this time.</div>
+    <div class="processes-state" role="status">Unable to load functions.</div>
   } @else if (emptyKind() === 'none') {
     <div class="processes-empty" role="status">
-      <h2>No functions found</h2>
-      <p>No functions are currently defined for this P-FMEA structure.</p>
+      <h2>No functions defined yet</h2>
+      <p>Add the first function for this process step.</p>
       <button type="button" class="btn btn--primary btn--compact" (click)="openCreate($event)">
         + Add Function
       </button>

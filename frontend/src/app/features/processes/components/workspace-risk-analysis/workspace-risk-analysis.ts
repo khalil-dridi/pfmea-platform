@@ -12,9 +12,11 @@ import {
   viewChild
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, distinctUntilChanged, finalize, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { ControlListDisplay } from '../control-list-display/control-list-display';
+import { ControlListEditor } from '../control-list-editor/control-list-editor';
 import { FailureCause } from '../../models/failure-cause.model';
 import { FailureMode } from '../../models/failure-mode.model';
 import { ActionPriority, DetectionScope, RiskAnalysis } from '../../models/risk-analysis.model';
@@ -23,9 +25,16 @@ import { FailureModeService } from '../../services/failure-mode.service';
 import { RiskAnalysisService } from '../../services/risk-analysis.service';
 import { optionalRequestText, optionalText, optionalTextError } from '../../utils/failure-analysis.utils';
 import {
+  CONTROL_FIELD_MAX_LENGTH,
+  controlListError,
+  controlsToMultilineString,
+  createControlList,
+  multilineStringToControls,
+  replaceControlList
+} from '../../utils/control-list.utils';
+import {
   ACTION_PRIORITIES,
   DETECTION_SCOPES,
-  controlPreview,
   detectionScopeLabel,
   isMissingRiskAnalysis,
   priorityClass,
@@ -59,7 +68,7 @@ interface RiskAnalysisRow {
 
 @Component({
   selector: 'app-workspace-risk-analysis',
-  imports: [FormsModule, ReactiveFormsModule, ConfirmationDialog],
+  imports: [FormsModule, ReactiveFormsModule, ConfirmationDialog, ControlListEditor, ControlListDisplay],
   templateUrl: './workspace-risk-analysis.html',
   styleUrl: './workspace-risk-analysis.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -95,15 +104,23 @@ export class WorkspaceRiskAnalysis {
   ];
 
   readonly riskForm = this.formBuilder.nonNullable.group({
-    currentPreventionControl: ['', [Validators.maxLength(2000)]],
+    preventionControls: createControlList(this.formBuilder),
     occurrence: this.formBuilder.control<number | null>(null, Validators.required),
-    currentDetectionControl: ['', [Validators.maxLength(2000)]],
+    detectionControls: createControlList(this.formBuilder),
     detection: this.formBuilder.control<number | null>(null, Validators.required),
     detectionScope: this.formBuilder.control<DetectionScope | null>(null, Validators.required),
     actionPriority: this.formBuilder.control<ActionPriority | null>(null, Validators.required),
     specialProcess: ['', [Validators.maxLength(1000)]],
     specialCharacteristic: ['', [Validators.maxLength(1000)]]
   });
+
+  get preventionControls(): FormArray<FormControl<string>> {
+    return this.riskForm.controls.preventionControls;
+  }
+
+  get detectionControls(): FormArray<FormControl<string>> {
+    return this.riskForm.controls.detectionControls;
+  }
 
   readonly filteredRows = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -235,10 +252,6 @@ export class WorkspaceRiskAnalysis {
     return optionalText(value);
   }
 
-  controlText(value: string | null | undefined, hasRisk: boolean): string {
-    return hasRisk ? controlPreview(value) : 'Not defined';
-  }
-
   numericText(value: number | null | undefined): string {
     return value === null || value === undefined ? '—' : String(value);
   }
@@ -253,16 +266,7 @@ export class WorkspaceRiskAnalysis {
 
   openCreate(row: RiskAnalysisRow, event: Event): void {
     this.openEditor('create', row, event);
-    this.riskForm.reset({
-      currentPreventionControl: '',
-      occurrence: null,
-      currentDetectionControl: '',
-      detection: null,
-      detectionScope: null,
-      actionPriority: null,
-      specialProcess: '',
-      specialCharacteristic: ''
-    });
+    this.resetRiskForm();
     this.riskForm.enable();
     this.focusFirstField();
   }
@@ -282,16 +286,7 @@ export class WorkspaceRiskAnalysis {
     }
 
     this.openEditor('edit', row, event);
-    this.riskForm.reset({
-      currentPreventionControl: row.risk.currentPreventionControl ?? '',
-      occurrence: row.risk.occurrence,
-      currentDetectionControl: row.risk.currentDetectionControl ?? '',
-      detection: row.risk.detection,
-      detectionScope: row.risk.detectionScope,
-      actionPriority: row.risk.actionPriority,
-      specialProcess: row.risk.specialProcess ?? '',
-      specialCharacteristic: row.risk.specialCharacteristic ?? ''
-    });
+    this.resetRiskForm(row.risk);
     this.riskForm.enable();
     this.focusFirstField();
   }
@@ -314,9 +309,9 @@ export class WorkspaceRiskAnalysis {
       return;
     }
 
+    this.preventionControls.markAsTouched();
+    this.detectionControls.markAsTouched();
     this.riskForm.patchValue({
-      currentPreventionControl: this.riskForm.controls.currentPreventionControl.value.trim(),
-      currentDetectionControl: this.riskForm.controls.currentDetectionControl.value.trim(),
       specialProcess: this.riskForm.controls.specialProcess.value.trim(),
       specialCharacteristic: this.riskForm.controls.specialCharacteristic.value.trim()
     });
@@ -378,7 +373,11 @@ export class WorkspaceRiskAnalysis {
   }
 
   preventionError(): string | null {
-    return optionalTextError(this.riskForm.controls.currentPreventionControl, 'Current Prevention Control', 2000);
+    return controlListError(
+      this.preventionControls,
+      'Current Prevention Controls',
+      CONTROL_FIELD_MAX_LENGTH
+    );
   }
 
   occurrenceError(): string | null {
@@ -386,7 +385,11 @@ export class WorkspaceRiskAnalysis {
   }
 
   detectionControlError(): string | null {
-    return optionalTextError(this.riskForm.controls.currentDetectionControl, 'Current Detection Control', 2000);
+    return controlListError(
+      this.detectionControls,
+      'Current Detection Controls',
+      CONTROL_FIELD_MAX_LENGTH
+    );
   }
 
   detectionError(): string | null {
@@ -435,9 +438,9 @@ export class WorkspaceRiskAnalysis {
     this.riskAnalysisService
       .createRiskAnalysis({
         failureCauseId: row.cause.id,
-        currentPreventionControl: optionalRequestText(values.currentPreventionControl),
+        currentPreventionControl: this.serializedControls(this.preventionControls),
         occurrence: values.occurrence,
-        currentDetectionControl: optionalRequestText(values.currentDetectionControl),
+        currentDetectionControl: this.serializedControls(this.detectionControls),
         detection: values.detection,
         detectionScope: values.detectionScope,
         actionPriority: values.actionPriority,
@@ -481,9 +484,9 @@ export class WorkspaceRiskAnalysis {
     this.isSaving.set(true);
     this.riskAnalysisService
       .updateRiskAnalysis(row.risk.id, {
-        currentPreventionControl: optionalRequestText(values.currentPreventionControl),
+        currentPreventionControl: this.serializedControls(this.preventionControls),
         occurrence: values.occurrence,
-        currentDetectionControl: optionalRequestText(values.currentDetectionControl),
+        currentDetectionControl: this.serializedControls(this.detectionControls),
         detection: values.detection,
         detectionScope: values.detectionScope,
         actionPriority: values.actionPriority,
@@ -529,18 +532,34 @@ export class WorkspaceRiskAnalysis {
     this.editingRow.set(null);
     this.pendingAction.set(null);
     this.editorError.set(null);
-    this.riskForm.reset({
-      currentPreventionControl: '',
-      occurrence: null,
-      currentDetectionControl: '',
-      detection: null,
-      detectionScope: null,
-      actionPriority: null,
-      specialProcess: '',
-      specialCharacteristic: ''
-    });
+    this.resetRiskForm();
     this.riskForm.enable();
     this.restoreTriggerFocus();
+  }
+
+  private resetRiskForm(risk?: RiskAnalysis | null): void {
+    this.riskForm.reset({
+      occurrence: risk?.occurrence ?? null,
+      detection: risk?.detection ?? null,
+      detectionScope: risk?.detectionScope ?? null,
+      actionPriority: risk?.actionPriority ?? null,
+      specialProcess: risk?.specialProcess ?? '',
+      specialCharacteristic: risk?.specialCharacteristic ?? ''
+    });
+    replaceControlList(
+      this.preventionControls,
+      multilineStringToControls(risk?.currentPreventionControl),
+      this.formBuilder
+    );
+    replaceControlList(
+      this.detectionControls,
+      multilineStringToControls(risk?.currentDetectionControl),
+      this.formBuilder
+    );
+  }
+
+  private serializedControls(array: FormArray<FormControl<string>>): string | null {
+    return optionalRequestText(controlsToMultilineString(array.getRawValue()));
   }
 
   private fetchRows() {

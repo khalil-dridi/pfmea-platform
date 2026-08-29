@@ -1,8 +1,17 @@
 <section class="opt-panel">
   <header class="opt-panel__header">
-    <div>
-      <h3>Optimization</h3>
-      <p>Improve identified risks through prevention and detection actions.</p>
+    <div class="opt-panel__identity">
+      <span class="opt-panel__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="m8.2 12.2 2.3 2.3 5.1-5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          <rect x="5" y="4.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      </span>
+      <div>
+        <h3>Optimization</h3>
+        <p>Improve identified risks through prevention and detection actions.</p>
+        <p class="opt-panel__context">Risk Analysis → Optimization → Actions</p>
+      </div>
     </div>
   </header>
 
@@ -86,11 +95,11 @@
     </ul>
     <span class="visually-hidden" role="status" aria-live="polite">Loading optimization…</span>
   } @else if (rows().length === 0 && errorMessage()) {
-    <div class="processes-state" role="status">Unable to display optimization at this time.</div>
+    <div class="processes-state" role="status">Unable to load optimization.</div>
   } @else if (emptyKind() === 'none') {
     <div class="processes-empty" role="status">
-      <h2>No optimization available</h2>
-      <p>No failure causes available for optimization.</p>
+      <h2>No optimization defined yet</h2>
+      <p>Define failure causes before adding optimization.</p>
     </div>
   } @else if (emptyKind() === 'filter') {
     <div class="processes-empty" role="status">
@@ -134,7 +143,7 @@
             <p class="opt-card__error">{{ loadError }}</p>
           } @else if (!row.risk) {
             <div class="opt-empty">
-              <p>Risk analysis not defined</p>
+              <p>No risk analysis defined yet.</p>
               <button type="button" class="btn btn--primary btn--compact" (click)="openCreateRisk(row, $event)">
                 + Add Risk Analysis
               </button>
@@ -145,20 +154,23 @@
                 <p class="opt-risk-block__title">Current Risk</p>
                 <div class="opt-metrics">
                   <div>
-                    <span>S</span>
+                    <span title="Severity">S</span>
                     <strong class="opt-metric">{{ metricText(row.effect?.severity) }}</strong>
                   </div>
                   <div>
-                    <span>O</span>
+                    <span title="Occurrence">O</span>
                     <strong class="opt-metric">{{ row.risk.occurrence }}</strong>
                   </div>
                   <div>
-                    <span>D</span>
+                    <span title="Detection">D</span>
                     <strong class="opt-metric">{{ row.risk.detection }}</strong>
                   </div>
                   <div>
-                    <span>AP</span>
-                    <strong [class]="apClass(row.risk.actionPriority)">{{ row.risk.actionPriority }}</strong>
+                    <span title="Action Priority">AP</span>
+                    <strong
+                      [class]="apClass(row.risk.actionPriority)"
+                      [attr.aria-label]="'Action priority ' + row.risk.actionPriority"
+                    >{{ row.risk.actionPriority }}</strong>
                   </div>
                 </div>
               </div>
@@ -175,25 +187,28 @@
                 @if (row.optimization; as optimization) {
                   <div class="opt-metrics">
                     <div>
-                      <span>S</span>
+                      <span title="Severity">S</span>
                       <strong class="opt-metric opt-metric--improved">{{ optimization.severity }}</strong>
                     </div>
                     <div>
-                      <span>O</span>
+                      <span title="Occurrence">O</span>
                       <strong class="opt-metric opt-metric--improved">{{ optimization.occurrence }}</strong>
                     </div>
                     <div>
-                      <span>D</span>
+                      <span title="Detection">D</span>
                       <strong class="opt-metric opt-metric--improved">{{ optimization.detection }}</strong>
                     </div>
                     <div>
-                      <span>AP</span>
-                      <strong [class]="apClass(optimization.actionPriority)">{{ optimization.actionPriority }}</strong>
+                      <span title="Action Priority">AP</span>
+                      <strong
+                        [class]="apClass(optimization.actionPriority)"
+                        [attr.aria-label]="'Action priority ' + optimization.actionPriority"
+                      >{{ optimization.actionPriority }}</strong>
                     </div>
                   </div>
                 } @else {
                   <div class="opt-empty opt-empty--inline">
-                    <p>Not defined</p>
+                    <p>No optimization defined yet.</p>
                     <button
                       type="button"
                       class="btn btn--primary btn--compact"
@@ -219,7 +234,7 @@
 
                 @if (row.actions.length === 0) {
                   <div class="opt-empty">
-                    <p>No optimization actions defined.</p>
+                    <p>No optimization actions defined yet.</p>
                     <button type="button" class="btn btn--ghost btn--compact" (click)="openCreateAction(row, $event)">
                       + Add Action
                     </button>
@@ -239,6 +254,7 @@
                         </div>
                         <span
                           [class]="statusClass(action.status)"
+                          [attr.aria-label]="'Status ' + statusLabel(action.status)"
                           [title]="action.status === 'CLOSED' ? 'Effectiveness demonstrated' : null"
                         >
                           {{ statusLabel(action.status) }}
@@ -333,7 +349,10 @@
                 <div>
                   <span>AP</span>
                   @if (currentRow.risk; as risk) {
-                    <strong [class]="apClass(risk.actionPriority)">{{ risk.actionPriority }}</strong>
+                    <strong
+                      [class]="apClass(risk.actionPriority)"
+                      [attr.aria-label]="'Action priority ' + risk.actionPriority"
+                    >{{ risk.actionPriority }}</strong>
                   } @else {
                     <strong>Not specified</strong>
                   }
@@ -369,7 +388,10 @@
                 <div>
                   <span>AP</span>
                   @if (currentRow.optimization; as optimization) {
-                    <strong [class]="apClass(optimization.actionPriority)">{{ optimization.actionPriority }}</strong>
+                      <strong
+                        [class]="apClass(optimization.actionPriority)"
+                        [attr.aria-label]="'Action priority ' + optimization.actionPriority"
+                      >{{ optimization.actionPriority }}</strong>
                   } @else {
                     <strong>Not specified</strong>
                   }
@@ -439,38 +461,35 @@
           <fieldset [disabled]="isSaving()">
             <div class="opt-form-grid">
               <div class="field opt-form-grid__full">
-                <label for="optRiskPrevention">Current Prevention Control</label>
-                <textarea
-                  #firstField
-                  id="optRiskPrevention"
-                  rows="2"
-                  maxlength="2000"
-                  formControlName="currentPreventionControl"
-                ></textarea>
-                @if (riskPreventionError(); as message) {
-                  <p class="field__error">{{ message }}</p>
-                }
+                <app-control-list-editor
+                  [controls]="preventionControls"
+                  label="Current Prevention Controls (PC) of FC (O)"
+                  addLabel="Add prevention control"
+                  emptyMessage="No prevention controls added yet."
+                  fieldId="optRiskPrevention"
+                  [errorMessage]="riskPreventionError()"
+                  [disabled]="isSaving()"
+                />
               </div>
               <div class="field">
                 <label for="optRiskOccurrence">
                   Occurrence <span class="field__required" aria-hidden="true">*</span>
                 </label>
-                <input id="optRiskOccurrence" type="number" formControlName="occurrence" />
+                <input #firstField id="optRiskOccurrence" type="number" formControlName="occurrence" />
                 @if (riskOccurrenceError(); as message) {
                   <p class="field__error">{{ message }}</p>
                 }
               </div>
               <div class="field opt-form-grid__full">
-                <label for="optRiskDetectionControl">Current Detection Control</label>
-                <textarea
-                  id="optRiskDetectionControl"
-                  rows="2"
-                  maxlength="2000"
-                  formControlName="currentDetectionControl"
-                ></textarea>
-                @if (riskDetectionControlError(); as message) {
-                  <p class="field__error">{{ message }}</p>
-                }
+                <app-control-list-editor
+                  [controls]="detectionControls"
+                  label="Current Detection Controls (DC) of FC or FM (D)"
+                  addLabel="Add detection control"
+                  emptyMessage="No detection controls added yet."
+                  fieldId="optRiskDetectionControl"
+                  [errorMessage]="riskDetectionControlError()"
+                  [disabled]="isSaving()"
+                />
               </div>
               <div class="field">
                 <label for="optRiskDetection">

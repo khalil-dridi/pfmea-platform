@@ -1,8 +1,15 @@
 <section class="risk-panel">
   <header class="risk-panel__header">
-    <div>
-      <h3>Risk Analysis</h3>
-      <p>Review occurrence, detection and action priority for each failure cause.</p>
+    <div class="risk-panel__identity">
+      <span class="risk-panel__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 4 19 7v5.2c0 4.1-2.8 7.3-7 8.8-4.2-1.5-7-4.7-7-8.8V7l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h3>Risk Analysis</h3>
+        <p>Occurrence, detection and action priority for each failure cause.</p>
+      </div>
     </div>
   </header>
 
@@ -90,11 +97,11 @@
     </ul>
     <span class="visually-hidden" role="status" aria-live="polite">Loading risk analysis…</span>
   } @else if (rows().length === 0 && errorMessage()) {
-    <div class="processes-state" role="status">Unable to display risk analysis at this time.</div>
+    <div class="processes-state" role="status">Unable to load risk analysis.</div>
   } @else if (emptyKind() === 'none') {
     <div class="processes-empty" role="status">
-      <h2>No risk analysis available</h2>
-      <p>No failure causes are available for risk analysis.</p>
+      <h2>No risk analysis available yet</h2>
+      <p>Define failure causes in Failure Analysis before adding risk analysis.</p>
     </div>
   } @else if (emptyKind() === 'filter') {
     <div class="processes-empty" role="status">
@@ -153,33 +160,32 @@
             <div class="risk-card__body">
               <div class="risk-card__control">
                 <span>Prevention Control</span>
-                <strong [title]="controlText(risk.currentPreventionControl, true)">
-                  {{ controlText(risk.currentPreventionControl, true) }}
-                </strong>
+                <app-control-list-display [value]="risk.currentPreventionControl" [compact]="true" />
               </div>
               <div class="risk-card__control">
                 <span>Detection Control</span>
-                <strong [title]="controlText(risk.currentDetectionControl, true)">
-                  {{ controlText(risk.currentDetectionControl, true) }}
-                </strong>
+                <app-control-list-display [value]="risk.currentDetectionControl" [compact]="true" />
               </div>
               <div class="risk-card__metrics">
                 <div>
-                  <span>O</span>
+                  <span title="Occurrence">O</span>
                   <strong class="risk-metric">{{ risk.occurrence }}</strong>
                 </div>
                 <div>
-                  <span>D</span>
+                  <span title="Detection">D</span>
                   <strong class="risk-metric">{{ risk.detection }}</strong>
                 </div>
                 <div>
-                  <span>AP</span>
-                  <strong [class]="apClass(risk.actionPriority)">{{ risk.actionPriority }}</strong>
+                  <span title="Action Priority">AP</span>
+                  <strong
+                    [class]="apClass(risk.actionPriority)"
+                    [attr.aria-label]="'Action priority ' + risk.actionPriority"
+                  >{{ risk.actionPriority }}</strong>
                 </div>
               </div>
             </div>
           } @else {
-            <p class="risk-card__undefined">Risk analysis not defined</p>
+            <p class="risk-card__undefined">No risk analysis defined yet.</p>
           }
         </li>
       }
@@ -223,16 +229,26 @@
             <dd>{{ currentRow.cause.description }}</dd>
           </div>
           <div>
-            <dt>Current Prevention Control</dt>
-            <dd>{{ displayText(currentRow.risk?.currentPreventionControl) }}</dd>
+            <dt>Current Prevention Controls</dt>
+            <dd>
+              <app-control-list-display
+                [value]="currentRow.risk?.currentPreventionControl"
+                emptyLabel="Not specified"
+              />
+            </dd>
           </div>
           <div>
             <dt>Occurrence</dt>
             <dd>{{ numericText(currentRow.risk?.occurrence) }}</dd>
           </div>
           <div>
-            <dt>Current Detection Control</dt>
-            <dd>{{ displayText(currentRow.risk?.currentDetectionControl) }}</dd>
+            <dt>Current Detection Controls</dt>
+            <dd>
+              <app-control-list-display
+                [value]="currentRow.risk?.currentDetectionControl"
+                emptyLabel="Not specified"
+              />
+            </dd>
           </div>
           <div>
             <dt>Detection</dt>
@@ -252,7 +268,10 @@
             <dt>Action Priority</dt>
             <dd>
               @if (currentRow.risk; as risk) {
-                <span [class]="apClass(risk.actionPriority)">{{ risk.actionPriority }}</span>
+                <span
+                  [class]="apClass(risk.actionPriority)"
+                  [attr.aria-label]="'Action priority ' + risk.actionPriority"
+                >{{ risk.actionPriority }}</span>
               } @else {
                 Not specified
               }
@@ -277,23 +296,21 @@
               <h3>Prevention</h3>
               <div class="risk-form-grid">
                 <div class="field risk-form-grid__full">
-                  <label for="riskPrevention">Current Prevention Control</label>
-                  <textarea
-                    #firstField
-                    id="riskPrevention"
-                    rows="2"
-                    maxlength="2000"
-                    formControlName="currentPreventionControl"
-                  ></textarea>
-                  @if (preventionError(); as message) {
-                    <p class="field__error">{{ message }}</p>
-                  }
+                  <app-control-list-editor
+                    [controls]="preventionControls"
+                    label="Current Prevention Controls (PC) of FC (O)"
+                    addLabel="Add prevention control"
+                    emptyMessage="No prevention controls added yet."
+                    fieldId="riskPrevention"
+                    [errorMessage]="preventionError()"
+                    [disabled]="isSaving()"
+                  />
                 </div>
                 <div class="field">
                   <label for="riskOccurrence">
                     Occurrence <span class="field__required" aria-hidden="true">*</span>
                   </label>
-                  <input id="riskOccurrence" type="number" formControlName="occurrence" />
+                  <input #firstField id="riskOccurrence" type="number" formControlName="occurrence" />
                   @if (occurrenceError(); as message) {
                     <p class="field__error">{{ message }}</p>
                   }
@@ -305,16 +322,15 @@
               <h3>Detection</h3>
               <div class="risk-form-grid">
                 <div class="field risk-form-grid__full">
-                  <label for="riskDetectionControl">Current Detection Control</label>
-                  <textarea
-                    id="riskDetectionControl"
-                    rows="2"
-                    maxlength="2000"
-                    formControlName="currentDetectionControl"
-                  ></textarea>
-                  @if (detectionControlError(); as message) {
-                    <p class="field__error">{{ message }}</p>
-                  }
+                  <app-control-list-editor
+                    [controls]="detectionControls"
+                    label="Current Detection Controls (DC) of FC or FM (D)"
+                    addLabel="Add detection control"
+                    emptyMessage="No detection controls added yet."
+                    fieldId="riskDetectionControl"
+                    [errorMessage]="detectionControlError()"
+                    [disabled]="isSaving()"
+                  />
                 </div>
                 <div class="field">
                   <label for="riskDetection">

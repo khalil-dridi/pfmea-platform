@@ -1,4 +1,5 @@
 import { JsonComparisonRow, JsonObject, isEmptyJsonObject, parseJsonObject } from '../../../shared/utils/json-data.utils';
+import { formatControlListValue } from '../../processes/utils/control-list.utils';
 import { formatRequestDateTime } from './change-request.utils';
 
 const UUID_PATTERN =
@@ -25,8 +26,8 @@ const FIELD_LABELS: Record<string, string> = {
   ourPlant: 'Our Plant',
   shipToPlant: 'Ship-to Plant',
   endUser: 'End User',
-  currentPreventionControl: 'Current Prevention Control',
-  currentDetectionControl: 'Current Detection Control',
+  currentPreventionControl: 'Current Prevention Controls',
+  currentDetectionControl: 'Current Detection Controls',
   detectionScope: 'Detection Scope',
   actionPriority: 'Action Priority',
   specialProcess: 'Special Process',
@@ -183,7 +184,10 @@ function presentPayload(
       continue;
     }
 
-    const formatted = formatReviewValue(value);
+    const formatted =
+      key === 'currentPreventionControl' || key === 'currentDetectionControl'
+        ? formatControlListValue(value)
+        : formatReviewValue(value);
 
     if (formatted === null) {
       continue;

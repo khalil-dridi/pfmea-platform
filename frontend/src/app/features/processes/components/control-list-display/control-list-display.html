@@ -1,0 +1,9 @@
+@if (items().length === 0) {
+  <p class="control-display__empty">{{ emptyLabel() }}</p>
+} @else {
+  <ul class="control-display" [class.control-display--compact]="compact()">
+    @for (item of items(); track $index) {
+      <li>{{ item }}</li>
+    }
+  </ul>
+}

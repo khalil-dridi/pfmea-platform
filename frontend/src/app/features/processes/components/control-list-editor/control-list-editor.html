@@ -1,0 +1,44 @@
+<div class="control-list" [class.control-list--disabled]="disabled()">
+  <p class="control-list__label" [id]="fieldId() + '-label'">{{ label() }}</p>
+
+  @if (controls().length === 0) {
+    <p class="control-list__empty">{{ emptyMessage() }}</p>
+  } @else {
+    <ul class="control-list__items" [attr.aria-labelledby]="fieldId() + '-label'">
+      @for (control of controls().controls; track control; let index = $index) {
+        <li class="control-list__item">
+          <label class="visually-hidden" [attr.for]="inputId(index)">
+            {{ label() }} {{ index + 1 }}
+          </label>
+          <textarea
+            #controlInput
+            [id]="inputId(index)"
+            rows="2"
+            [formControl]="control"
+            [attr.aria-invalid]="!!errorMessage()"
+          ></textarea>
+          <button
+            type="button"
+            class="control-list__remove"
+            [disabled]="disabled()"
+            [attr.aria-label]="'Remove ' + label() + ' ' + (index + 1)"
+            (click)="remove(index)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m8 8 8 8M16 8l-8 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  <button type="button" class="control-list__add" [disabled]="disabled()" (click)="add()">
+    <span aria-hidden="true">+</span>
+    {{ addLabel() }}
+  </button>
+
+  @if (errorMessage(); as message) {
+    <p class="field__error" role="alert">{{ message }}</p>
+  }
+</div>

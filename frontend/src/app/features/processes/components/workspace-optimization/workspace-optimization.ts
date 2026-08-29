@@ -12,9 +12,10 @@ import {
   viewChild
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, distinctUntilChanged, finalize, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { ControlListEditor } from '../control-list-editor/control-list-editor';
 import { FailureCause } from '../../models/failure-cause.model';
 import { FailureEffect } from '../../models/failure-effect.model';
 import { FailureMode } from '../../models/failure-mode.model';
@@ -28,6 +29,13 @@ import { OptimizationActionService } from '../../services/optimization-action.se
 import { OptimizationService } from '../../services/optimization.service';
 import { RiskAnalysisService } from '../../services/risk-analysis.service';
 import { optionalRequestText, optionalText, optionalTextError, requiredTextError } from '../../utils/failure-analysis.utils';
+import {
+  CONTROL_FIELD_MAX_LENGTH,
+  controlListError,
+  controlsToMultilineString,
+  createControlList,
+  replaceControlList
+} from '../../utils/control-list.utils';
 import {
   actionStatusClass,
   actionStatusLabel,
@@ -87,7 +95,7 @@ interface OptimizationRow {
 
 @Component({
   selector: 'app-workspace-optimization',
-  imports: [FormsModule, ReactiveFormsModule, ConfirmationDialog],
+  imports: [FormsModule, ReactiveFormsModule, ConfirmationDialog, ControlListEditor],
   templateUrl: './workspace-optimization.html',
   styleUrl: './workspace-optimization.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -129,15 +137,23 @@ export class WorkspaceOptimization {
   ];
 
   readonly riskForm = this.formBuilder.nonNullable.group({
-    currentPreventionControl: ['', [Validators.maxLength(2000)]],
+    preventionControls: createControlList(this.formBuilder),
     occurrence: this.formBuilder.control<number | null>(null, Validators.required),
-    currentDetectionControl: ['', [Validators.maxLength(2000)]],
+    detectionControls: createControlList(this.formBuilder),
     detection: this.formBuilder.control<number | null>(null, Validators.required),
     detectionScope: this.formBuilder.control<DetectionScope | null>(null, Validators.required),
     actionPriority: this.formBuilder.control<ActionPriority | null>(null, Validators.required),
     specialProcess: ['', [Validators.maxLength(1000)]],
     specialCharacteristic: ['', [Validators.maxLength(1000)]]
   });
+
+  get preventionControls(): FormArray<FormControl<string>> {
+    return this.riskForm.controls.preventionControls;
+  }
+
+  get detectionControls(): FormArray<FormControl<string>> {
+    return this.riskForm.controls.detectionControls;
+  }
 
   readonly optimizationForm = this.formBuilder.nonNullable.group({
     severity: this.formBuilder.control<number | null>(null, Validators.required),
@@ -370,16 +386,7 @@ export class WorkspaceOptimization {
 
   openCreateRisk(row: OptimizationRow, event: Event): void {
     this.openEditor('risk', 'create', row, event);
-    this.riskForm.reset({
-      currentPreventionControl: '',
-      occurrence: null,
-      currentDetectionControl: '',
-      detection: null,
-      detectionScope: null,
-      actionPriority: null,
-      specialProcess: '',
-      specialCharacteristic: ''
-    });
+    this.resetRiskForm();
     this.riskForm.enable();
     this.focusFirstField();
   }
@@ -498,9 +505,9 @@ export class WorkspaceOptimization {
     }
 
     if (kind === 'risk') {
+      this.preventionControls.markAsTouched();
+      this.detectionControls.markAsTouched();
       this.riskForm.patchValue({
-        currentPreventionControl: this.riskForm.controls.currentPreventionControl.value.trim(),
-        currentDetectionControl: this.riskForm.controls.currentDetectionControl.value.trim(),
         specialProcess: this.riskForm.controls.specialProcess.value.trim(),
         specialCharacteristic: this.riskForm.controls.specialCharacteristic.value.trim()
       });
@@ -586,7 +593,11 @@ export class WorkspaceOptimization {
   }
 
   riskPreventionError(): string | null {
-    return optionalTextError(this.riskForm.controls.currentPreventionControl, 'Current Prevention Control', 2000);
+    return controlListError(
+      this.preventionControls,
+      'Current Prevention Controls',
+      CONTROL_FIELD_MAX_LENGTH
+    );
   }
 
   riskOccurrenceError(): string | null {
@@ -594,7 +605,11 @@ export class WorkspaceOptimization {
   }
 
   riskDetectionControlError(): string | null {
-    return optionalTextError(this.riskForm.controls.currentDetectionControl, 'Current Detection Control', 2000);
+    return controlListError(
+      this.detectionControls,
+      'Current Detection Controls',
+      CONTROL_FIELD_MAX_LENGTH
+    );
   }
 
   riskDetectionError(): string | null {
@@ -693,9 +708,9 @@ export class WorkspaceOptimization {
     this.riskAnalysisService
       .createRiskAnalysis({
         failureCauseId: row.cause.id,
-        currentPreventionControl: optionalRequestText(values.currentPreventionControl),
+        currentPreventionControl: this.serializedRiskControls(this.preventionControls),
         occurrence: values.occurrence,
-        currentDetectionControl: optionalRequestText(values.currentDetectionControl),
+        currentDetectionControl: this.serializedRiskControls(this.detectionControls),
         detection: values.detection,
         detectionScope: values.detectionScope,
         actionPriority: values.actionPriority,
@@ -915,16 +930,7 @@ export class WorkspaceOptimization {
     this.editingAction.set(null);
     this.pendingAction.set(null);
     this.editorError.set(null);
-    this.riskForm.reset({
-      currentPreventionControl: '',
-      occurrence: null,
-      currentDetectionControl: '',
-      detection: null,
-      detectionScope: null,
-      actionPriority: null,
-      specialProcess: '',
-      specialCharacteristic: ''
-    });
+    this.resetRiskForm();
     this.optimizationForm.reset({
       severity: null,
       occurrence: null,
@@ -947,6 +953,23 @@ export class WorkspaceOptimization {
     this.optimizationForm.enable();
     this.actionForm.enable();
     this.restoreTriggerFocus();
+  }
+
+  private resetRiskForm(): void {
+    this.riskForm.reset({
+      occurrence: null,
+      detection: null,
+      detectionScope: null,
+      actionPriority: null,
+      specialProcess: '',
+      specialCharacteristic: ''
+    });
+    replaceControlList(this.preventionControls, [], this.formBuilder);
+    replaceControlList(this.detectionControls, [], this.formBuilder);
+  }
+
+  private serializedRiskControls(array: FormArray<FormControl<string>>): string | null {
+    return optionalRequestText(controlsToMultilineString(array.getRawValue()));
   }
 
   private fetchRows() {
